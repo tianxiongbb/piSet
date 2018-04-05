@@ -37,16 +37,35 @@ Once you have installed piSet, you need to install the download or make all the 
 
 To install mouse mm10 genome, run:
 ```
-piSet_install_genome -g mm10 -s "Mus musculus"  
+piSet_install_genome -g mm10 -s "Mus musculus" -c 16  
 ```
 piSet will automaticlly download the latest version of a genome, to install genome in lower version like mm9, run:
 ```
-piSet_install_genome -g mm10 -s "Mus musculus" -T "http://www.repeatmasker.org/genomes/mm9/RepeatMasker-rm328-db20090604/mm9.fa.out.gz"
+piSet_install_genome -g mm10 -s "Mus musculus" -c 16 -T "http://www.repeatmasker.org/genomes/mm9/RepeatMasker-rm328-db20090604/mm9.fa.out.gz"
 ```
 tips: -T provides rmsk.url for downloading repeat element annotation in different genome version. The url can be found in [RepeatMasker Website](http://www.repeatmasker.org/genomicDatasets/RMGenomicDatasets.html)  
-To install a genome without well miRNA annotation like scopion, you may want to denovo annotate miRNA use smallRNAseq data run: 
+
+To install a genome without well miRNA annotation like scopion, you may want to denovo annotate miRNA use smallRNAseq data. You can run: 
 ```
-piSet_install_genome -g Cscu -s "Centruroides sculpturatus" -i srnaseq.fastq -a adapter_sequence|0
+piSet_install_genome -g Cscu -s "Centruroides sculpturatus" -c 16 -i srnaseq.fastq -a adapter_sequence|0
 ```
-tips: -i provides smallRNAseq data for miRNA annotation via miRDeep2  
-      -a provides adapter to be remove in 3END via cutadapt, set to 0 if you don't know the adapter and piSet will automaticlly guess what adapter is in your data  
+tips: -i provides smallRNAseq data for miRNA annotation via miRDeep2.  
+-a provides adapter to be remove in 3END via cutadapt, set to 0 if you don't know the adapter and piSet will automaticlly guess what adapter is in your data.   
+
+To install a genome without well repeat element annotation like scopion, you may want to denovo annotate repeat element. You can run:  
+```
+piSet_install_genome -g Cscu -s "Centruroides sculpturatus" -c 16 -t
+```
+tips: set -t to enable denovo repeat element annotation via RepeatModeler and RepeatMasker. piSet will try to pile up all the consensus repeat sequences via RepeatModeler and then combine with known repbase sequences to annotate repeat element coordinates in genome via RepeatMasker.  
+
+Also, if you want to denovo annotate RNA/DNA virus via RNAseq data, you can run:
+```
+piSet_install_genome -g Cscu -s "Centruroides sculpturatus" -c 16 -v -L left.rnaseq,fastq -R right.rnaseq.fastq
+```
+tips: -v enables denovo virus annotation.
+-L and -R provide paired-end rnaseq.fastq for virus annotation via Trinity and diamond.
+
+---
+## 3. smallRNAseq pipeline
+After installing genome, running pipeline for s
+
