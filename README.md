@@ -67,5 +67,29 @@ tips: -v enables denovo virus annotation.
 
 ---
 ## 3. smallRNAseq pipeline
-After installing genome, running pipeline for s
+After installing genome, running pipeline is quite easy. For smallRNAseq data for mouse mm10, simply run:
+```
+piSet_srnaseq -i srnaseq.fastq -g mm10 -o output_dir
+```
+tips: piSet_srnaseq will automaticlly running two main scripts (*piSet_srnamap, piSet_run_bed2_summary*) with default parameters. 
 
+Especially, you may want to compare several srnaseq data at one time, then you can run:
+```
+piSet_srna_map -i "amybHet1.fastq amybHet2.fastq amybMut1.fastq amybMut2.fastq" -g mm10 -o output_dir -p amyb_HetMut -E -N allSM -a 0
+```
+tips: -E will enable piSet use EM algorithm to assign multiple mapped reads more accurately.  
+set -a to 0 to automaticlly guess the adapter sequence and remove adapter for each samples.  
+set -N to allSM to normalize results via all mapped reads including miRNA and other small noncoding RNAs (eg: snoRNA, snRNA)  
+
+:runner::runner::runner:After finishing piSet_srnaseq, you may get a bunch of stuffs in output directory, which main includes results below:
+1. XXX.insert files which store raw reads, reads after removing rRNA [and miRNA [and sncRNA]] and unaligned reads.
+2. XXX.bed2 files which store all the mapping results including mapping to rRNA, miRNA, sncRNA, genome, puclusters, transposons and/or virus.
+3. XXX.log files which store all the log for debugging.
+4. bed2_summary/XXX.lendis files which store all the length distribution for each piclusters and transposons. Also there will be length distribution for all mRNA exons, CDSs, 5UTRs, 3UTRs, introns and other noncoding RNA exons and introns.
+5. bed2_summary/XXX.pp files which store all the ping-pong pair information for each piclusters and transposons. Also there will be ping-pong pair information for all mRNA exons, CDSs, 5UTRs, 3UTRs, introns and other noncoding RNA exons and introns.
+6. bed2_summary/XXX.cov files which store the normalized signal across the while body of each piclusters and transposons.
+7. **bed2_summary/XXX.cov** files which store all the information like uniq/all mapped sense/antisense reads/species for each piclusters, transposons, genes and other noncoding genes. Also, ping-pong zscore and pairs are available for piclusters and transposons. These files is very useful if you want to get detailed information of some piclusters, transposons or genes. Or if you want to make a systematic figures yourselves.
+8. figures/XXX.scatter.pdf files are final results which compare all the samples 1-to-1 by scatter plot.
+9. figures/XXX.pdf files are final results which use length distribution, ping-pong and buckets to get more detailed comparison of all the samples.  
+
+## 4. rnaseq pipeline
