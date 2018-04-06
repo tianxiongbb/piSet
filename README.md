@@ -92,4 +92,5 @@ set -N to allSM to normalize results via all mapped reads including miRNA and ot
 8. figures/XXX.scatter.pdf files are final results which compare all the samples 1-to-1 by scatter plot.
 9. figures/XXX.pdf files are final results which use length distribution, ping-pong and buckets to get more detailed comparison of all the samples.  
 
+---
 ## 4. rnaseq pipeline
