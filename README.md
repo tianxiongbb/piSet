@@ -1,4 +1,4 @@
-# piSet: a set of pipeline for piRNA analysis
+# piSet: a set of pipeline for piRNA and transposon analysis
 
 ---
 ## 0. Why piSet?
