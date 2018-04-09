@@ -8,7 +8,7 @@ Our old sofwares [piPipes](https://github.com/bowhan/piPipes) and [TEMP](https:/
 
 In another aspect, piRNA cluster/gene annotation is still a challenge though several scientist have started the first step in this aspect like [piClust](http://epigenomics.snu.ac.kr/piclustweb/), [proTRAC](http://www.smallrnagroup.uni-mainz.de/software/proTRAC_documentation_v2.4.1.pdf) and [Xin's method](https://www.tandfonline.com/doi/pdf/10.4161/cc.24989) for piRNA gene annotation using RNAseq, smallRNAseq, CAGE and PAS. piClust only use piRNA reads with up to 5 multiple mapped location which will impede the accurate annotation of piRNA cluster 3'/5' end. proTRAC used a probolistic mode with assumption of a uniform distribution for piRNA cluster annotation which may not be assumed. Xin's method can annotate piRNA cluster with pretty accurate 5'/3' ends and even gene structure (eg. exons, introns, isforms) but is not appropariate for all the species due to lack of CAGE and PAS data and manually fix needed.
 
-So, we develop a new conprehensive pipeline **piSet** which can handle piRNA and transposon analysis for almost all the species with assembled genome and output all-round results and elegant figures. Further more, piSet also contains a module **piFinder** which can automaticlly annotate high quality piRNA cluster/genes with accurate 3'/5' ends and higher sensitivity/specificity for animals via smallRNAseq [and RNAseq] data in gonads. Also, piSet upgrade [TEMP](https://github.com/JialiUMassWengLab/TEMP) that only use transposon ends mapped discoordinate reads for transposon insertion calling to decrease false positive that may be cause by chimeric reads.
+So, we develop a new conprehensive pipeline **piSet** which can handle piRNA and transposon analysis for almost all the species with assembled genome and output all-round results and elegant figures. Further more, piSet also contains a module **piFinder** which can automaticlly annotate high quality piRNA cluster/genes with accurate 3'/5' ends and higher sensitivity/specificity for animals via smallRNAseq [and RNAseq] data in gonads. Also, piSet upgrade [TEMP](https://github.com/JialiUMassWengLab/TEMP) that only use transposon ends mapped discoordant reads for transposon insertion calling to decrease false positive that may be cause by chimeric reads.
 
 ---
 ## 1. install piSet
@@ -77,7 +77,7 @@ tips: -v enables denovo virus annotation.
 
 ---
 ## 3. smallRNAseq pipeline
-After installing genome, running pipeline is quite easy. For smallRNAseq data for mouse mm10, simply run:
+After installing genome, running smallRNAseq pipeline is quite easy. For smallRNAseq data for mouse mm10, simply run:
 ```
 piSet_srnaseq -i srnaseq.fastq -g mm10 -o output_dir
 ```
@@ -97,10 +97,66 @@ set -N to allSM to normalize results via all mapped reads including miRNA and ot
 3. XXX.log files which store all the log for debugging.
 4. bed2_summary/XXX.lendis files which store all the length distribution for each piclusters and transposons. Also there will be length distribution for all mRNA exons, CDSs, 5UTRs, 3UTRs, introns and other noncoding RNA exons and introns.
 5. bed2_summary/XXX.pp files which store all the ping-pong pair information for each piclusters and transposons. Also there will be ping-pong pair information for all mRNA exons, CDSs, 5UTRs, 3UTRs, introns and other noncoding RNA exons and introns.
-6. bed2_summary/XXX.cov files which store the normalized signal across the while body of each piclusters and transposons.
-7. **bed2_summary/XXX.cov** files which store all the information like uniq/all mapped sense/antisense reads/species for each piclusters, transposons, genes and other noncoding genes. Also, ping-pong zscore and pairs are available for piclusters and transposons. These files is very useful if you want to get detailed information of some piclusters, transposons or genes. Or if you want to make a systematic figures yourselves.
-8. figures/XXX.scatter.pdf files are final results which compare all the samples 1-to-1 by scatter plot.
-9. figures/XXX.pdf files are final results which use length distribution, ping-pong and buckets to get more detailed comparison of all the samples.  
+6. bed2_summary/XXX.phasing files which store all the phasing information for each piclusters and transposons. Also there will be ping-pong pair information for all mRNA exons, CDSs, 5UTRs, 3UTRs, introns and other noncoding RNA exons and introns.  
+7. bed2_summary/XXX.cov files which store the normalized signal across the while body of each piclusters and transposons.
+8. **bed2_summary/XXX.cov** files which store all the information like uniq/all mapped sense/antisense reads/species for each piclusters, transposons, genes and other noncoding genes. Also, ping-pong zscore and pairs are available for piclusters and transposons. These files is very useful if you want to get detailed information of some piclusters, transposons or genes. Or if you want to make a systematic figures yourselves.
+9. figures/XXX.scatter.pdf files are final results which compare all the samples 1-to-1 by scatter plot.
+10. figures/XXX.pdf files are final results which use length distribution, ping-pong and buckets to get more detailed comparison of all the samples.  
 
 ---
-## 4. rnaseq pipeline
+## 4. RNAseq pipeline
+For running RNAseq pipeline for mm10, typing:  
+```
+# single-end RNAseq
+piSet_rnaseq -l left.fq -g mm10 -o output_dir
+# paired-end RNAseq
+piSet_rnaseq -l left.fq -r right.fq -g mm10 -o output_dir
+```
+
+Similar to smallRNAseq pipeline, RNAseq pipeline also accept multiple input files at one time and compare them one to one. For example, if you want to compare several RNAseq data in dm3:  
+```
+piSet_rnaseq -l "Bill.RNAseq.gen.Thoc7_Df.ovary.r1.1.fastq Bill.RNAseq.gen.Thoc7_Df.ovary.r2.1.fastq Bill.RNAseq.gen.wt.r1.1.fastq Bill.RNAseq.gen.wt.r2.1.fastq Bill.RNAseq.gen.wt.r3.1.fastq Bill.RNAseq.gen.Thoc5e_1.092816.r1.1.fastq Bill.RNAseq.gen.Thoc5e_1.092816.r2.1.fastq" -r "Bill.RNAseq.gen.Thoc7_Df.ovary.r1.2.fastq Bill.RNAseq.gen.Thoc7_Df.ovary.r2.2.fastq Bill.RNAseq.gen.wt.r1.2.fastq Bill.RNAseq.gen.wt.r2.2.fastq Bill.RNAseq.gen.wt.r3.2.fastq Bill.RNAseq.gen.Thoc5e_1.092816.r1.2.fastq Bill.RNAseq.gen.Thoc5e_1.092816.r2.2.fastq" -g dm3 -o output_dir -t sample_information.tab -p Thoc7or5e.Mut
+```
+Tips1: For comparison mode with multiple input files, -p specified the output prefix name and -t which specified a sample information file is also needed.
+sample_information.tab maybe like:
+```
+#if RNAseq is paired-end, please use the first file as file_name
+#file_name  sample_type
+Bill.RNAseq.gen.Thoc7_Df.ovary.r1.1.fastq Thoc7_DF
+Bill.RNAseq.gen.Thoc7_Df.ovary.r2.1.fastq Thoc7_DF
+Bill.RNAseq.gen.wt.r1.1.fastq Wild_type
+Bill.RNAseq.gen.wt.r2.1.fastq Wild_type
+Bill.RNAseq.gen.wt.r3.1.fastq Wild_type
+Bill.RNAseq.gen.Thoc5e_1.092816.r1.1.fastq  Thoc5e_DF
+Bill.RNAseq.gen.Thoc5e_1.092816.r2.1.fastq  Thoc5e_DF
+```
+Tips2: If you are not sure which replicates you want to use for differential expression calling, please run piSet_rnaseq with --no-deseq2 and then use piSet_deseq2 to do differential expression analysis after determine which replicates to use with a new(or same if all the replicates is OK) sample_information.tab
+```
+piSet_rnaseq -l "Bill.RNAseq.gen.Thoc7_Df.ovary.r1.1.fastq Bill.RNAseq.gen.Thoc7_Df.ovary.r2.1.fastq Bill.RNAseq.gen.wt.r1.1.fastq Bill.RNAseq.gen.wt.r2.1.fastq Bill.RNAseq.gen.wt.r3.1.fastq Bill.RNAseq.gen.Thoc5e_1.092816.r1.1.fastq Bill.RNAseq.gen.Thoc5e_1.092816.r2.1.fastq" -r "Bill.RNAseq.gen.Thoc7_Df.ovary.r1.2.fastq Bill.RNAseq.gen.Thoc7_Df.ovary.r2.2.fastq Bill.RNAseq.gen.wt.r1.2.fastq Bill.RNAseq.gen.wt.r2.2.fastq Bill.RNAseq.gen.wt.r3.2.fastq Bill.RNAseq.gen.Thoc5e_1.092816.r1.2.fastq Bill.RNAseq.gen.Thoc5e_1.092816.r2.2.fastq" -g dm3 -o output_dir -t sample_information.tab -p Thoc7or5e.Mut
+ --no-deseq2
+piSet_deseq2 sample_information.tab output_dir
+```
+
+:runner::runner::runner:After finishing piSet_rnaseq, you may get a bunch of stuffs in output directory, which main includes results below:  
+1. bowtie2/* rRNA removing results.
+2. STAR/* genome mapping results with XXX.bed12 file stands for split reads mapping information with fixed strand.
+3. log_file/* all log files in pipeline.
+4. signal/XXX.rmsk.rpkm All mapped RPKM for all transposons, with the same transposon family copies added into one record.
+5. signal/XXX.picluster.rpkm Unique mapped RPKM for all piclusters.
+6. signal/XXX.gene.rpkm Unique mapped RPKM for all genes calculated by HTSeq and then normalized to read depth and gene length.
+7. signal/XXX.[rmsk|pucluster|gene].readCounts The same as 4, 5, 6 but just raw reads. This is useful for differtial expression calling using DEseq2.
+8. replicates_quality/* Assessing of replicates quality in three levels: 1) pearson and spearman correlation between between all the samples; 2) principal components analysis for all the samples; 3) scatterplot showed how coordant of each replicates. You may get a overall view of each replicates quality.
+8. comparison/XXX.vs.XXX.de Defferential expression results for all transposons, piclusters and genes called by DEseq2.
+9. comparison/XXX.vs.XXX.norNy.[rpkm|quantile|deseq2].pdf Scatter plot to compare mean expression levels of replicates for all the transposons, piclusters and genes. Three normalization methods will be applied: 1) standard rpkm value; 2) readCounts value with quantile normalization of all the samples in all conditions; 3) readCounts value with DEseq2 normalization of all the samples in two conditions.
+
+---
+## 5. DNAseq pipeline
+For running DNAseq pipeline for dm3 and enable transposon insertion finding, typing:
+```
+piSet_dnaseq -l left.fq -r right.fq -p out_dir/out_prefix -g dm3 -T -F -s 500
+```
+Tips: -T enables running TEMP and -F enables using upgraded TEMP mode for more accurate transposon insertion finding.
+
+---
+## 6. ChIPseq pipeline
+
