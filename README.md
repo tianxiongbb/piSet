@@ -1,6 +1,16 @@
 # piSet: a set of pipeline for piRNA analysis
 
 ---
+## 0. Why piSet?
+Due to the fast accumulation of sequencing data for different species, it is necessary to use a comprehensive pipeline for analyzing piRNA and transposons.
+
+Our old sofwares [piPipes](https://github.com/bowhan/piPipes) and [TEMP](https://github.com/JialiUMassWengLab/TEMP) and great for piRNA and transposon analysis. However, piPipes is not user-fridenly for **newly assembled species** like koala or scorpion and TEMP is not good at calling **transposon insertion with low penetrance** (eg. newly acquired transposon insertion).
+
+In another aspect, piRNA cluster/gene annotation is still a challenge though several scientist have started the first step in this aspect like [piClust](http://epigenomics.snu.ac.kr/piclustweb/), [proTRAC](http://www.smallrnagroup.uni-mainz.de/software/proTRAC_documentation_v2.4.1.pdf) and [Xin's method](https://www.tandfonline.com/doi/pdf/10.4161/cc.24989) for piRNA gene annotation using RNAseq, smallRNAseq, CAGE and PAS. piClust only use piRNA reads with up to 5 multiple mapped location which will impede the accurate annotation of piRNA cluster 3'/5' end. proTRAC used a probolistic mode with assumption of a uniform distribution for piRNA cluster annotation which may not be assumed. Xin's method can annotate piRNA cluster with pretty accurate 5'/3' ends and even gene structure (eg. exons, introns, isforms) but is not appropariate for all the species due to lack of CAGE and PAS data and manually fix needed.
+
+So, we develop a new conprehensive pipeline **piSet** which can handle piRNA and transposon analysis for almost all the species with assembled genome and output all-round results and elegant figures. Further more, piSet also contains a module **piFinder** which can automaticlly annotate high quality piRNA cluster/genes with accurate 3'/5' ends and higher sensitivity/specificity for animals via smallRNAseq [and RNAseq] data in gonads. Also, piSet upgrade [TEMP](https://github.com/JialiUMassWengLab/TEMP) that only use transposon ends mapped discoordinate reads for transposon insertion calling to decrease false positive that may be cause by chimeric reads.
+
+---
 ## 1. install piSet
 piSet is based on a bunch of software, most of the dependencies is pre-installed but three of them still need to be installed by users:  
 1). [Htseq](https://htseq.readthedocs.io/en/release_0.9.1/) 2). [miRDeep2](https://github.com/rajewsky-lab/mirdeep2) 3). [cutadapt](http://cutadapt.readthedocs.io/en/stable/guide.html)   
