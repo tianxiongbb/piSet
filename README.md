@@ -158,5 +158,20 @@ piSet_dnaseq -l left.fq -r right.fq -p out_dir/out_prefix -g dm3 -T -F -s 500
 Tips: -T enables running TEMP and -F enables using upgraded TEMP mode for more accurate transposon insertion finding.
 
 ---
-## 6. ChIPseq pipeline
+## 6. ChIPseq/CUT_and_RUN pipeline
+To run H3K4me3 ChIPseq pipeline for mm10 and enable peak calling via MACS2, typing:
+```
+# single-end ChIPseq
+piSet_chipseq -l left.fq -g mm10 -P -T -o output_dir -p output_preifx -R -m
+# paired-end ChIPseq
+piSet_chipseq -l left.fq -r right.fq -g mm10 -P -T -o output_dir -p output_preifx -R -m
+# paired-end CUT_and_RUN
+piSet_chipseq -l left.fq -r right.fq -g mm10 -P -T -o output_dir -p output_preifx -m
+```
+Tips1: -P and -T enable analysis of piclusters and transposons while -m enables peak calling via MACS2 and -R enables duplicates remving via samtools rmdup.  
+Tips2: When running pipeline for CUT_and_RUN data, it is almost the same to ChIPseq data. But just keep in mind that it is better not set -R to disable PRC duplicates removing cause CUT_and_RUN will get many reads from one exactly site.
 
+Also, piSet_chipseq accept multiple samples like RNAseq, with sample_information.tab:
+```
+piSet_chipseq -l "mouse_wt_chip_rep1.1.fq mouse_wt_chip_rep2.1.fq mouse_mnkMut_amyb_chip_rep1.fq"
+```
