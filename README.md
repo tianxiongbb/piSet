@@ -115,7 +115,7 @@ piSet_rnaseq -l left.fq -r right.fq -g mm10 -o output_dir
 
 Similar to smallRNAseq pipeline, RNAseq pipeline also accept multiple input files at one time and compare them one to one. For example, if you want to compare several RNAseq data in dm3:  
 ```
-piSet_rnaseq -l "Bill.RNAseq.gen.Thoc7_Df.ovary.r1.1.fastq Bill.RNAseq.gen.Thoc7_Df.ovary.r2.1.fastq Bill.RNAseq.gen.wt.r1.1.fastq Bill.RNAseq.gen.wt.r2.1.fastq Bill.RNAseq.gen.wt.r3.1.fastq Bill.RNAseq.gen.Thoc5e_1.092816.r1.1.fastq Bill.RNAseq.gen.Thoc5e_1.092816.r2.1.fastq" -r "Bill.RNAseq.gen.Thoc7_Df.ovary.r1.2.fastq Bill.RNAseq.gen.Thoc7_Df.ovary.r2.2.fastq Bill.RNAseq.gen.wt.r1.2.fastq Bill.RNAseq.gen.wt.r2.2.fastq Bill.RNAseq.gen.wt.r3.2.fastq Bill.RNAseq.gen.Thoc5e_1.092816.r1.2.fastq Bill.RNAseq.gen.Thoc5e_1.092816.r2.2.fastq" -g dm3 -o output_dir -t sample_information.tab -p Thoc7or5e.Mut
+piSet_rnaseq -l "Bill.RNAseq.gen.Thoc7_Df.ovary.r1.1.fastq Bill.RNAseq.gen.Thoc7_Df.ovary.r2.1.fastq Bill.RNAseq.gen.wt.r1.1.fastq Bill.RNAseq.gen.wt.r2.1.fastq Bill.RNAseq.gen.wt.r3.1.fastq Bill.RNAseq.gen.Thoc5e_1.092816.r1.1.fastq Bill.RNAseq.gen.Thoc5e_1.092816.r2.1.fastq" -r "Bill.RNAseq.gen.Thoc7_Df.ovary.r1.2.fastq Bill.RNAseq.gen.Thoc7_Df.ovary.r2.2.fastq Bill.RNAseq.gen.wt.r1.2.fastq Bill.RNAseq.gen.wt.r2.2.fastq Bill.RNAseq.gen.wt.r3.2.fastq Bill.RNAseq.gen.Thoc5e_1.092816.r1.2.fastq Bill.RNAseq.gen.Thoc5e_1.092816.r2.2.fastq" -g dm3 -o output_dir -t sample_information.tab -P Thoc7or5e.Mut
 ```
 Tips1: For comparison mode with multiple input files, -p specified the output prefix name and -t which specified a sample information file is also needed.
 sample_information.tab maybe like:
@@ -132,7 +132,7 @@ Bill.RNAseq.gen.Thoc5e_1.092816.r2.1.fastq  Thoc5e_DF
 ```
 Tips2: If you are not sure which replicates you want to use for differential expression calling, please run piSet_rnaseq with --no-deseq2 and then use piSet_deseq2 to do differential expression analysis after determine which replicates to use with a new(or same if all the replicates is OK) sample_information.tab
 ```
-piSet_rnaseq -l "Bill.RNAseq.gen.Thoc7_Df.ovary.r1.1.fastq Bill.RNAseq.gen.Thoc7_Df.ovary.r2.1.fastq Bill.RNAseq.gen.wt.r1.1.fastq Bill.RNAseq.gen.wt.r2.1.fastq Bill.RNAseq.gen.wt.r3.1.fastq Bill.RNAseq.gen.Thoc5e_1.092816.r1.1.fastq Bill.RNAseq.gen.Thoc5e_1.092816.r2.1.fastq" -r "Bill.RNAseq.gen.Thoc7_Df.ovary.r1.2.fastq Bill.RNAseq.gen.Thoc7_Df.ovary.r2.2.fastq Bill.RNAseq.gen.wt.r1.2.fastq Bill.RNAseq.gen.wt.r2.2.fastq Bill.RNAseq.gen.wt.r3.2.fastq Bill.RNAseq.gen.Thoc5e_1.092816.r1.2.fastq Bill.RNAseq.gen.Thoc5e_1.092816.r2.2.fastq" -g dm3 -o output_dir -t sample_information.tab -p Thoc7or5e.Mut
+piSet_rnaseq -l "Bill.RNAseq.gen.Thoc7_Df.ovary.r1.1.fastq Bill.RNAseq.gen.Thoc7_Df.ovary.r2.1.fastq Bill.RNAseq.gen.wt.r1.1.fastq Bill.RNAseq.gen.wt.r2.1.fastq Bill.RNAseq.gen.wt.r3.1.fastq Bill.RNAseq.gen.Thoc5e_1.092816.r1.1.fastq Bill.RNAseq.gen.Thoc5e_1.092816.r2.1.fastq" -r "Bill.RNAseq.gen.Thoc7_Df.ovary.r1.2.fastq Bill.RNAseq.gen.Thoc7_Df.ovary.r2.2.fastq Bill.RNAseq.gen.wt.r1.2.fastq Bill.RNAseq.gen.wt.r2.2.fastq Bill.RNAseq.gen.wt.r3.2.fastq Bill.RNAseq.gen.Thoc5e_1.092816.r1.2.fastq Bill.RNAseq.gen.Thoc5e_1.092816.r2.2.fastq" -g dm3 -o output_dir -t sample_information.tab -P Thoc7or5e.Mut
  --no-deseq2
 piSet_deseq2 sample_information.tab output_dir
 ```
