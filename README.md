@@ -49,15 +49,16 @@ To install mouse mm10 genome, run:
 ```
 piSet_install_genome -g mm10 -s "Mus musculus" -c 16  
 ```
-piSet will automaticlly download the latest assembled version of a genome, to install genome in lower assembled version like mm9|hg19|dm3, simply run without -s:
+piSet will automaticlly download the latest assembled version of a genome, to install genome in lower assembled version like mm9|hg19|dm3, simply run with -O:
 ```
-piSet_install_genome -g mm9 -c 16
+piSet_install_genome -g mm9 -s "Mus musculus" -c 16 -O
 ```
 Right now, piSet only support genome in old assembled version of mm9, hg19 and dm3. To get old assembled genome except mm10, hg19 and dm3, eg: bosTau7, you need to give the gene annotation gtf/gff file as piSet/annotation/bosTau7/bosTau7.(gtf|gff) and  run:
 ```
-piSet_install_genome -g bosTau7 -c 16 -O -T http://www.repeatmasker.org/genomes/bosTau7/RepeatMasker-rm405-db20140131/bosTau7.fa.out.gz
+piSet_install_genome -g bosTau7 -s "Bos taurus" -c 16 -O -T http://www.repeatmasker.org/genomes/bosTau7/RepeatMasker-rm405-db20140131/bosTau7.fa.out.gz
 ```
-tips: -T provides rmsk.url for downloading repeat element annotation in different genome version. The url can be found in [RepeatMasker Website](http://www.repeatmasker.org/genomicDatasets/RMGenomicDatasets.html)  
+tips: -T provides rmsk.url for downloading repeat element annotation in different genome version. The url can be found in [RepeatMasker Website](http://www.repeatmasker.org/genomicDatasets/RMGenomicDatasets.html)
+gene annotation file can be found in [Ensembl](https://useast.ensembl.org/info/data/ftp/index.html) or [iGenome](https://support.illumina.com/sequencing/sequencing_software/igenome.html)
 
 To install a genome without well miRNA annotation like scopion, you may want to denovo annotate miRNA use smallRNAseq data. You can run: 
 ```
