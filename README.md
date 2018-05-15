@@ -43,15 +43,19 @@ By default, piSet will add piSet/bin to your PATH. Enjoy the journey with piSet 
 
 ---
 ## 2. install genome
-Once you have installed piSet, you need to install the download or make all the genome annotation needed in the pipeline. Simply typing: `piSet_install_genome` to get help information.  
+Once you have installed piSet, you need to install and download or make all the genome annotation needed in the pipeline. Simply typing: `piSet_install_genome` to get help information.  
 
 To install mouse mm10 genome, run:
 ```
 piSet_install_genome -g mm10 -s "Mus musculus" -c 16  
 ```
-piSet will automaticlly download the latest version of a genome, to install genome in lower version like mm9, run:
+piSet will automaticlly download the latest assembled version of a genome, to install genome in lower assembled version like mm9|hg19|dm3, simply run:
 ```
-piSet_install_genome -g mm10 -s "Mus musculus" -c 16 -T "http://www.repeatmasker.org/genomes/mm9/RepeatMasker-rm328-db20090604/mm9.fa.out.gz"
+piSet_install_genome -g mm9 -c 16
+```
+Right now, piSet only support genome in old assembled version of mm9, hg19 and dm3. To get old assembled genome except mm10, hg19 and dm3, eg: bosTau7, you need to give the gene annotation gtf/gff file as piSet/annotation/bosTau7/bosTau7.(gtf|gff) and  run:
+```
+piSet_install_genome -g bosTau7 -c 16 -T http://www.repeatmasker.org/genomes/bosTau7/RepeatMasker-rm405-db20140131/bosTau7.fa.out.gz
 ```
 tips: -T provides rmsk.url for downloading repeat element annotation in different genome version. The url can be found in [RepeatMasker Website](http://www.repeatmasker.org/genomicDatasets/RMGenomicDatasets.html)  
 
