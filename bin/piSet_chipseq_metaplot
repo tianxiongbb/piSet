@@ -1,0 +1,27 @@
+#!/bin/bash
+
+if [ $# -lt 3 ];then
+	echo0 5 "$0 \"in.bw1 in.bw2 ...\" gene.bed group.list out.dir cpu"
+	echo0 4 "group.list should include all the genes and which group(s) of the gene belong; you can use \",\" to devide each group like:"
+	echo0 4 "Mybl1\tpathway,all_mRNA,ubiquitou_mRNA,TS_mRNA,TS_lincRNA"
+	echo0 4 "Nanog\tall_mRNA"
+	exit 1
+fi
+
+OUTDIR=${4%/}
+PARAFILE=${RANDOM}.${RANDOM}.${RANDOM}.${RANDOM}.parafly
+touch ${PARAFILE}
+for i in $1
+do
+	n=`basename $i`
+	if [ ! -f ${OUTDIR}/${n%.bw}.t5.u5000.d5000.b200.mat ] || [ ! -f ${OUTDIR}/${n%.bw}.t53.u5000.d5000.b400.mat ];then
+		echo -e "BB_makeAggregationMatrix.sh -B $i -b $2 -p ${OUTDIR}/${n%.bw} -t 5 -u 5000 -d 5000 -n 200 && BB_makeAggregationMatrix.sh -B $i -b $2 -p ${OUTDIR}/${n%.bw} -t 53 -u 5000 -d 5000 -n 400" >> ${PARAFILE}
+	fi
+done
+ParaFly -c ${PARAFILE} -CPU $5 && rm ${PARAFILE}*
+for i in $1
+do
+	n=`basename $i`
+	echo -e "piSet_chipseq_metaplot.R ${OUTDIR}/${n%.bw} ${3} ${OUTDIR}/${n%.bw}.pdf" >> ${PARAFILE}
+done
+ParaFly -c ${PARAFILE} -CPU $5 && rm ${PARAFILE}*

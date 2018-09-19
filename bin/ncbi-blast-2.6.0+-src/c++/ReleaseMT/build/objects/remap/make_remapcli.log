@@ -1,0 +1,11 @@
+make[4]: Entering directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/build/objects/remap'
+Updating dependency information for /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objects/remap/remap_client_.cpp.
+Updating dependency information for /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objects/remap/remap_client.cpp.
+/usr/bin/ccache /usr/bin/g++  -std=gnu++11 -c  -Wall -Wno-format-y2k  -pthread -fopenmp -O2 -fPIC   -DNDEBUG -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE   -D_MT -D_REENTRANT -D_THREAD_SAFE -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/inc -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/include  -fdiagnostics-color=always /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objects/remap/remap_client.cpp -o remap_client.o 
+/usr/bin/ccache /usr/bin/g++  -std=gnu++11 -c  -Wall -Wno-format-y2k  -pthread -fopenmp -O2 -fPIC   -DNDEBUG -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE   -D_MT -D_REENTRANT -D_THREAD_SAFE -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/inc -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/include  -fdiagnostics-color=always /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objects/remap/remap_client_.cpp -o remap_client_.o 
+/bin/rm -f libremapcli.a .libremapcli.a.stamp
+ar cr libremapcli.a remap_client.o remap_client_.o  
+/bin/bash /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/scripts/common/impl/if_diff.sh /bin/ln -f libremapcli.a /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib
+/bin/ln -f libremapcli.a /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib/libremapcli.a
+/bin/ln -f .remapcli.dep /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/status/.remapcli.dep
+make[4]: Leaving directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/build/objects/remap'

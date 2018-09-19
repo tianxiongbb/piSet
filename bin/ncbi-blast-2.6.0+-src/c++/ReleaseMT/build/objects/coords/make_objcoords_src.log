@@ -1,0 +1,5 @@
+/usr/bin/make -w -f /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/build-system/Makefile.module MODULE=objcoords MODULE_PATH=objects/coords MODULE_ASN=objcoords.asn MODULE_IMPORT='' IMPDEPS='' IMPFILES='' top_srcdir=/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++ DATATOOL=/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/bin/datatool MODULE_SEARCH=/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src all
+make[4]: Entering directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objects/coords'
+/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/bin/datatool -oR /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++ -opm /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src -m objcoords.asn -M "" -oA -oc objcoords -or objects/coords -odi -od objcoords.def -oex '' -ocvs -pch 'ncbi_pch.hpp' -fd objcoords.dump 
+datatool: 2.16.0
+make[4]: Leaving directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objects/coords'

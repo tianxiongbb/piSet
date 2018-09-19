@@ -1,0 +1,1 @@
+../opt/trinity-2.5.1/util/analyze_blastPlus_topHit_coverage.pl

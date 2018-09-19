@@ -1,0 +1,9 @@
+#include <objects/biotree/BioTreeContainer.hpp>
+#include <objects/biotree/DistanceMatrix.hpp>
+#include <objects/biotree/FeatureDescr.hpp>
+#include <objects/biotree/FeatureDictSet.hpp>
+#include <objects/biotree/Node.hpp>
+#include <objects/biotree/NodeFeature.hpp>
+#include <objects/biotree/NodeFeatureSet.hpp>
+#include <objects/biotree/NodeSet.hpp>
+#include <objects/biotree/NCBI_BioTree_module.hpp>

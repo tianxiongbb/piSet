@@ -1,0 +1,8 @@
+make[1]: Entering directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/build/build-system/helpers'
+Updating dependency information for /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/build-system/helpers/run_with_lock.c.
+gcc -c  -g -O2   /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/build-system/helpers/run_with_lock.c -o run_with_lock.o 
+gcc run_with_lock.o -Wl,-rpath,/home/yutianx/bin/lib -Wl,-rpath-link,/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib -L/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib -lm -lpthread -o run_with_lock
+strip run_with_lock
+/bin/bash /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/scripts/common/impl/if_diff.sh /bin/ln -f run_with_lock /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/bin
+/bin/ln -f run_with_lock /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/bin/run_with_lock
+make[1]: Leaving directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/build/build-system/helpers'

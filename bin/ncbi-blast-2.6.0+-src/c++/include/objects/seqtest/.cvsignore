@@ -1,0 +1,10 @@
+.cvsignore
+SeqTestResults_.hpp
+Seq_test_result_.hpp
+Seq_test_result_set_.hpp
+SeqTestResults.hpp
+Seq_test_result.hpp
+Seq_test_result_set.hpp
+NCBI_SeqTest_module.hpp
+seqtest__.hpp
+seqtest.dump

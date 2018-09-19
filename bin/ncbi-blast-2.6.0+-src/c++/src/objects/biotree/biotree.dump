@@ -1,0 +1,60 @@
+M,11,biotree.asn:NCBI-BioTree
+--$Revision: 480916 $
+--*********************************************************************
+--
+--  biotree.asn
+--
+--     BioTree ASN
+--     Anatoliy Kuznetsov
+--
+--*********************************************************************
+  T,18,NCBI-BioTree:BioTreeContainer
+  T,26,NCBI-BioTree:NodeSet
+  T,29,NCBI-BioTree:Node
+  T,36,NCBI-BioTree:NodeFeatureSet
+  T,39,NCBI-BioTree:NodeFeature
+  T,45,NCBI-BioTree:FeatureDictSet
+  T,48,NCBI-BioTree:FeatureDescr
+  T,54,NCBI-BioTree:DistanceMatrix
+
+T,18,BioTreeContainer,SEQUENCE
+  F,19,BioTreeContainer:treetype,VisibleString,OPTIONAL
+  -- hint on what kind of tree this is
+  F,20,BioTreeContainer:fdict,/FeatureDictSet
+  -- features dictionary 
+  F,21,BioTreeContainer:nodes,/NodeSet
+  -- set of nodes with encoded topology   
+  F,22,BioTreeContainer:label,VisibleString,OPTIONAL
+  -- bio-tree label (short name)
+  F,23,BioTreeContainer:user,/User-object,OPTIONAL
+  -- user defined object
+
+T,26,NodeSet,SET /Node
+
+T,29,Node,SEQUENCE
+  F,30,Node:id,INTEGER
+  -- node uid
+  F,31,Node:parent,INTEGER,OPTIONAL
+  -- parent node id
+  F,32,Node:features,/NodeFeatureSet,OPTIONAL
+
+T,36,NodeFeatureSet,SET /NodeFeature
+
+T,39,NodeFeature,SEQUENCE
+  F,40,NodeFeature:featureid,INTEGER
+  F,41,NodeFeature:value,VisibleString
+
+T,45,FeatureDictSet,SET /FeatureDescr
+
+T,48,FeatureDescr,SEQUENCE
+  F,49,FeatureDescr:id,INTEGER
+  -- feature id
+  F,50,FeatureDescr:name,VisibleString
+  -- feature name
+
+T,54,DistanceMatrix,SEQUENCE
+  F,55,DistanceMatrix:labels,SEQUENCE VisibleString
+  -- n labels
+  F,56,DistanceMatrix:distances,SEQUENCE REAL
+  -- n(n-1)/2 pairwise distances
+  -- (0, 1)...(0, n), (1, 2)...(1, n)...

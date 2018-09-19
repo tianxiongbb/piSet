@@ -1,0 +1,14 @@
+.cvsignore
+Seq_code_set_.cpp
+Seq_code_table_.cpp
+Seq_code_type_.cpp
+Seq_map_table_.cpp
+Seq_code_set.cpp
+Seq_code_table.cpp
+Seq_code_type.cpp
+Seq_map_table.cpp
+NCBI_SeqCode_module.cpp
+seqcode___.cpp
+seqcode__.cpp
+seqcode.files
+seqcode.dump

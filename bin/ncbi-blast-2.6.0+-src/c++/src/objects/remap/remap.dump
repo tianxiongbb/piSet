@@ -1,0 +1,93 @@
+M,12,remap.asn:NCBI-Remap
+--$Id: remap.asn 96973 2007-01-17 16:00:32Z gouriano $********************************************
+--
+--  remap.asn
+--   Version 1
+--
+--   API for remapping locations on sequences
+--
+--   Author: Josh Cherry
+--
+--***************************************************************
+  T,18,NCBI-Remap:Remap-dt
+  T,19,NCBI-Remap:Remap-db-id
+  T,32,NCBI-Remap:Remap-request
+  T,37,NCBI-Remap:RMRequest
+  T,43,NCBI-Remap:Remap-query
+  T,53,NCBI-Remap:Remap-reply
+  T,59,NCBI-Remap:RMReply
+  T,68,NCBI-Remap:Remap-result
+
+T,18,Remap-dt,INTEGER
+-- a date/time stamp
+
+T,19,Remap-db-id,VisibleString
+-- database name
+
+T,32,Remap-request,SEQUENCE
+--***************************************
+--  Remap Request types
+--***************************************
+--****************************************
+-- The basic request wrapper leaves space for a version which
+--   allow the server to support older clients
+-- The tool parameter allows us to log the client types for
+--   debugging and tuning
+--****************************************
+-- a standard request
+  F,33,Remap-request:request,/RMRequest
+  -- the actual request
+  F,34,Remap-request:version,INTEGER
+  -- ASN1 spec version
+  F,35,Remap-request:tool,VisibleString,OPTIONAL
+  -- tool making request
+
+T,37,RMRequest,CHOICE
+-- request types
+  F,38,RMRequest:remap,/Remap-query
+  -- do the actual remapping
+  F,39,RMRequest:maps-to-builds,VisibleString
+  -- what builds can this be mapped to?
+  F,40,RMRequest:maps-from-builds,VisibleString
+  -- what builds can be mapped to this?
+  F,41,RMRequest:all-builds,NULL
+  -- all the builds the server knows of
+
+T,43,Remap-query,SEQUENCE
+  F,44,Remap-query:from-build,VisibleString
+  -- build to map from
+  F,45,Remap-query:to-build,VisibleString
+  -- build to map to
+  F,46,Remap-query:locs,SEQUENCE /Seq-loc
+  -- the locations to remap
+
+T,53,Remap-reply,SEQUENCE
+--**********************************************************
+-- Replies from the server
+--  all replies contain the date/time stamp when they were executed
+--**********************************************************
+  F,54,Remap-reply:reply,/RMReply
+  -- the actual reply
+  F,55,Remap-reply:dt,/Remap-dt
+  -- date/time stamp from server
+  F,56,Remap-reply:server,VisibleString
+  -- server version info
+  F,57,Remap-reply:msg,VisibleString,OPTIONAL
+  -- possibly a message to the user
+
+T,59,RMReply,CHOICE
+  F,60,RMReply:error,VisibleString
+  -- if nothing can be returned
+  F,61,RMReply:remap,/Remap-result
+  -- result of actual remapping
+  F,62,RMReply:maps-to-builds,SEQUENCE VisibleString
+  -- all the builds that the server
+  -- knows how to map this build to
+  F,64,RMReply:maps-from-builds,SEQUENCE VisibleString
+  -- all the builds that the server
+  -- knows how to map to this build
+  F,66,RMReply:all-builds,SEQUENCE VisibleString
+  -- all builds that the server knows of
+
+T,68,Remap-result,SEQUENCE /Seq-loc
+-- remapped locations

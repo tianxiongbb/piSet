@@ -1,0 +1,16 @@
+# $Id: Makefile.ncbi_xloader_blastdb.lib 468535 2015-05-26 13:23:32Z ucko $
+
+LIB = ncbi_xloader_blastdb
+SRC = bdbloader cached_sequence local_blastdb_adapter
+
+DLL_LIB = seqdb
+
+CPPFLAGS = -DNCBI_MODULE=BLASTDB $(ORIG_CPPFLAGS)
+
+ASN_DEP = blastdb seqset
+
+WATCHERS = camacho
+
+
+USES_LIBRARIES =  \
+    seqdb

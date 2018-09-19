@@ -1,0 +1,10 @@
+WATCHERS = lavr
+
+ASN_DEP = entrez2
+
+LIB = entrez2cli
+SRC = entrez2_client entrez2_client_
+
+
+USES_LIBRARIES =  \
+    entrez2 xconnect

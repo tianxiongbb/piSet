@@ -1,0 +1,278 @@
+M,1,varrep.asn:NCBI-VariationIRep
+  T,7,NCBI-VariationIRep:VariantExpression
+  T,14,NCBI-VariationIRep:SequenceVariant
+  T,24,NCBI-VariationIRep:Variant
+  T,30,NCBI-VariationIRep:VariantSeqType
+  T,41,NCBI-VariationIRep:SpecialVariant
+  T,54,NCBI-VariationIRep:SimpleVariantSeq
+  T,61,NCBI-VariationIRep:SimpleVariant
+  T,80,NCBI-VariationIRep:Delins
+  T,92,NCBI-VariationIRep:NaSub
+  T,98,NCBI-VariationIRep:NaIdentity
+  T,104,NCBI-VariationIRep:ProteinSub
+  T,115,NCBI-VariationIRep:ProteinExtension
+  T,121,NCBI-VariationIRep:NtermExtension
+  T,127,NCBI-VariationIRep:CtermExtension
+  T,134,NCBI-VariationIRep:Frameshift
+  T,140,NCBI-VariationIRep:Deletion
+  T,146,NCBI-VariationIRep:Duplication
+  T,152,NCBI-VariationIRep:Inversion
+  T,159,NCBI-VariationIRep:Insertion
+  T,171,NCBI-VariationIRep:Conversion
+  T,177,NCBI-VariationIRep:Subsequence
+  T,184,NCBI-VariationIRep:Repeat
+  T,191,NCBI-VariationIRep:SeqLocation
+  T,196,NCBI-VariationIRep:SeqInterval
+  T,202,NCBI-VariationIRep:AaLocation
+  T,209,NCBI-VariationIRep:AaInterval
+  T,215,NCBI-VariationIRep:AaSiteRange
+  T,221,NCBI-VariationIRep:AaSite
+  T,227,NCBI-VariationIRep:NtLocation
+  T,234,NCBI-VariationIRep:NtIntLimit
+  T,239,NCBI-VariationIRep:NtInterval
+  T,245,NCBI-VariationIRep:NtSiteRange
+  T,251,NCBI-VariationIRep:NtSite
+  T,279,NCBI-VariationIRep:Count
+
+T,7,VariantExpression,SEQUENCE
+--EXPORTS VariantExpression, SimpleVariant;
+  F,8,VariantExpression:input-expr,VisibleString
+  -- contains the input expression to be parsed
+  F,9,VariantExpression:reference-id,VisibleString
+  -- contains the accession id or other identifier for the reference sequence
+  F,10,VariantExpression:sequence-variant,/SequenceVariant
+
+T,14,SequenceVariant,SEQUENCE
+  F,15,SequenceVariant:seqtype,/VariantSeqType
+  F,16,SequenceVariant:subvariants,SEQUENCE /Variant
+  F,17,SequenceVariant:complex,INTEGER,OPTIONAL
+    V,18,SequenceVariant:complex:mosaic,1
+    V,19,SequenceVariant:complex:chimera,2
+
+T,24,Variant,CHOICE
+  F,25,Variant:simple,/SimpleVariant
+  F,26,Variant:special,/SpecialVariant
+
+T,30,VariantSeqType,INTEGER
+  V,31,VariantSeqType:g,0
+  --genomic
+  V,32,VariantSeqType:m,1
+  --mitochondrial
+  V,33,VariantSeqType:c,2
+  --coding
+  V,34,VariantSeqType:r,3
+  --rna
+  V,35,VariantSeqType:n,4
+  --non-coding rna
+  V,36,VariantSeqType:p,5
+  --protein
+  V,37,VariantSeqType:u,6
+  --unknown
+
+T,41,SpecialVariant,INTEGER
+  V,42,SpecialVariant:unknown,0
+  -- ?
+  V,43,SpecialVariant:not-analyzed,1
+  -- (?) Not sure about this
+  V,44,SpecialVariant:nochange,2
+  -- =
+  V,45,SpecialVariant:nochange-expected,3
+  -- (=)
+  V,46,SpecialVariant:noseq,4
+  -- 0
+  V,47,SpecialVariant:noseq-expected,5
+  -- 0?
+  V,48,SpecialVariant:splice-expected,6
+  -- spl?
+  V,49,SpecialVariant:splice-possible,7
+  -- (spl?) 
+
+T,54,SimpleVariantSeq,SEQUENCE
+-- SimpleVarSeq is deprecated and should go
+  F,55,SimpleVariantSeq:variants,SEQUENCE /SimpleVariant
+  F,56,SimpleVariantSeq:sisters,BOOLEAN,DEFAULT,FALSE
+  F,57,SimpleVariantSeq:fuzzy,BOOLEAN,DEFAULT,FALSE
+
+T,61,SimpleVariant,SEQUENCE
+  F,62,SimpleVariant:type,CHOICE
+    F,63,SimpleVariant:type:na-identity,/NaIdentity
+    F,64,SimpleVariant:type:na-sub,/NaSub
+    F,65,SimpleVariant:type:prot-sub,/ProteinSub
+    F,66,SimpleVariant:type:del,/Deletion
+    F,67,SimpleVariant:type:dup,/Duplication
+    F,68,SimpleVariant:type:inv,/Inversion
+    F,69,SimpleVariant:type:ins,/Insertion
+    F,70,SimpleVariant:type:conv,/Conversion
+    F,71,SimpleVariant:type:delins,/Delins
+    F,72,SimpleVariant:type:repeat,/Repeat
+    --short-sequence repeat (ssr)
+    F,73,SimpleVariant:type:prot-ext,/ProteinExtension
+    F,74,SimpleVariant:type:frameshift,/Frameshift
+  F,76,SimpleVariant:fuzzy,BOOLEAN,DEFAULT,FALSE
+
+T,80,Delins,SEQUENCE
+  F,81,Delins:loc,/SeqLocation
+  F,82,Delins:deleted-raw-seq,VisibleString,OPTIONAL
+  -- can optionally specify the deleted sequence
+  F,83,Delins:inserted-seq-info,CHOICE
+    F,84,Delins:inserted-seq-info:identifier,VisibleString
+    -- A sequence identifier (e.g. an accession id)
+    F,85,Delins:inserted-seq-info:raw-seq,VisibleString
+    -- The actual nucleotide / amino-acid sequence
+    F,86,Delins:inserted-seq-info:count,/Count
+    -- The number of elements inserted
+    F,87,Delins:inserted-seq-info:subseq,/Subsequence
+    -- A subsequence specified by an id, type descriptor, and a range
+
+T,92,NaSub,SEQUENCE
+  F,93,NaSub:loc,/NtLocation
+  F,94,NaSub:initial,VisibleString
+  F,95,NaSub:final,VisibleString
+
+T,98,NaIdentity,SEQUENCE
+  F,99,NaIdentity:loc,/NtLocation
+  F,100,NaIdentity:nucleotide,VisibleString,OPTIONAL
+
+T,104,ProteinSub,SEQUENCE
+  F,105,ProteinSub:type,INTEGER
+    V,106,ProteinSub:type:missense,0
+    V,107,ProteinSub:type:nonsense,1
+    V,108,ProteinSub:type:unknown,2
+  F,110,ProteinSub:initial,/AaSite
+  F,111,ProteinSub:final,VisibleString,OPTIONAL
+
+T,115,ProteinExtension,CHOICE
+  F,116,ProteinExtension:nterm-ext,/NtermExtension
+  F,117,ProteinExtension:cterm-ext,/CtermExtension
+
+T,121,NtermExtension,SEQUENCE
+  F,122,NtermExtension:newStart,/Count
+  F,123,NtermExtension:newAa,VisibleString,OPTIONAL
+
+T,127,CtermExtension,SEQUENCE
+  F,128,CtermExtension:refStop,INTEGER
+  F,129,CtermExtension:newAa,VisibleString
+  F,130,CtermExtension:length,/Count
+
+T,134,Frameshift,CHOICE
+  F,135,Frameshift:aasite,/AaSite
+  F,136,Frameshift:stopcodon,NULL
+
+T,140,Deletion,SEQUENCE
+  F,141,Deletion:loc,/SeqLocation
+  F,142,Deletion:raw-seq,VisibleString,OPTIONAL
+  -- can optionally specify the deleted sequence
+
+T,146,Duplication,SEQUENCE
+  F,147,Duplication:loc,/SeqLocation
+  F,148,Duplication:raw-seq,VisibleString,OPTIONAL
+  -- can optionally specify the sequence duplicated sequence
+
+T,152,Inversion,SEQUENCE
+  F,153,Inversion:ntint,/NtInterval
+  F,154,Inversion:raw-seq,VisibleString,OPTIONAL
+  F,155,Inversion:size,INTEGER,OPTIONAL
+  -- optionall specify the size of the inverted sequence
+
+T,159,Insertion,SEQUENCE
+  F,160,Insertion:int,/SeqInterval
+  F,162,Insertion:seqinfo,CHOICE
+    F,163,Insertion:seqinfo:identifier,VisibleString
+    -- A sequence identifier (e.g. an accession id)
+    F,164,Insertion:seqinfo:raw-seq,VisibleString
+    -- The actual nucleotide / amino-acid sequence
+    F,165,Insertion:seqinfo:count,/Count
+    -- The number of elements inserted
+    F,166,Insertion:seqinfo:subseq,/Subsequence
+    -- A subsequence specified by an id, type descriptor, and a range
+
+T,171,Conversion,SEQUENCE
+  F,172,Conversion:loc,/NtLocation
+  F,173,Conversion:origin,/NtLocation
+
+T,177,Subsequence,SEQUENCE
+  F,178,Subsequence:identifier,VisibleString
+  -- For example, an accession id
+  F,179,Subsequence:type,/VariantSeqType
+  F,180,Subsequence:int,/SeqInterval
+
+T,184,Repeat,SEQUENCE
+  F,185,Repeat:loc,/SeqLocation
+  F,186,Repeat:count,/Count
+  F,187,Repeat:raw-seq,VisibleString,OPTIONAL
+  --Used if ntloc is a site, not an interval
+
+T,191,SeqLocation,CHOICE
+  F,192,SeqLocation:aaloc,/AaLocation
+  F,193,SeqLocation:ntloc,/NtLocation
+
+T,196,SeqInterval,CHOICE
+  F,197,SeqInterval:aaint,/AaInterval
+  F,198,SeqInterval:ntint,/NtInterval
+
+T,202,AaLocation,CHOICE
+  F,203,AaLocation:site,/AaSite
+  F,204,AaLocation:range,/AaSiteRange
+  F,205,AaLocation:int,/AaInterval
+
+T,209,AaInterval,SEQUENCE
+  F,210,AaInterval:start,/AaSite
+  F,211,AaInterval:stop,/AaSite
+
+T,215,AaSiteRange,SEQUENCE
+  F,216,AaSiteRange:start,/AaSite
+  F,217,AaSiteRange:stop,/AaSite
+
+T,221,AaSite,SEQUENCE
+  F,222,AaSite:index,INTEGER
+  F,223,AaSite:aa,VisibleString
+
+T,227,NtLocation,CHOICE
+  F,228,NtLocation:site,/NtSite
+  F,229,NtLocation:range,/NtSiteRange
+  F,230,NtLocation:int,/NtInterval
+
+T,234,NtIntLimit,CHOICE
+  F,235,NtIntLimit:site,/NtSite
+  F,236,NtIntLimit:range,/NtSiteRange
+
+T,239,NtInterval,SEQUENCE
+  F,240,NtInterval:start,/NtIntLimit
+  F,241,NtInterval:stop,/NtIntLimit
+
+T,245,NtSiteRange,SEQUENCE
+  F,246,NtSiteRange:start,/NtSite
+  F,247,NtSiteRange:stop,/NtSite
+
+T,251,NtSite,SEQUENCE
+  F,252,NtSite:seqid,VisibleString,OPTIONAL
+  F,253,NtSite:seqtype,/VariantSeqType,OPTIONAL
+  F,255,NtSite:base,CHOICE
+    F,256,NtSite:base:val,INTEGER
+    F,257,NtSite:base:unknown,NULL
+  F,260,NtSite:offset,CHOICE,OPTIONAL
+    F,261,NtSite:offset:val,INTEGER
+    F,262,NtSite:offset:plus-unknown,NULL
+    F,263,NtSite:offset:minus-unknown,NULL
+  F,266,NtSite:utr,CHOICE,OPTIONAL
+    F,267,NtSite:utr:five-prime,NULL
+    F,268,NtSite:utr:three-prime,NULL
+  F,272,NtSite:strand-minus,BOOLEAN,DEFAULT,FALSE
+  -- TRUE implies opposite transcriptional orientation to 
+  -- to the reference sequence
+  F,274,NtSite:fuzzy,BOOLEAN,DEFAULT,FALSE
+  -- TRUE implies HGVS subexpression of the form (base + offset),
+  F,275,NtSite:fuzzy-offset,BOOLEAN,DEFAULT,FALSE
+  -- TRUE implies HGVS subexpression of the form base+(offset)
+
+T,279,Count,CHOICE
+  F,280,Count:unknown,NULL
+  F,281,Count:val,INTEGER
+  F,282,Count:fuzzy-val,INTEGER
+  F,283,Count:range,SEQUENCE
+    F,284,Count:range:start,CHOICE
+      F,285,Count:range:start:val,INTEGER
+      F,286,Count:range:start:unknown,NULL
+    F,288,Count:range:stop,CHOICE
+      F,289,Count:range:stop:val,INTEGER
+      F,290,Count:range:stop:unknown,NULL

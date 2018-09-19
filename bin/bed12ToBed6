@@ -1,0 +1,8 @@
+#!/bin/sh
+
+if [ $# -lt 1 ];then
+	echo0 5 "$0 in.bed12"
+	exit 1
+fi
+
+awk 'BEGIN{FS=OFS="\t"} {split($11,a,",");split($12,b,",");for(i in a){print $1,$2+b[i],$2+b[i]+a[i],$4,$5,$6}}' $1

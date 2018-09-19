@@ -1,0 +1,8 @@
+# $Id: Makefile.tables.lib 427415 2014-02-20 13:33:40Z gouriano $
+
+LIB = tables
+SRC = raw_scoremat
+
+WATCHERS = ucko
+USES_LIBRARIES =  \
+    $(ORIG_LIBS)

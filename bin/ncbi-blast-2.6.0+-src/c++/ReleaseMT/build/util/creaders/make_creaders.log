@@ -1,0 +1,9 @@
+make[4]: Entering directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/build/util/creaders'
+Updating dependency information for /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/util/creaders/alnread.c.
+/usr/bin/ccache /usr/bin/gcc  -std=gnu11 -fgnu89-inline -c  -Wall -Wno-format-y2k  -pthread -fopenmp -O2 -fPIC     -DNDEBUG -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE   -D_MT -D_REENTRANT -D_THREAD_SAFE -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/inc -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/include  -fdiagnostics-color=always /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/util/creaders/alnread.c -o alnread.o 
+/bin/rm -f libcreaders.a .libcreaders.a.stamp
+ar cr libcreaders.a alnread.o  
+/bin/bash /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/scripts/common/impl/if_diff.sh /bin/ln -f libcreaders.a /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib
+/bin/ln -f libcreaders.a /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib/libcreaders.a
+/bin/ln -f .creaders.dep /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/status/.creaders.dep
+make[4]: Leaving directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/build/util/creaders'

@@ -1,0 +1,10 @@
+.cvsignore
+Medlars_entry_.cpp
+Medlars_record_.cpp
+Medlars_entry.cpp
+Medlars_record.cpp
+NCBI_Medlars_module.cpp
+medlars___.cpp
+medlars__.cpp
+medlars.files
+medlars.dump

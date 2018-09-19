@@ -1,0 +1,59 @@
+M,9,seqres.asn:NCBI-Seqres
+--$Revision: 96973 $
+--**********************************************************************
+--
+--  NCBI Sequence Analysis Results (other than alignments)
+--  by James Ostell, 1990
+--
+--**********************************************************************
+  T,21,NCBI-Seqres:Seq-graph
+  T,36,NCBI-Seqres:Real-graph
+  T,42,NCBI-Seqres:Int-graph
+  T,48,NCBI-Seqres:Byte-graph
+
+T,21,Seq-graph,SEQUENCE
+--*** Sequence Graph ********************************
+--*
+--*   for values mapped by residue or range to sequence
+--*
+  F,22,Seq-graph:title,VisibleString,OPTIONAL
+  F,23,Seq-graph:comment,VisibleString,OPTIONAL
+  F,24,Seq-graph:loc,/Seq-loc
+  -- region this applies to
+  F,25,Seq-graph:title-x,VisibleString,OPTIONAL
+  -- title for x-axis
+  F,26,Seq-graph:title-y,VisibleString,OPTIONAL
+  F,27,Seq-graph:comp,INTEGER,OPTIONAL
+  -- compression (residues/value)
+  F,28,Seq-graph:a,REAL,OPTIONAL
+  -- for scaling values
+  F,29,Seq-graph:b,REAL,OPTIONAL
+  -- display = (a x value) + b
+  F,30,Seq-graph:numval,INTEGER
+  -- number of values in graph
+  F,31,Seq-graph:graph,CHOICE
+    F,32,Seq-graph:graph:real,/Real-graph
+    F,33,Seq-graph:graph:int,/Int-graph
+    F,34,Seq-graph:graph:byte,/Byte-graph
+
+T,36,Real-graph,SEQUENCE
+  F,37,Real-graph:max,REAL
+  -- top of graph
+  F,38,Real-graph:min,REAL
+  -- bottom of graph
+  F,39,Real-graph:axis,REAL
+  -- value to draw axis on
+  F,40,Real-graph:values,SEQUENCE REAL
+
+T,42,Int-graph,SEQUENCE
+  F,43,Int-graph:max,INTEGER
+  F,44,Int-graph:min,INTEGER
+  F,45,Int-graph:axis,INTEGER
+  F,46,Int-graph:values,SEQUENCE INTEGER
+
+T,48,Byte-graph,SEQUENCE
+-- integer from 0-255
+  F,49,Byte-graph:max,INTEGER
+  F,50,Byte-graph:min,INTEGER
+  F,51,Byte-graph:axis,INTEGER
+  F,52,Byte-graph:values,OCTET STRING

@@ -1,0 +1,9 @@
+#include <objects/id1/Entry_complexities.hpp>
+#include <objects/id1/ID1SeqEntry_info.hpp>
+#include <objects/id1/ID1Seq_hist.hpp>
+#include <objects/id1/ID1blob_info.hpp>
+#include <objects/id1/ID1server_back.hpp>
+#include <objects/id1/ID1server_debug.hpp>
+#include <objects/id1/ID1server_maxcomplex.hpp>
+#include <objects/id1/ID1server_request.hpp>
+#include <objects/id1/NCBI_ID1Access_module.hpp>

@@ -1,0 +1,16 @@
+.cvsignore
+FeatDef_.hpp
+FeatDefGroupSet_.hpp
+FeatDefSet_.hpp
+FeatDispGroup_.hpp
+FeatDispGroupSet_.hpp
+FeatMolType_.hpp
+FeatDef.hpp
+FeatDefGroupSet.hpp
+FeatDefSet.hpp
+FeatDispGroup.hpp
+FeatDispGroupSet.hpp
+FeatMolType.hpp
+NCBI_FeatDef_module.hpp
+featdef__.hpp
+featdef.dump

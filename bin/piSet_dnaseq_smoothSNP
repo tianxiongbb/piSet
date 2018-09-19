@@ -1,0 +1,9 @@
+#!/bin/bash
+
+if [ $# -lt 2 ];then
+	echo0 5 "$0 in.freq window_size"
+	echo0 4 "simply smooth frequency data use the mean frequency in each window"
+	exit 1
+fi
+
+awk -v wd=$2 'BEGIN{FS=OFS="\t"} {if(NR>1){for(i=4;i<=num_f;i++){a[$1"_"int($2/wd)][i]+=$i;b[$1"_"int($2/wd)][i]++}}else{num_f=NF;print $0}} END{for(p in a){split(p,pp,"_");printf pp[1]"\t"pp[2]*wd"\t"(pp[2]*wd+wd);for(i=4;i<=num_f;i++){if(b[p][i]==0){printf "\t"0}else{printf "\t"a[p][i]/b[p][i]}};printf "\n"}}' $1

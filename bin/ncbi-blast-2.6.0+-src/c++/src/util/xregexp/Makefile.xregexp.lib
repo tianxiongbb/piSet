@@ -1,0 +1,14 @@
+# $Id: Makefile.xregexp.lib 467289 2015-05-12 16:23:41Z ivanov $
+
+SRC = regexp arg_regexp mask_regexp
+LIB = xregexp
+
+CPPFLAGS = $(ORIG_CPPFLAGS) $(PCRE_INCLUDE)
+
+DLL_LIB = $(PCRE_LIB)
+LIBS    = $(PCRE_LIBS)
+
+USES_LIBRARIES =  \
+    $(PCRE_LIB) $(PCRE_LIBS) xncbi
+
+WATCHERS = ivanov

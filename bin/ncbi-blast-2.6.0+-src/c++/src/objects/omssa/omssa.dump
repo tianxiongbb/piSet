@@ -1,0 +1,906 @@
+M,14,omssa.asn:OMSSA
+-- $Id: omssa.asn 197695 2010-07-21 13:38:58Z lewisg $
+--**********************************************************************
+--
+--  OMSSA (Open Mass Spectrometry Search Algorithm) data definitions
+--  Lewis Geer, 2003
+--
+--  make using something like
+--  "datatool -m omssa.asn -oc ObjOmssa -oA -od omssa.def"
+--
+--  note that this file requires omssa.def
+--
+--**********************************************************************
+  T,21,OMSSA:NameValue
+  T,28,OMSSA:MSSpectrum
+  T,42,OMSSA:MSSpectrumset
+  T,47,OMSSA:MSEnzymes
+  T,80,OMSSA:MSMod
+  T,319,OMSSA:MSModType
+  T,335,OMSSA:MSMassSet
+  T,343,OMSSA:MSModSpec
+  T,358,OMSSA:MSModSpecSet
+  T,364,OMSSA:MSCalcPlusOne
+  T,371,OMSSA:MSCalcCharge
+  T,379,OMSSA:MSChargeHandle
+  T,394,OMSSA:MSSearchType
+  T,405,OMSSA:MSZdependence
+  T,413,OMSSA:MSIterativeSettings
+  T,421,OMSSA:MSLibrarySettings
+  T,431,OMSSA:MSSearchSettings
+  T,491,OMSSA:MSSerialDataFormat
+  T,501,OMSSA:MSOutFile
+  T,507,OMSSA:MSSpectrumFileType
+  T,523,OMSSA:MSInFile
+  T,528,OMSSA:MSSearchSettingsSet
+  T,532,OMSSA:MSRequest
+  T,543,OMSSA:MSIonType
+  T,562,OMSSA:MSIonNeutralLoss
+  T,569,OMSSA:MSIonIsotopicType
+  T,579,OMSSA:MSImmonium
+  T,586,OMSSA:MSIon
+  T,595,OMSSA:MSIonAnnot
+  T,603,OMSSA:MSMZHit
+  T,617,OMSSA:MSPepHit
+  T,632,OMSSA:MSModHit
+  T,640,OMSSA:MSScoreSet
+  T,647,OMSSA:MSHits
+  T,668,OMSSA:MSHitError
+  T,677,OMSSA:MSUserAnnot
+  T,685,OMSSA:MSHitSet
+  T,698,OMSSA:MSResponseError
+  T,708,OMSSA:MSBioseq
+  T,713,OMSSA:MSBioseqSet
+  T,717,OMSSA:MSResponse
+  T,730,OMSSA:MSSearch
+
+T,21,NameValue,SEQUENCE
+-- Generic holder for experimental info
+  F,22,NameValue:name,VisibleString
+  F,23,NameValue:value,VisibleString
+
+T,28,MSSpectrum,SEQUENCE
+-- Holds a single spectrum
+  F,29,MSSpectrum:number,INTEGER
+  -- unique number of spectrum
+  F,30,MSSpectrum:charge,SEQUENCE INTEGER
+  -- may be more than one if unknown
+  F,31,MSSpectrum:precursormz,INTEGER
+  -- scaled precursor m/z, scale is in MSSearchSettings
+  F,32,MSSpectrum:mz,SEQUENCE INTEGER
+  -- scaled product m/z
+  F,33,MSSpectrum:abundance,SEQUENCE INTEGER
+  -- scaled product abundance
+  F,34,MSSpectrum:iscale,REAL
+  -- abundance scale, float to integer
+  F,35,MSSpectrum:ids,SEQUENCE VisibleString,OPTIONAL
+  -- ids/filenames
+  F,36,MSSpectrum:namevalue,SEQUENCE /NameValue,OPTIONAL
+  -- extra info: retention times, etc.
+
+T,42,MSSpectrumset,SEQUENCE /MSSpectrum
+-- Holds a set of spectra
+
+T,47,MSEnzymes,INTEGER
+-- enumerate enzymes
+  V,48,MSEnzymes:trypsin,0
+  V,49,MSEnzymes:argc,1
+  V,50,MSEnzymes:cnbr,2
+  V,51,MSEnzymes:chymotrypsin,3
+  V,52,MSEnzymes:formicacid,4
+  V,53,MSEnzymes:lysc,5
+  V,54,MSEnzymes:lysc-p,6
+  V,55,MSEnzymes:pepsin-a,7
+  V,56,MSEnzymes:tryp-cnbr,8
+  V,57,MSEnzymes:tryp-chymo,9
+  V,58,MSEnzymes:trypsin-p,10
+  V,59,MSEnzymes:whole-protein,11
+  V,60,MSEnzymes:aspn,12
+  V,61,MSEnzymes:gluc,13
+  V,62,MSEnzymes:aspngluc,14
+  V,63,MSEnzymes:top-down,15
+  V,64,MSEnzymes:semi-tryptic,16
+  V,65,MSEnzymes:no-enzyme,17
+  V,66,MSEnzymes:chymotrypsin-p,18
+  V,67,MSEnzymes:aspn-de,19
+  V,68,MSEnzymes:gluc-de,20
+  V,69,MSEnzymes:lysn,21
+  V,70,MSEnzymes:thermolysin-p,22
+  V,71,MSEnzymes:semi-chymotrypsin,23
+  V,72,MSEnzymes:semi-gluc,24
+  V,73,MSEnzymes:max,25
+  V,74,MSEnzymes:none,255
+
+T,80,MSMod,INTEGER
+-- enumerate modifications
+  V,81,MSMod:methylk,0
+  -- methylation of K
+  V,82,MSMod:oxym,1
+  -- oxidation of methionine
+  V,83,MSMod:carboxymethylc,2
+  -- carboxymethyl cysteine
+  V,84,MSMod:carbamidomethylc,3
+  -- carbamidomethyl cysteine
+  V,85,MSMod:deamidationkq,4
+  -- deamidation of K and Q
+  V,86,MSMod:propionamidec,5
+  -- propionamide cysteine
+  V,87,MSMod:phosphorylations,6
+  -- phosphorylation of S
+  V,88,MSMod:phosphorylationt,7
+  -- phosphorylation of T
+  V,89,MSMod:phosphorylationy,8
+  -- phosphorylation of Y    
+  V,90,MSMod:ntermmcleave,9
+  -- N terminal methionine cleavage
+  V,91,MSMod:ntermacetyl,10
+  -- N terminal protein acetyl
+  V,92,MSMod:ntermmethyl,11
+  -- N terminal protein methyl
+  V,93,MSMod:ntermtrimethyl,12
+  -- N terminal protein trimethyl
+  V,94,MSMod:methythiold,13
+  -- beta methythiolation of D
+  V,95,MSMod:methylq,14
+  -- methylation of Q
+  V,96,MSMod:trimethylk,15
+  -- trimethylation of K
+  V,97,MSMod:methyld,16
+  -- methylation of D
+  V,98,MSMod:methyle,17
+  -- methylation of E
+  V,99,MSMod:ctermpepmethyl,18
+  -- C terminal methylation
+  V,100,MSMod:trideuteromethyld,19
+  -- trideuteromethylation of D
+  V,101,MSMod:trideuteromethyle,20
+  -- trideuteromethylation of E
+  V,102,MSMod:ctermpeptrideuteromethyl,21
+  -- C terminal trideuteromethylation
+  V,103,MSMod:nformylmet,22
+  V,104,MSMod:twoamino3oxobutanoicacid,23
+  V,105,MSMod:acetylk,24
+  V,106,MSMod:ctermamide,25
+  V,107,MSMod:bmethylthiold,26
+  V,108,MSMod:carbamidomethylk,27
+  V,109,MSMod:carbamidometylh,28
+  V,110,MSMod:carbamidomethyld,29
+  V,111,MSMod:carbamidomethyle,30
+  V,112,MSMod:carbamylk,31
+  V,113,MSMod:ntermcarbamyl,32
+  V,114,MSMod:citrullinationr,33
+  V,115,MSMod:cysteicacidc,34
+  V,116,MSMod:diiodinationy,35
+  V,117,MSMod:dimethylk,36
+  V,118,MSMod:dimethylr,37
+  V,119,MSMod:ntermpepdimethyl,38
+  V,120,MSMod:dihydroxyf,39
+  V,121,MSMod:thioacetylk,40
+  V,122,MSMod:ntermpeptioacetyl,41
+  V,123,MSMod:farnesylationc,42
+  V,124,MSMod:formylk,43
+  V,125,MSMod:ntermpepformyl,44
+  V,126,MSMod:formylkynureninw,45
+  V,127,MSMod:phef,46
+  V,128,MSMod:gammacarboxyld,47
+  V,129,MSMod:gammacarboxyle,48
+  V,130,MSMod:geranylgeranylc,49
+  V,131,MSMod:ntermpepglucuronylg,50
+  V,132,MSMod:glutathionec,51
+  V,133,MSMod:glyglyk,52
+  V,134,MSMod:guanidinationk,53
+  V,135,MSMod:his2asnh,54
+  V,136,MSMod:his2asph,55
+  V,137,MSMod:ctermpephsem,56
+  V,138,MSMod:ctermpephselactm,57
+  V,139,MSMod:hydroxykynureninw,58
+  V,140,MSMod:hydroxylationd,59
+  V,141,MSMod:hydroxylationk,60
+  V,142,MSMod:hydroxylationn,61
+  V,143,MSMod:hydroxylationp,62
+  V,144,MSMod:hydroxylationf,63
+  V,145,MSMod:hydroxylationy,64
+  V,146,MSMod:iodinationy,65
+  V,147,MSMod:kynureninw,66
+  V,148,MSMod:lipoylk,67
+  V,149,MSMod:ctermpepmeester,68
+  V,150,MSMod:meesterd,69
+  V,151,MSMod:meestere,70
+  V,152,MSMod:meesters,71
+  V,153,MSMod:meestery,72
+  V,154,MSMod:methylc,73
+  V,155,MSMod:methylh,74
+  V,156,MSMod:methyln,75
+  V,157,MSMod:ntermpepmethyl,76
+  V,158,MSMod:methylr,77
+  V,159,MSMod:ntermpepmyristoyeylationg,78
+  V,160,MSMod:ntermpepmyristoyl4hg,79
+  V,161,MSMod:ntermpepmyristoylationg,80
+  V,162,MSMod:myristoylationk,81
+  V,163,MSMod:ntermformyl,82
+  V,164,MSMod:nemc,83
+  V,165,MSMod:nipcam,84
+  V,166,MSMod:nitrow,85
+  V,167,MSMod:nitroy,86
+  V,168,MSMod:ctermpepo18,87
+  V,169,MSMod:ctermpepdio18,88
+  V,170,MSMod:oxyh,89
+  V,171,MSMod:oxyw,90
+  V,172,MSMod:ppantetheines,91
+  V,173,MSMod:palmitoylationc,92
+  V,174,MSMod:palmitoylationk,93
+  V,175,MSMod:palmitoylations,94
+  V,176,MSMod:palmitoylationt,95
+  V,177,MSMod:phospholosss,96
+  V,178,MSMod:phospholosst,97
+  V,179,MSMod:phospholossy,98
+  V,180,MSMod:phosphoneutrallossc,99
+  V,181,MSMod:phosphoneutrallossd,100
+  V,182,MSMod:phosphoneutrallossh,101
+  V,183,MSMod:propionylk,102
+  V,184,MSMod:ntermpeppropionyl,103
+  V,185,MSMod:propionylheavyk,104
+  V,186,MSMod:ntermpeppropionylheavy,105
+  V,187,MSMod:pyridylk,106
+  V,188,MSMod:ntermpeppyridyl,107
+  V,189,MSMod:ntermpeppyrocmc,108
+  V,190,MSMod:ntermpeppyroe,109
+  V,191,MSMod:ntermpeppyroq,110
+  V,192,MSMod:pyroglutamicp,111
+  V,193,MSMod:spyridylethylc,112
+  V,194,MSMod:semetm,113
+  V,195,MSMod:sulfationy,114
+  V,196,MSMod:suphonem,115
+  V,197,MSMod:triiodinationy,116
+  V,198,MSMod:trimethylationr,117
+  V,199,MSMod:ntermpeptripalmitatec,118
+  V,200,MSMod:usermod1,119
+  -- start of user defined mods
+  V,201,MSMod:usermod2,120
+  V,202,MSMod:usermod3,121
+  V,203,MSMod:usermod4,122
+  V,204,MSMod:usermod5,123
+  V,205,MSMod:usermod6,124
+  V,206,MSMod:usermod7,125
+  V,207,MSMod:usermod8,126
+  V,208,MSMod:usermod9,127
+  V,209,MSMod:usermod10,128
+  -- end of user defined mods
+  V,210,MSMod:icatlight,129
+  V,211,MSMod:icatheavy,130
+  V,212,MSMod:camthiopropanoylk,131
+  V,213,MSMod:phosphoneutrallosss,132
+  V,214,MSMod:phosphoneutrallosst,133
+  V,215,MSMod:phosphoetdlosss,134
+  V,216,MSMod:phosphoetdlosst,135
+  V,217,MSMod:arg-13c6,136
+  V,218,MSMod:arg-13c6-15n4,137
+  V,219,MSMod:lys-13c6,138
+  V,220,MSMod:oxy18,139
+  V,221,MSMod:beta-elim-s,140
+  V,222,MSMod:beta-elim-t,141
+  V,223,MSMod:usermod11,142
+  V,224,MSMod:usermod12,143
+  V,225,MSMod:usermod13,144
+  V,226,MSMod:usermod14,145
+  V,227,MSMod:usermod15,146
+  V,228,MSMod:usermod16,147
+  V,229,MSMod:usermod17,148
+  V,230,MSMod:usermod18,149
+  V,231,MSMod:usermod19,150
+  V,232,MSMod:usermod20,151
+  V,233,MSMod:usermod21,152
+  V,234,MSMod:usermod22,153
+  V,235,MSMod:usermod23,154
+  V,236,MSMod:usermod24,155
+  V,237,MSMod:usermod25,156
+  V,238,MSMod:usermod26,157
+  V,239,MSMod:usermod27,158
+  V,240,MSMod:usermod28,159
+  V,241,MSMod:usermod29,160
+  V,242,MSMod:usermod30,161
+  V,243,MSMod:sulfinicacid,162
+  V,244,MSMod:arg2orn,163
+  V,245,MSMod:dehydro,164
+  V,246,MSMod:carboxykynurenin,165
+  V,247,MSMod:sumoylation,166
+  V,248,MSMod:iTRAQ114nterm,167
+  V,249,MSMod:iTRAQ114K,168
+  V,250,MSMod:iTRAQ114Y,169
+  V,251,MSMod:iTRAQ115nterm,170
+  V,252,MSMod:iTRAQ115K,171
+  V,253,MSMod:iTRAQ115Y,172
+  V,254,MSMod:iTRAQ116nterm,173
+  V,255,MSMod:iTRAQ116K,174
+  V,256,MSMod:iTRAQ116Y,175
+  V,257,MSMod:iTRAQ117nterm,176
+  V,258,MSMod:iTRAQ117K,177
+  V,259,MSMod:iTRAQ117Y,178
+  V,260,MSMod:mmts,179
+  V,261,MSMod:lys-2H4,180
+  V,262,MSMod:lys-13C615N2,181
+  V,263,MSMod:hexNAcN,182
+  V,264,MSMod:dHexHexNAcN,183
+  V,265,MSMod:hexNAcS,184
+  V,266,MSMod:hexNAcT,185
+  V,267,MSMod:mod186,186
+  V,268,MSMod:mod187,187
+  V,269,MSMod:mod188,188
+  V,270,MSMod:mod189,189
+  V,271,MSMod:mod190,190
+  V,272,MSMod:mod191,191
+  V,273,MSMod:mod192,192
+  V,274,MSMod:mod193,193
+  V,275,MSMod:mod194,194
+  V,276,MSMod:mod195,195
+  V,277,MSMod:mod196,196
+  V,278,MSMod:mod197,197
+  V,279,MSMod:mod198,198
+  V,280,MSMod:mod199,199
+  V,281,MSMod:mod200,200
+  V,282,MSMod:mod201,201
+  V,283,MSMod:mod202,202
+  V,284,MSMod:mod203,203
+  V,285,MSMod:mod204,204
+  V,286,MSMod:mod205,205
+  V,287,MSMod:mod206,206
+  V,288,MSMod:mod207,207
+  V,289,MSMod:mod208,208
+  V,290,MSMod:mod209,209
+  V,291,MSMod:mod210,210
+  V,292,MSMod:mod211,211
+  V,293,MSMod:mod212,212
+  V,294,MSMod:mod213,213
+  V,295,MSMod:mod214,214
+  V,296,MSMod:mod215,215
+  V,297,MSMod:mod216,216
+  V,298,MSMod:mod217,217
+  V,299,MSMod:mod218,218
+  V,300,MSMod:mod219,219
+  V,301,MSMod:mod220,220
+  V,302,MSMod:mod221,221
+  V,303,MSMod:mod222,222
+  V,304,MSMod:mod223,223
+  V,305,MSMod:mod224,224
+  V,306,MSMod:mod225,225
+  V,307,MSMod:mod226,226
+  V,308,MSMod:mod227,227
+  V,309,MSMod:mod228,228
+  V,310,MSMod:mod229,229
+  V,311,MSMod:mod230,230
+  V,312,MSMod:max,231
+  -- maximum number of mods
+  V,313,MSMod:unknown,9999
+  -- modification of unknown type
+  V,314,MSMod:none,10000
+
+T,319,MSModType,INTEGER
+-- enumerate modification types
+  V,320,MSModType:modaa,0
+  -- at particular amino acids
+  V,321,MSModType:modn,1
+  -- at the N terminus of a protein
+  V,322,MSModType:modnaa,2
+  -- at the N terminus of a protein at particular amino acids
+  V,323,MSModType:modc,3
+  -- at the C terminus of a protein
+  V,324,MSModType:modcaa,4
+  -- at the C terminus of a protein at particular amino acids
+  V,325,MSModType:modnp,5
+  -- at the N terminus of a peptide
+  V,326,MSModType:modnpaa,6
+  -- at the N terminus of a peptide at particular amino acids
+  V,327,MSModType:modcp,7
+  -- at the C terminus of a peptide
+  V,328,MSModType:modcpaa,8
+  -- at the C terminus of a peptide at particular amino acids
+  V,329,MSModType:modmax,9
+  -- the max number of modification types
+
+T,335,MSMassSet,SEQUENCE
+-- mass container
+  F,336,MSMassSet:monomass,REAL
+  F,337,MSMassSet:averagemass,REAL
+  F,338,MSMassSet:n15mass,REAL
+
+T,343,MSModSpec,SEQUENCE
+-- Modification Definition
+  F,344,MSModSpec:mod,/MSMod
+  -- what is the mod
+  F,345,MSModSpec:type,/MSModType
+  -- modification type
+  F,346,MSModSpec:name,VisibleString
+  -- friendly name of mod
+  F,347,MSModSpec:monomass,REAL
+  -- monoisotopic mass
+  F,348,MSModSpec:averagemass,REAL
+  -- average mass
+  F,349,MSModSpec:n15mass,REAL
+  -- monoisotopic n15 mass
+  F,350,MSModSpec:residues,SEQUENCE VisibleString,OPTIONAL
+  -- residues to apply mod to
+  F,351,MSModSpec:neutralloss,/MSMassSet,OPTIONAL
+  -- loss after precursor mass determination
+  F,352,MSModSpec:unimod,INTEGER,OPTIONAL
+  -- the equivalent Unimod Accession number
+  F,353,MSModSpec:psi-ms,VisibleString,OPTIONAL
+  -- the PSI-MS equivalent name  
+
+T,358,MSModSpecSet,SEQUENCE /MSModSpec
+-- Holds a set of modifications
+
+T,364,MSCalcPlusOne,INTEGER
+-- How is charge to be handled?  Some input files are not clear
+-- on this.  For example, a dta file only specifies one charge, 
+-- even though the charge is not really known.
+  V,365,MSCalcPlusOne:dontcalc,0
+  -- don't guess charge one
+  V,366,MSCalcPlusOne:calc,1
+  -- guess charge one
+
+T,371,MSCalcCharge,INTEGER
+-- user instructions on whether to believe charges in input file
+  V,372,MSCalcCharge:calculate,0
+  -- guess the charge(s) from the data
+  V,373,MSCalcCharge:usefile,1
+  -- use what the input file says
+  V,374,MSCalcCharge:userange,2
+  -- use the charge range specified
+
+T,379,MSChargeHandle,SEQUENCE
+-- How to handle precursor charge
+  F,380,MSChargeHandle:calcplusone,/MSCalcPlusOne,DEFAULT,1
+  -- do we guess charge one?
+  F,381,MSChargeHandle:calccharge,/MSCalcCharge,DEFAULT,2
+  -- how do we handle charges?
+  F,382,MSChargeHandle:mincharge,INTEGER,DEFAULT,2
+  -- if userange, what is the min?
+  F,383,MSChargeHandle:maxcharge,INTEGER,DEFAULT,3
+  -- if userange, what is the max?
+  F,384,MSChargeHandle:considermult,INTEGER,DEFAULT,3
+  -- at which precursor charge to consider +2 ions?
+  F,385,MSChargeHandle:plusone,REAL
+  -- what % of peaks below precursor needed to call as +1
+  F,386,MSChargeHandle:maxproductcharge,INTEGER,OPTIONAL
+  -- maximum product ion charge
+  F,387,MSChargeHandle:prodlesspre,BOOLEAN,OPTIONAL
+  -- product charge always less thanor equal to precursor?
+  F,388,MSChargeHandle:negative,INTEGER,DEFAULT,1
+  -- negative ion search if -1, positive ion if 1
+
+T,394,MSSearchType,INTEGER
+-- what type of atomic mass to use
+  V,395,MSSearchType:monoisotopic,0
+  V,396,MSSearchType:average,1
+  V,397,MSSearchType:monon15,2
+  V,398,MSSearchType:exact,3
+  V,399,MSSearchType:multiisotope,4
+  V,400,MSSearchType:max,5
+
+T,405,MSZdependence,INTEGER
+-- what is the charge dependence of the mass tolerance?
+  V,406,MSZdependence:independent,0
+  -- mass tol. invariant with charge
+  V,407,MSZdependence:linearwithz,1
+  -- mass tol. scales with charge
+  V,408,MSZdependence:max,2
+
+T,413,MSIterativeSettings,SEQUENCE
+-- Iterative search settings
+  F,414,MSIterativeSettings:researchthresh,REAL
+  -- e-val threshold for re-searching spectra, 0 = always re-search
+  F,415,MSIterativeSettings:subsetthresh,REAL
+  -- e-val threshold for picking sequence subset, 0 = all sequences
+  F,416,MSIterativeSettings:replacethresh,REAL
+  -- e-val threshold for replacing hitset, 0 = only if better
+
+T,421,MSLibrarySettings,SEQUENCE
+-- Library search settings
+  F,422,MSLibrarySettings:libnames,SEQUENCE VisibleString
+  -- names of search libraries
+  F,423,MSLibrarySettings:presearch,BOOLEAN
+  -- should there be a restriction on precursor mass?
+  F,424,MSLibrarySettings:useomssascore,BOOLEAN
+  -- use the omssa score?
+  F,425,MSLibrarySettings:usereplicatescore,BOOLEAN
+  -- use the number of replicates score?
+  F,426,MSLibrarySettings:qtofscore,BOOLEAN
+  -- use the qtof score?
+
+T,431,MSSearchSettings,SEQUENCE
+-- Generic search settings
+  F,432,MSSearchSettings:precursorsearchtype,/MSSearchType
+  -- average or monoisotopic?
+  F,433,MSSearchSettings:productsearchtype,/MSSearchType
+  -- average or monoisotopic?
+  F,434,MSSearchSettings:ionstosearch,SEQUENCE /MSIonType
+  -- which ions to search?
+  F,435,MSSearchSettings:peptol,REAL
+  -- peptide mass tolerance
+  F,436,MSSearchSettings:msmstol,REAL
+  -- msms mass tolerance
+  F,437,MSSearchSettings:zdep,/MSZdependence
+  -- what is the charge dependence of the mass tolerance?
+  F,438,MSSearchSettings:cutoff,REAL
+  -- evalue cutoff
+  -- next 3 fields define intensity fraction below
+  -- which peaks will be discard
+  F,441,MSSearchSettings:cutlo,REAL
+  -- the start of the cutoff, fraction of most intense peak
+  F,442,MSSearchSettings:cuthi,REAL
+  -- the end of the cutoff
+  F,443,MSSearchSettings:cutinc,REAL
+  -- the increment of the cutoff
+  F,444,MSSearchSettings:singlewin,INTEGER
+  -- the size of the single charge filtering window
+  F,445,MSSearchSettings:doublewin,INTEGER
+  -- the size of the double charge filtering window
+  F,446,MSSearchSettings:singlenum,INTEGER
+  -- the number of peaks allowed in the single window
+  F,447,MSSearchSettings:doublenum,INTEGER
+  -- the number of peaks allowed in the double window
+  F,448,MSSearchSettings:fixed,SEQUENCE /MSMod
+  -- fixed PTM's
+  F,449,MSSearchSettings:variable,SEQUENCE /MSMod
+  -- variable PTM's
+  F,450,MSSearchSettings:enzyme,/MSEnzymes
+  -- digestion enzyme
+  F,451,MSSearchSettings:missedcleave,INTEGER
+  -- number of missed cleaves allowed
+  F,452,MSSearchSettings:hitlistlen,INTEGER,DEFAULT,25
+  -- the number of hits kept in memory
+  -- for a spectrum
+  F,454,MSSearchSettings:db,VisibleString
+  -- sequence set to search, e.g. "nr"
+  F,455,MSSearchSettings:tophitnum,INTEGER
+  -- number of m/z to consider in first pass
+  F,456,MSSearchSettings:minhit,INTEGER,DEFAULT,2
+  -- minimum number of m/z values for a valid hit
+  F,457,MSSearchSettings:minspectra,INTEGER,DEFAULT,4
+  -- minimum number of m/z for a valid spectra
+  F,458,MSSearchSettings:scale,INTEGER,DEFAULT,100
+  -- scale for m/z float to integer
+  F,459,MSSearchSettings:maxmods,INTEGER,DEFAULT,64
+  -- maximum number of mass ladders per
+  -- database peptide
+  F,461,MSSearchSettings:taxids,SEQUENCE INTEGER,OPTIONAL
+  -- taxa to limit search
+  F,462,MSSearchSettings:chargehandling,/MSChargeHandle,OPTIONAL
+  -- how to deal with charges
+  F,463,MSSearchSettings:usermods,/MSModSpecSet,OPTIONAL
+  -- user defined modifications
+  F,464,MSSearchSettings:pseudocount,INTEGER,DEFAULT,1
+  -- min number of counts per precursor bin
+  F,465,MSSearchSettings:searchb1,INTEGER,DEFAULT,0
+  -- should b1 product be in search (1=no, 0=yes)
+  F,466,MSSearchSettings:searchctermproduct,INTEGER,DEFAULT,0
+  -- should c terminus ion be searched (1=no, 0=yes)
+  F,467,MSSearchSettings:maxproductions,INTEGER,DEFAULT,0
+  -- max number of ions in each series (0=all)
+  F,468,MSSearchSettings:minnoenzyme,INTEGER,DEFAULT,4
+  -- min number of AA in peptide for noenzyme search
+  F,469,MSSearchSettings:maxnoenzyme,INTEGER,DEFAULT,0
+  -- max number of AA in peptide for noenzyme search (0=none)
+  F,470,MSSearchSettings:exactmass,REAL,OPTIONAL
+  -- the threshold in Da for adding neutron
+  F,471,MSSearchSettings:settingid,INTEGER,OPTIONAL
+  -- id of the search settings
+  F,472,MSSearchSettings:iterativesettings,/MSIterativeSettings,OPTIONAL
+  -- iterative search settings
+  F,473,MSSearchSettings:precursorcull,INTEGER,OPTIONAL
+  -- turn on aggressive precursor culling for ETD (0=none)
+  F,474,MSSearchSettings:infiles,SEQUENCE /MSInFile,OPTIONAL
+  -- input files
+  F,475,MSSearchSettings:outfiles,SEQUENCE /MSOutFile,OPTIONAL
+  -- output files
+  F,476,MSSearchSettings:nocorrelationscore,INTEGER,OPTIONAL
+  -- turn on correlation score (1=nocorr)
+  F,477,MSSearchSettings:probfollowingion,REAL,OPTIONAL
+  -- probability of a consecutive ion (used in correlation)
+  F,478,MSSearchSettings:nmethionine,BOOLEAN,OPTIONAL
+  -- should nmethionine be cleaved?
+  F,479,MSSearchSettings:automassadjust,REAL,OPTIONAL
+  -- fraction allowable adjustment of product mass tolerance
+  F,480,MSSearchSettings:lomasscutoff,REAL,OPTIONAL
+  -- low mass filter in Daltons, unscaled
+  F,481,MSSearchSettings:libsearchsettings,/MSLibrarySettings,OPTIONAL
+  -- library search settings
+  F,482,MSSearchSettings:noprolineions,SEQUENCE /MSIonType,OPTIONAL
+  -- which ions to use no proline rule
+  F,483,MSSearchSettings:reversesearch,BOOLEAN,OPTIONAL
+  -- do reverse search
+  F,484,MSSearchSettings:othersettings,SEQUENCE /NameValue,OPTIONAL
+  -- extra search settings
+  F,485,MSSearchSettings:numisotopes,INTEGER,OPTIONAL
+  -- number of isotopic peaks to search when using MSSearchType multiisotope
+  F,486,MSSearchSettings:pepppm,BOOLEAN,OPTIONAL
+  -- search precursor as ppm
+  F,487,MSSearchSettings:msmsppm,BOOLEAN,OPTIONAL
+  -- search product as ppm
+  F,488,MSSearchSettings:reportedhitcount,INTEGER,OPTIONAL
+  -- the maximum number of hits to report per spectrum, 0=all
+
+T,491,MSSerialDataFormat,INTEGER
+  V,492,MSSerialDataFormat:none,0
+  V,493,MSSerialDataFormat:asntext,1
+  -- open ASN.1 text format
+  V,494,MSSerialDataFormat:asnbinary,2
+  -- open ASN.1 binary format
+  V,495,MSSerialDataFormat:xml,3
+  -- open XML format
+  V,496,MSSerialDataFormat:csv,4
+  -- csv (excel)
+  V,497,MSSerialDataFormat:pepxml,5
+  -- pepXML format
+  V,498,MSSerialDataFormat:xmlbz2,6
+  -- bzip2 XML format
+
+T,501,MSOutFile,SEQUENCE
+  F,502,MSOutFile:outfile,VisibleString
+  -- output file name
+  F,503,MSOutFile:outfiletype,/MSSerialDataFormat
+  -- output file type
+  F,504,MSOutFile:includerequest,BOOLEAN
+  -- should the output include the request?
+
+T,507,MSSpectrumFileType,INTEGER
+  V,508,MSSpectrumFileType:dta,0
+  V,509,MSSpectrumFileType:dtablank,1
+  V,510,MSSpectrumFileType:dtaxml,2
+  V,511,MSSpectrumFileType:asc,3
+  V,512,MSSpectrumFileType:pkl,4
+  V,513,MSSpectrumFileType:pks,5
+  V,514,MSSpectrumFileType:sciex,6
+  V,515,MSSpectrumFileType:mgf,7
+  V,516,MSSpectrumFileType:unknown,8
+  V,517,MSSpectrumFileType:oms,9
+  -- asn.1 binary for iterative search
+  V,518,MSSpectrumFileType:omx,10
+  -- xml for iterative search
+  V,519,MSSpectrumFileType:xml,11
+  -- xml MSRequest
+  V,520,MSSpectrumFileType:omxbz2,12
+  -- bzip2 omx file
+
+T,523,MSInFile,SEQUENCE
+  F,524,MSInFile:infile,VisibleString
+  -- input file name
+  F,525,MSInFile:infiletype,/MSSpectrumFileType
+  -- input file type
+
+T,528,MSSearchSettingsSet,SEQUENCE /MSSearchSettings
+
+T,532,MSRequest,SEQUENCE
+-- The search request that is given to the OMSSA algorithm
+  F,533,MSRequest:spectra,/MSSpectrumset
+  -- the set of spectra
+  F,534,MSRequest:settings,/MSSearchSettings
+  -- the search settings
+  F,535,MSRequest:rid,VisibleString,OPTIONAL
+  -- request id
+  F,536,MSRequest:moresettings,/MSSearchSettingsSet,OPTIONAL
+  -- additional search runs
+  F,537,MSRequest:modset,/MSModSpecSet,OPTIONAL
+  -- list of mods that can be used in search
+
+T,543,MSIonType,INTEGER
+-- enumeration of ion types
+  V,544,MSIonType:a,0
+  V,545,MSIonType:b,1
+  V,546,MSIonType:c,2
+  V,547,MSIonType:x,3
+  V,548,MSIonType:y,4
+  V,549,MSIonType:z,5
+  -- actually zdot
+  V,550,MSIonType:parent,6
+  V,551,MSIonType:internal,7
+  V,552,MSIonType:immonium,8
+  V,553,MSIonType:unknown,9
+  V,554,MSIonType:adot,10
+  V,555,MSIonType:x-CO2,11
+  V,556,MSIonType:adot-CO2,12
+  V,557,MSIonType:max,13
+
+T,562,MSIonNeutralLoss,INTEGER
+-- types of neutral loss
+  V,563,MSIonNeutralLoss:water,0
+  -- minus 18 Da
+  V,564,MSIonNeutralLoss:ammonia,1
+  -- minus 17 Da
+
+T,569,MSIonIsotopicType,INTEGER
+-- iosotopic type of ion
+  V,570,MSIonIsotopicType:monoisotopic,0
+  -- no c13s in molecule
+  V,571,MSIonIsotopicType:c13,1
+  -- one c13 in molecule
+  V,572,MSIonIsotopicType:c13two,2
+  -- two c13s in molecule, and so on...
+  V,573,MSIonIsotopicType:c13three,3
+  V,574,MSIonIsotopicType:c13four,4
+
+T,579,MSImmonium,SEQUENCE
+-- type of immonium ion
+  F,580,MSImmonium:parent,VisibleString
+  -- parent amino acid
+  F,581,MSImmonium:product,VisibleString,OPTIONAL
+  -- product ion code
+
+T,586,MSIon,SEQUENCE
+-- ion type at a finer level than ion series
+  F,587,MSIon:neutralloss,/MSIonNeutralLoss,OPTIONAL
+  -- is this peak a neutral loss?
+  F,588,MSIon:isotope,/MSIonIsotopicType,OPTIONAL
+  -- isotopic composition of peak
+  F,589,MSIon:internal,VisibleString,OPTIONAL
+  -- if iontype is internal, this is the internal sequence
+  F,590,MSIon:immonium,/MSImmonium,OPTIONAL
+  -- if iontype is immonium, show characteristics
+
+T,595,MSIonAnnot,SEQUENCE
+-- annotated comments about the ion
+  F,596,MSIonAnnot:suspect,BOOLEAN,OPTIONAL
+  -- is this peak suspect?
+  F,597,MSIonAnnot:massdiff,REAL,OPTIONAL
+  -- what is the difference in mass from library spectrum?
+  F,598,MSIonAnnot:missingisotope,BOOLEAN,OPTIONAL
+  -- are the lower mass peaks missing?
+
+T,603,MSMZHit,SEQUENCE
+-- defines a particular ion
+  F,604,MSMZHit:ion,/MSIonType
+  -- ion type, e.g. b
+  F,605,MSMZHit:charge,INTEGER
+  -- ion charge
+  F,606,MSMZHit:number,INTEGER
+  -- the sequential number of the ion
+  F,607,MSMZHit:mz,INTEGER
+  -- scaled m/z value in Da
+  F,608,MSMZHit:index,INTEGER,OPTIONAL
+  -- the index of the peak in the original spectrum
+  F,609,MSMZHit:moreion,/MSIon,OPTIONAL
+  -- more information about the ion type
+  F,610,MSMZHit:annotation,/MSIonAnnot,OPTIONAL
+  -- annotations on the ion
+
+T,617,MSPepHit,SEQUENCE
+-- contains information about sequences with identical peptide
+-- sequences
+  F,618,MSPepHit:start,INTEGER
+  -- start position (inclusive) in sequence
+  F,619,MSPepHit:stop,INTEGER
+  -- stop position (inclusive) in sequence
+  F,620,MSPepHit:gi,INTEGER,OPTIONAL
+  -- genbank identifier
+  F,621,MSPepHit:accession,VisibleString,OPTIONAL
+  -- sequence accession
+  F,622,MSPepHit:defline,VisibleString,OPTIONAL
+  -- sequence description
+  F,623,MSPepHit:protlength,INTEGER,OPTIONAL
+  -- length of protein
+  F,624,MSPepHit:oid,INTEGER,OPTIONAL
+  -- blast library oid 
+  F,625,MSPepHit:reversed,BOOLEAN,OPTIONAL
+  -- reversed sequence
+  F,626,MSPepHit:pepstart,VisibleString,OPTIONAL
+  -- AA before the peptide
+  F,627,MSPepHit:pepstop,VisibleString,OPTIONAL
+  -- AA after the peptide
+
+T,632,MSModHit,SEQUENCE
+-- modifications to a hit peptide
+  F,633,MSModHit:site,INTEGER
+  -- the position in the peptide
+  F,634,MSModHit:modtype,/MSMod
+  -- the type of modification
+
+T,640,MSScoreSet,SEQUENCE
+-- sets of scores
+  F,641,MSScoreSet:name,VisibleString
+  F,642,MSScoreSet:value,REAL
+
+T,647,MSHits,SEQUENCE
+-- hits to a given spectrum
+  F,648,MSHits:evalue,REAL
+  -- E-value (expect value)
+  F,649,MSHits:pvalue,REAL
+  -- P-value (probability value)
+  F,650,MSHits:charge,INTEGER
+  -- the charge state used in search.  -1 == not +1
+  F,651,MSHits:pephits,SEQUENCE /MSPepHit
+  -- peptides that match this hit
+  F,652,MSHits:mzhits,SEQUENCE /MSMZHit,OPTIONAL
+  -- ions hit
+  F,653,MSHits:pepstring,VisibleString,OPTIONAL
+  -- the peptide sequence
+  F,654,MSHits:mass,INTEGER,OPTIONAL
+  -- scaled experimental mass of peptide in Da
+  F,655,MSHits:mods,SEQUENCE /MSModHit,OPTIONAL
+  -- modifications to sequence
+  F,656,MSHits:pepstart,VisibleString,OPTIONAL
+  -- AA before the peptide (depricated)
+  F,657,MSHits:pepstop,VisibleString,OPTIONAL
+  -- AA after the peptide (depricated)
+  F,658,MSHits:protlength,INTEGER,OPTIONAL
+  -- length of protein hit (depricated)
+  F,659,MSHits:theomass,INTEGER,OPTIONAL
+  -- scaled theoretical mass of peptide hit
+  F,660,MSHits:oid,INTEGER,OPTIONAL
+  -- blast library oid (depricated) 
+  F,661,MSHits:scores,SEQUENCE /MSScoreSet,OPTIONAL
+  -- optional scores (for library search)
+  F,662,MSHits:libaccession,VisibleString,OPTIONAL
+  -- library search accesssion
+
+T,668,MSHitError,INTEGER
+-- error return for a particular spectrum's hitset
+  V,669,MSHitError:none,0
+  V,670,MSHitError:generalerr,1
+  V,671,MSHitError:unable2read,2
+  -- can't read the spectrum
+  V,672,MSHitError:notenuffpeaks,3
+  -- not enough peaks to search
+
+T,677,MSUserAnnot,INTEGER
+-- MSHitSet annotation by end user
+  V,678,MSUserAnnot:none,0
+  V,679,MSUserAnnot:delete,1
+  V,680,MSUserAnnot:flag,2
+
+T,685,MSHitSet,SEQUENCE
+-- contains a set of hits to a single spectrum
+  F,686,MSHitSet:number,INTEGER
+  -- unique number of spectrum
+  F,687,MSHitSet:error,/MSHitError,OPTIONAL
+  -- error, if any
+  F,688,MSHitSet:hits,SEQUENCE /MSHits,OPTIONAL
+  -- set of hit to spectrum
+  F,689,MSHitSet:ids,SEQUENCE VisibleString,OPTIONAL
+  -- filenames or other ids of spectra searched
+  F,690,MSHitSet:namevalue,SEQUENCE /NameValue,OPTIONAL
+  -- extra info: retention times, etc.
+  F,691,MSHitSet:settingid,INTEGER,OPTIONAL
+  -- id of the search setting used
+  F,692,MSHitSet:userannotation,/MSUserAnnot,OPTIONAL
+  -- allows users to flag certain
+
+T,698,MSResponseError,INTEGER
+-- error return for the entire response
+  V,699,MSResponseError:none,0
+  V,700,MSResponseError:generalerr,1
+  V,701,MSResponseError:noblastdb,2
+  -- unable to open blast library
+  V,702,MSResponseError:noinput,3
+  -- input missing
+
+T,708,MSBioseq,SEQUENCE
+-- bioseq container
+  F,709,MSBioseq:oid,INTEGER
+  -- blast library oid
+  F,710,MSBioseq:seq,/Bioseq
+
+T,713,MSBioseqSet,SEQUENCE /MSBioseq
+
+T,717,MSResponse,SEQUENCE
+-- search results
+  F,718,MSResponse:hitsets,SEQUENCE /MSHitSet
+  -- hits grouped by spectrum
+  F,719,MSResponse:scale,INTEGER,DEFAULT,100
+  -- scale to change m/z float to integer
+  F,720,MSResponse:rid,VisibleString,OPTIONAL
+  -- request id
+  F,721,MSResponse:error,/MSResponseError,OPTIONAL
+  -- error response
+  F,722,MSResponse:version,VisibleString,OPTIONAL
+  -- version of OMSSA
+  F,723,MSResponse:email,VisibleString,OPTIONAL
+  -- email address for notification
+  F,724,MSResponse:dbversion,INTEGER,OPTIONAL
+  -- version of db searched (usually size)
+  F,725,MSResponse:bioseqs,/MSBioseqSet,OPTIONAL
+  -- sequences found in search     
+
+T,730,MSSearch,SEQUENCE
+-- holds both search requests and responses
+  F,731,MSSearch:request,SEQUENCE /MSRequest,OPTIONAL
+  F,732,MSSearch:response,SEQUENCE /MSResponse,OPTIONAL

@@ -1,0 +1,8 @@
+.cvsignore
+ValidErrItem_.cpp
+ValidError_.cpp
+NCBI_ValErrors_module.cpp
+valerr___.cpp
+valerr__.cpp
+valerr.files
+valerr.dump

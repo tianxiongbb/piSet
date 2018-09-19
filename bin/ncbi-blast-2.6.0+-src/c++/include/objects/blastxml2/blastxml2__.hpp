@@ -1,0 +1,15 @@
+#include <objects/blastxml2/BlastOutput2.hpp>
+#include <objects/blastxml2/BlastXML2.hpp>
+#include <objects/blastxml2/Err.hpp>
+#include <objects/blastxml2/Hit.hpp>
+#include <objects/blastxml2/HitDescr.hpp>
+#include <objects/blastxml2/Hsp.hpp>
+#include <objects/blastxml2/Iteration.hpp>
+#include <objects/blastxml2/Parameters.hpp>
+#include <objects/blastxml2/Range.hpp>
+#include <objects/blastxml2/Report.hpp>
+#include <objects/blastxml2/Results.hpp>
+#include <objects/blastxml2/Search.hpp>
+#include <objects/blastxml2/Statistics.hpp>
+#include <objects/blastxml2/Target.hpp>
+#include <objects/blastxml2/NCBI_BlastOutput2_module.hpp>

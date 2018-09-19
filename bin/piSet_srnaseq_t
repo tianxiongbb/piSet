@@ -1,0 +1,383 @@
+#!/bin/bash
+
+# function
+function checkTools(){
+	if [ `which $1` ];then
+		echo0 3 "$1: `which $1`"
+	else
+		echo0 0 "$1 not found, please install it or add it into your PATH!"
+		exit 1
+	fi
+}
+
+# help infomation
+help_info(){
+	echo0 5 `basename $0`
+	echo0 5 "\t-i <file>\tfile with fastq|fq|insert appendix for mapping. You can use multiple mode like this \"srnaseq1.fastq srnaseq2.fastq srnaseq3.insert srnaseq4.fq\""
+	echo0 5 "\t-g <genome>\tgenome used in pipeline"
+	echo0 4 "output:"
+	echo0 4 "\t-o <dir>\toutput directory. default: ./"
+	echo0 4 "\t-p <string>\tprefix for all figures. default: result"
+	echo0 4 "\t-E \t\tset -E to enable using EM algorithm to assign multiple mappers. default: not set"
+	echo0 4 "\t-N <miRNA|uniq|all|uniqS|uniqM|uniqSM|allS|allM|allSM>\tdefault: miRNA"
+	echo0 4 "\t\t\t\tnormalize signal to miRNA or unique/all genome mapping reads (including S: sncRNA or/and M: miRNA)"
+	echo0 1 "bed2_summary:"
+	echo0 1 "\t-D \t\tset -D to skip downstream analysis for piRNA signal calculation, figure making as so on."
+	echo0 0 "mapping:"
+	echo0 0 "\t-R <int>\tmismatch for rRNA mapping. default: 1"
+	echo0 0 "\t-H <int>\tmismatch for hairpin mapping. default: 1"
+	echo0 0 "\t-S <int>\tmismatch for sncRNA mapping. default: 1"
+	echo0 0 "\t-G <int>\tmismatch for genome mapping. default: 1"
+	echo0 0 "\t-P <int>\tmismatch for picluster mapping. default: 1"
+	echo0 0 "\t-T <int>\tmismatch for transposon mapping. default: 1"
+	echo0 3 "adapter removing:"
+	echo0 3 "\t-a <string>\tadapter used for adapter removing. set to 0 if you don't know the adapter or adapter for all the samples is different, not set to disable adapter removing. default: not set"
+	echo0 3 "\t-e <0-1>\terror rate used for cutadapt. default: 0.15"
+	echo0 3 "\t-O <int>\tshortest adapter to cut for cutadapt. default: 7"
+	echo0 3 "\t-m <int>\tminimum length to discard reads for cutadapt. default: 18"
+	echo0 3 "\t-M <int>\tmaximum length to discard reads for cutadapt. default: 35"
+	echo0 6 "other:"
+	echo0 6 "\t-c <int>\tCPU number used. default: 1"
+}
+
+if [ $# -lt 2 ];then
+	help_info
+	exit 1
+fi
+
+# parameters
+CPU=1
+MISMATCH_RRNA=1
+MISMATCH_HAIRPIN=1
+MISMATCH_SNCRNA=1
+MISMATCH_GENOME=1
+MISMATCH_PIC=1
+MISMATCH_TRN=1
+CUTADAPT_e=0.15
+CUTADAPT_O=7
+CUTADAPT_m=18
+CUTADAPT_M=35
+NOR_METHOD="miRNA"
+OUTDIR=./
+FIGURE_PREFIX=result
+
+while getopts "hi:g:o:ER:H:S:G:P:T:a:e:O:m:M:c:N:p:D" OPTION; do
+	case $OPTION in
+		i)	FILE_IN=${OPTARG};;
+		g)	GENOME=${OPTARG};;
+		E)	IF_EM=1;;
+		o)	OUTDIR=${OPTARG};;
+		p)	FIGURE_PREFIX=${OPTARG};;
+		N)	NOR_METHOD=${OPTARG};;
+		R)	MISMATCH_RRNA=${OPTARG};;
+		H)	MISMATCH_HAIRPIN=${OPTARG};;
+		S)	MISMATCH_SNCRNA=${OPTARG};;
+		G)	MISMATCH_GENOME=${OPTARG};;
+		P)	MISMATCH_PIC=${OPTARG};;
+		T)	MISMATCH_TRN=${OPTARG};;
+		a)	ADAPTER=${OPTARG};;
+		e)	CUTADAPT_e=${OPTARG};;
+		O)	CUTADAPT_O=${OPTARG};;
+		m)	CUTADAPT_m=${OPTARG};;
+		M)	CUTADAPT_M=${OPTARG};;
+		c)	CPU=${OPTARG};;
+		D)	IF_NOT_BED2SUMMARY=1;;
+		h)	help_info && exit 1;;
+		*)	help_info && exit 1;;
+	esac
+done
+
+# check parameters
+[ -z "${FILE_IN}" ] && echo0 0 "please input srna sequencing file via -i" && exit 1
+for SRNA in ${FILE_IN}
+do
+	[ ! -f ${SRNA} ] && echo0 "no srna sequencing file in ${SRNA}" && exit 1
+done
+[ -z ${GENOME} ] && echo0 0 "please input genome via -g" && exit 1
+PATH_PROG=`dirname $0` && PATH_ANNO=${PATH_PROG%/bin}/annotation/${GENOME}
+[ ! -d ${PATH_ANNO} ] && echo0 "genome not found in ${PATH_ANNO}, maybe not installed. please install ${GENOME} via piSet_install_genome" && exit 1
+[ ! -d ${OUTDIR} ] && echo0 4 "make output directory ${OUTDIR}" && mkdir -p ${OUTDIR} && echo0 3 "all output will be in ${OUTDIR}"
+PARA_EM=${OUTDIR}/${RANDOM}.${RANDOM}.${RANDOM}.${RANDOM}.EM
+PARA_BW=${OUTDIR}/${RANDOM}.${RANDOM}.${RANDOM}.${RANDOM}.BW
+PARA_BED2SUMMARY=${OUTDIR}/${RANDOM}.${RANDOM}.${RANDOM}.${RANDOM}.BED2SUMMARY
+[ ! -d ${OUTDIR}/bed2_summary ] && mkdir ${OUTDIR}/bed2_summary 
+[ ! -d ${OUTDIR}/figures ] && mkdir ${OUTDIR}/figures 
+[ ! -d ${OUTDIR}/logs ] && mkdir ${OUTDIR}/logs 
+[ ! -d ${OUTDIR}/insert ] && mkdir ${OUTDIR}/inserts
+[ ! -d ${OUTDIR}/bigWig ] && mkdir ${OUTDIR}/bigWig
+
+# checkTools
+checkTools bowtie
+checkTools fastq_to_insert
+checkTools assign_multiMappers_EM.py
+checkTools cutadapt
+checkTools samtools
+checkTools bedtools
+checkTools insertBed_to_bed2
+
+######################
+### program here ###
+######################
+for SRNA in ${FILE_IN}
+do
+	echo0 4 "------ analysizing ${SRNA} ------"
+	# get file format
+	[ "${SRNA%.f*q*}" != "${SRNA}" ] && IF_FASTQ=1
+	# get sample name
+	PREFIX=${OUTDIR}/`basename ${SRNA}`
+	if [ -z ${IF_FASTQ} ];then
+		PREFIX=${PREFIX%.insert}
+	else
+		PREFIX=${PREFIX%.f*q*}
+	fi
+	SAMPLE_NAME=`basename ${PREFIX}`
+	PREFIX_TEMP=${PREFIX}
+	# adapter removing
+	if [ ! -z ${ADAPTER} ];then
+		if [ "${ADAPTER}" == "0" ];then
+			echo0 2 "guess adapter......"
+			ADAPTER_RESULT=`guess_adapter ${SRNA}`
+			ADAPTER=`awk -v ar="${ADAPTER_RESULT}" 'BEGIN{split(ar,a," ");print a[1]}'`
+			ADAPTER_RATE=`awk -v ar="${ADAPTER_RESULT}" 'BEGIN{split(ar,a," ");print a[2]}'`
+			echo0 3 "adapter ${ADAPTER} was found, about ${ADAPTER_RATE} of sequence have this adapter"
+		fi
+		echo0 2 "remove adapter: ${ADAPTER}......"
+		cutadapt -a ${ADAPTER} -e ${CUTADAPT_e} -O ${CUTADAPT_O} -m ${CUTADAPT_m} -M ${CUTADAPT_M} -o ${PREFIX}.cutadapt.fastq ${SRNA} > ${PREFIX}.cutadapt.log 2>&1 && SRNA=${PREFIX}.cutadapt.fastq || (echo0 0 "cutadapt error, please check ${PREFIX}.cutadapt.log" && exit 1)
+	fi
+	
+	# fastq to insert
+	if [ ! -z ${IF_FASTQ} ];then
+		echo0 2 "fastq to insert......"
+		fastq_to_insert ${SRNA} ${PREFIX}.insert
+		SRNA=${PREFIX}.insert
+	fi
+	READ_ALL=`awk '{sum+=$2} END{print sum}' ${SRNA}`
+	
+	# mapping to rRNA
+	if [ -f ${PATH_ANNO}/BowtieIndex/rRNA.1.ebwt ];then
+		if [ -f ${PREFIX}.rRNA.bed2 ];then
+			echo0 4 "rRNA mapping file exists, skip mapping to rRNA"
+		else
+			echo0 2 "mapping to rRNA, allow ${MISMATCH_RRNA} mismatch......"
+			bowtie -r -S -v ${MISMATCH_RRNA} -k 1 -p ${CPU} --un ${PREFIX}.x_rRNA.insert \
+				${PATH_ANNO}/BowtieIndex/rRNA ${SRNA} \
+				2>${PREFIX}.rRNA.log | \
+				samtools view -bhSF 0x4 - 2>/dev/null | \
+				bedtools bamtobed -i - > ${PREFIX}.temp.bed && \
+				insertBed_to_bed2 ${SRNA} ${PREFIX}.temp.bed > ${PREFIX}.rRNA.bed2 && \
+				rm -rf ${PREFIX}.temp.bed
+		fi
+		READ_RRNA=`awk '{sum+=$4/$5} END{print sum}' ${PREFIX}.rRNA.bed2`
+		SRNA=${PREFIX}.x_rRNA.insert
+		PREFIX=${PREFIX}.x_rRNA
+	else
+		echo0 4 "no rRNA index found, skip mapping to rRNA......"
+		READ_RRNA=0
+	fi
+	
+	# mapping to hairpin
+	if [ -f ${PATH_ANNO}/BowtieIndex/hairpin.1.ebwt ];then
+		if [ -f ${PREFIX}*.hairpin.bed2 ];then
+			echo0 4 "hairpin mapping file exists, skip mapping to hairpin"
+		else
+			echo0 2 "mapping to hairpin, allow ${MISMATCH_HAIRPIN} mismatch......"
+			bowtie -r -S -v ${MISMATCH_HAIRPIN} -a --best --strata -p ${CPU} --un ${PREFIX}.x_hairpin.insert \
+				${PATH_ANNO}/BowtieIndex/hairpin ${SRNA} \
+				2>${PREFIX}.hairpin.log | \
+				samtools view -bhSF 0x4 - 2>/dev/null | \
+				bedtools bamtobed -i - > ${PREFIX}.temp.bed && \
+				insertBed_to_bed2 ${SRNA} ${PREFIX}.temp.bed > ${PREFIX}.hairpin.bed2 && \
+				rm -rf ${PREFIX}.temp.bed
+		fi
+		READ_MIRNA=`awk '{sum+=$4/$5} END{print sum}' ${PREFIX}.hairpin.bed2`
+		[ "${NOR_METHOD}" == "miRNA" -o "${NOR_METHOD}" == "uniqM" -o "${NOR_METHOD}" == "uniqSM" -o "${NOR_METHOD}" == "allM" -o "${NOR_METHOD}" == "allSM"  ] && NORFILE=$NORFILE" "${PREFIX}.hairpin.bed2
+		SRNA=${PREFIX}.x_hairpin.insert
+		PREFIX=${PREFIX}.x_hairpin
+	else
+		echo0 4 "no hairpin  index found, skip mapping to hairpin......"
+		READ_MIRNA=0
+	fi
+	
+	# mapping to sncRNA
+	if [ -f ${PATH_ANNO}/BowtieIndex/sncRNA.1.ebwt ];then
+		if [ -f ${PREFIX}*.sncRNA.bed2 ];then
+			echo0 4 "sncRNA mapping file exists, skip mapping to sncrna"
+		else
+			echo0 2 "mapping to sncRNA, allow ${MISMATCH_SNCRNA} mismatch......"
+			bowtie -r -S -v ${MISMATCH_SNCRNA} -a --best --strata -p ${CPU} --un ${PREFIX}.x_sncRNA.insert \
+				${PATH_ANNO}/BowtieIndex/sncRNA ${SRNA} \
+				2>${PREFIX}.sncRNA.log | \
+				samtools view -bhSF 0x4 - 2>/dev/null | \
+				bedtools bamtobed -i - > ${PREFIX}.temp.bed && \
+				insertBed_to_bed2 ${SRNA} ${PREFIX}.temp.bed > ${PREFIX}.sncRNA.bed2 && \
+				rm -rf ${PREFIX}.temp.bed
+		fi
+		READ_SNCRNA=`awk '{sum+=$4/$5} END{print sum}' ${PREFIX}.sncRNA.bed2`
+		[ "${NOR_METHOD}" == "uniqS" -o "${NOR_METHOD}" == "uniqSM" -o "${NOR_METHOD}" == "allS" -o "${NOR_METHOD}" == "allSM"  ] && NORFILE=$NORFILE" "${PREFIX}.sncRNA.bed2
+		SRNA=${PREFIX}.x_sncRNA.insert
+		PREFIX=${PREFIX}.x_sncRNA
+	else
+		echo0 4 "no sncRNA  index found, skip mapping to sncRNA......"
+		READ_SNCRNA=0
+	fi
+	
+	# mapping to genome
+	if [ -f ${PATH_ANNO}/BowtieIndex/genome.1.ebwt ];then
+		if [ -f ${PREFIX}*.genome.bed2 ];then
+			echo0 4 "genome mapping file exists, skip mapping to genome"
+		else
+			echo0 2 "mapping to genome, allow ${MISMATCH_GENOME} mismatch......"
+			bowtie -r -S -v ${MISMATCH_GENOME} -a --best --strata -p ${CPU} --un ${PREFIX}.unalign.insert \
+				${PATH_ANNO}/BowtieIndex/genome ${SRNA} \
+				2>${PREFIX}.genome.log | \
+				samtools view -bhSF 0x4 - 2>/dev/null | \
+				bedtools bamtobed -i - > ${PREFIX}.temp.bed && \
+				insertBed_to_bed2 ${SRNA} ${PREFIX}.temp.bed > ${PREFIX}.genome.bed2 && \
+				rm -rf ${PREFIX}.temp.bed
+		fi
+		[ "${NOR_METHOD}" == "uniq" -o "${NOR_METHOD}" == "all" -o "${NOR_METHOD}" == "uniqM" -o "${NOR_METHOD}" == "allM" -o "${NOR_METHOD}" == "uniqS" -o "${NOR_METHOD}" == "uniqSM" -o "${NOR_METHOD}" == "allS" -o "${NOR_METHOD}" == "allSM"  ] && NORFILE=$NORFILE" "${PREFIX}.genome.bed2
+	else
+		echo0 0 "no genome index found, corrupt" && exit 1
+	fi
+	
+	# calculate factor
+	echo0 2 "calculate factor......"
+	FILE_NOR_FACTOR=${PREFIX_TEMP}.factor.norBy_${NOR_METHOD}
+	if [ -f ${FILE_NOR_FACTOR} ];then
+		echo0 4 "factor file exists, skip calculating factor"
+		FACTOR=(`cat ${FILE_NOR_FACTOR}`)
+	else
+		# make a simple file to preserve factor used
+		touch ${PREFIX_TEMP}.factor.norBy_${NOR_METHOD}  
+		if [ "${NOR_METHOD}" == "uniq" -o "${NOR_METHOD}" == "uniqM" -o "${NOR_METHOD}" == "uniqS" -o "${NOR_METHOD}" == "uniqSM" ];then
+			FACTOR=`awk '{if($5==1){sum+=$4}} END{print sum/1000000}' ${NORFILE}`
+		else
+			FACTOR=`awk '{sum+=$4/$5} END{print sum/1000000}' ${NORFILE}`
+		fi
+	fi
+	echo0 3 "factor: ${FACTOR}"
+	NORFILE=""
+	
+	# mapping to pilcuster
+	if [ -f ${PATH_ANNO}/BowtieIndex/picluster.1.ebwt ];then
+		if [ -f ${PREFIX}*.picluster.bed2 ];then
+			echo0 4 "picluster mapping file exists, skip mapping to picluster"
+		else
+			echo0 2 "mapping to picluster, allow ${MISMATCH_PIC} mismatch......"
+			bowtie -r -S -v ${MISMATCH_PIC} -a --best --strata -p ${CPU} \
+				${PATH_ANNO}/BowtieIndex/picluster ${SRNA} \
+				2>${PREFIX}.picluster.log | \
+				samtools view -bhSF 0x4 - 2>/dev/null | \
+				bedtools bamtobed -i - > ${PREFIX}.temp.bed && \
+				insertBed_to_bed2 ${SRNA} ${PREFIX}.temp.bed > ${PREFIX}.picluster.bed2 && \
+				rm -rf ${PREFIX}.temp.bed
+		fi
+	else
+		echo0 4 "no pilcuster index found, skip mapping to picluster"
+	fi
+	
+	# mapping to transposon
+	if [ -f ${PATH_ANNO}/BowtieIndex/transposon.1.ebwt ];then
+		if [ -f ${PREFIX}*.transposon.bed2 ];then
+			echo0 4 "transposon mapping file exists, skip mapping to transposon"
+		else
+			echo0 2 "mapping to transposon, allow ${MISMATCH_TRN} mismatch......"
+			bowtie -r -S -v ${MISMATCH_TRN} -a --best --strata -p ${CPU} \
+				${PATH_ANNO}/BowtieIndex/transposon ${SRNA} \
+				2>${PREFIX}.transposon.log | \
+				samtools view -bhSF 0x4 - 2>/dev/null | \
+				bedtools bamtobed -i - > ${PREFIX}.temp.bed && \
+				insertBed_to_bed2 ${SRNA} ${PREFIX}.temp.bed > ${PREFIX}.transposon.bed2 && \
+				rm -rf ${PREFIX}.temp.bed
+		fi
+	else
+		echo0 4 "no transposon index found, skip mapping to transposon"
+	fi
+	# use EM to assign multiple mappers
+	if [ ! -z ${IF_EM} ];then
+		FIFTH_COLUMN=(`tail -1 ${PREFIX}.genome.bed2 | cut -f 5`)
+		if [ ${FIFTH_COLUMN} -gt 0 ] 2>/dev.null;then
+			echo -e "assign_multiMappers_EM.py -i ${PREFIX}.genome.bed2 -o ${PREFIX}.genome.temp.bed2 && mv ${PREFIX}.genome.temp.bed2 ${PREFIX}.genome.bed2" >> ${PARA_EM}
+		else
+			echo -e "echo0 4 \"already assigned multiple mappped reads via EM, skip EM step\"" >> ${PARA_EM}
+		fi
+	fi
+	# get uniq reads and 24-32nt (piRNA) reads
+	[ ! -f ${PREFIX}.genome.uniq.bed2 ] && awk '$5==1' ${PREFIX}.genome.bed2 > ${PREFIX}.genome.uniq.bed2
+	[ ! -f ${PREFIX}.genome.pirna.bed2 ] && awk '$3-$2>=24 && $3-$2<=32' ${PREFIX}.genome.bed2 > ${PREFIX}.genome.pirna.bed2 
+	[ ! -f ${PREFIX}.genome.pirna.uniq.bed2 ] && awk '$3-$2>=24 && $3-$2<=32' ${PREFIX}.genome.uniq.bed2 > ${PREFIX}.genome.pirna.uniq.bed2 
+	[ ! -f ${PREFIX}.genome.sirna.bed2 ] && awk '$3-$2>=20 && $3-$2<=23' ${PREFIX}.genome.bed2 > ${PREFIX}.genome.sirna.bed2 
+	[ ! -f ${PREFIX}.genome.sirna.uniq.bed2 ] && awk '$3-$2>=20 && $3-$2<=23' ${PREFIX}.genome.uniq.bed2 > ${PREFIX}.genome.sirna.uniq.bed2 
+	[ ! -f ${PREFIX}.genome.orna.bed2 ] && awk '$3-$2<20 || $3-$2>32' ${PREFIX}.genome.bed2 > ${PREFIX}.genome.orna.bed2 
+	[ ! -f ${PREFIX}.genome.orna.uniq.bed2 ] && awk '$3-$2<20 && $3-$2>32' ${PREFIX}.genome.uniq.bed2 > ${PREFIX}.genome.orna.uniq.bed2 
+	# get read number for piRNA, siRNA and otherRNA intersetcing with all features
+	[ ! -f ${PREFIX_TEMP}.statistics ] && piSet_srnaseq_piechart ${PREFIX_TEMP} ${GENOME}
+	[ ! -f ${OUTDIR}/figures/${PREFIX_TEMP##*/}.statistics.pdf ] && piSet_srnaseq_piechart.R ${PREFIX_TEMP}.statistics ${OUTDIR}/figures/${PREFIX_TEMP##*/}.statistics.pdf 
+	# make bigWig for visulization
+	if [ -d ${OUTDIR}/bigWig/${SAMPLE_NAME} ];then
+		echo -e "echo0 4 \"bigWig files exist, skip making bigWig\"" >> ${PARA_BW}
+	else
+		echo -e "bed2_to_bw ${PREFIX}.genome.bed2 ${OUTDIR}/bigWig/${SAMPLE_NAME} ${PATH_ANNO}/${GENOME}.chrom.size ${CPU} ${FACTOR}" >> ${PARA_BW}
+	fi
+	echo -e "${FACTOR}" > ${FILE_NOR_FACTOR}
+	# move log files to ./log
+	mv ${PREFIX_TEMP}.*log ${OUTDIR}/logs
+done
+TIME_MAPPING=${SECONDS}
+SECONDS=0
+# run EM
+if [ ! -z ${IF_EM} ];then
+	echo0 2 "assign multiple mapped reads via EM algorithm......"
+	ParaFly -c ${PARA_EM} -CPU ${CPU} && rm ${PARA_EM}*
+fi
+TIME_EM=${SECONDS}
+SECONDS=0
+# run make bigWig
+CPU_BIGWIG=$(( ${CPU} / 4 ))
+echo0 2 "make bigWig files......"
+if [ ! -d ${OUTDIR}/bigWig/${SAMPLE_NAME} ];then
+	ParaFly -c ${PARA_BW} -CPU ${CPU_BIGWIG} && rm ${PARA_BW}*
+fi
+TIME_BIGWIG=${SECONDS}
+SECONDS=0
+
+# run bed2_summary
+if [ -z ${IF_NOT_BED2SUMMARY} ];then
+	ALL_PREFIX=""
+	for SRNA in ${FILE_IN}
+	do
+		# get file format
+		[ "${SRNA%.f*q}" != "${SRNA}" ] && IF_FASTQ=1
+		# get sample name
+		PREFIX=${OUTDIR}/`basename ${SRNA}`
+		if [ -z ${IF_FASTQ} ];then
+			PREFIX=${PREFIX%.insert}
+		else
+			PREFIX=${PREFIX%.f*q}
+		fi
+		ALL_PREFIX=${ALL_PREFIX}" "${PREFIX%/*}/bed2_summary/${PREFIX##*/}
+		FACTOR=`cat ${PREFIX}.factor.norBy_${NOR_METHOD}`
+		echo0 2 "run bed2_summary for ${PREFIX}......"
+		echo -e "run_bed2_summary_t -c ${PREFIX} -o ${OUTDIR}/bed2_summary -g ${GENOME} -f ${FACTOR} -p ${CPU_BIGWIG}" >> ${PARA_BED2SUMMARY}
+	done
+	ParaFly -c ${PARA_BED2SUMMARY} -CPU ${CPU} && rm ${PARA_BED2SUMMARY}*
+fi
+TIME_BED2_SUMMARY=${SECONDS}
+SECONDS=0
+
+# plot results
+if [ -z ${IF_NOT_BED2SUMMARY} ];then
+	echo0 2 "plot summary and bucket figures......"
+	plot_bed2_summary_autoScale.R ${CPU} ${OUTDIR}/figures/${FIGURE_PREFIX}.autoScale ${ALL_PREFIX}
+	plot_bed2_summary.R ${CPU} ${OUTDIR}/figures/${FIGURE_PREFIX} ${ALL_PREFIX}
+	plot_bed2_summary_for_gene_autoScale.R ${CPU} ${OUTDIR}/figures/${FIGURE_PREFIX}.autoScale ${ALL_PREFIX}
+fi
+TIME_PLOT=${SECONDS}
+
+# time used
+echo0 3 "Time used for mapping: $((${TIME_MAPPING} / 3600))h $(((${TIME_MAPPING} / 60) % 60))m"
+echo0 3 "Time used for EM: $((${TIME_EM} / 3600))h $(((${TIME_EM} / 60) % 60))m"
+echo0 3 "Time used for making bigWig: $((${TIME_BIGWIG} / 3600))h $(((${TIME_BIGWIG} / 60) % 60))m"
+echo0 3 "Time used for bed2_summary: $((${TIME_BED2_SUMMARY} / 3600))h $(((${TIME_BED2_SUMMARY} / 60) % 60))m"
+echo0 3 "Time used for figure plot: $((${TIME_PLOT} / 3600))h $(((${TIME_PLOT} / 60) % 60))m"
+echo0 4 "------finished, congras🍺🍺🍺------"

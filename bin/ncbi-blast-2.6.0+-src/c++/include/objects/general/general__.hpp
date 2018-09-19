@@ -1,0 +1,10 @@
+#include <objects/general/Date.hpp>
+#include <objects/general/Date_std.hpp>
+#include <objects/general/Dbtag.hpp>
+#include <objects/general/Int_fuzz.hpp>
+#include <objects/general/Name_std.hpp>
+#include <objects/general/Object_id.hpp>
+#include <objects/general/Person_id.hpp>
+#include <objects/general/User_field.hpp>
+#include <objects/general/User_object.hpp>
+#include <objects/general/NCBI_General_module.hpp>

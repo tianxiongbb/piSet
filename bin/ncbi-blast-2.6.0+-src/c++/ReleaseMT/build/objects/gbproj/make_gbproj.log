@@ -1,0 +1,12 @@
+make[4]: Entering directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/build/objects/gbproj'
+Updating dependency information for /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objects/gbproj/gbproj___.cpp.
+Updating dependency information for /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objects/gbproj/gbproj__.cpp.
+/usr/bin/ccache /usr/bin/g++  -std=gnu++11 -c  -Wall -Wno-format-y2k  -pthread -fopenmp -O2 -fPIC   -DNDEBUG -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE   -D_MT -D_REENTRANT -D_THREAD_SAFE -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/inc -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/include  -fdiagnostics-color=always /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objects/gbproj/gbproj__.cpp -o gbproj__.o 
+In file included from ember function 'oveAllChildItems()& item = **it;
+/usr/bin/ccache /usr/bin/g++  -std=gnu++11 -c  -Wall -Wno-format-y2k  -pthread -fopenmp -O2 -fPIC   -DNDEBUG -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE   -D_MT -D_REENTRANT -D_THREAD_SAFE -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/inc -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/include  -fdiagnostics-color=always /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objects/gbproj/gbproj___.cpp -o gbproj___.o 
+/bin/rm -f libgbproj.a .libgbproj.a.stamp
+ar cr libgbproj.a gbproj__.o gbproj___.o  
+/bin/bash /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/scripts/common/impl/if_diff.sh /bin/ln -f libgbproj.a /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib
+/bin/ln -f libgbproj.a /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib/libgbproj.a
+/bin/ln -f .gbproj.dep /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/status/.gbproj.dep
+make[4]: Leaving directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/build/objects/gbproj'

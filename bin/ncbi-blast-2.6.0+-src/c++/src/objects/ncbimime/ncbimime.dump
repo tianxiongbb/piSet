@@ -1,0 +1,125 @@
+M,9,ncbimime.asn:NCBI-Mime
+--$Revision: 96973 $
+--****************************************************************
+--
+--  NCBI MIME type (chemical/ncbi-asn1-ascii and chemical/ncbi-asn1-binary)
+--  by Jonathan Epstein, February 1996
+--
+--****************************************************************
+  T,20,NCBI-Mime:Ncbi-mime-asn1
+  T,31,NCBI-Mime:Bundle-seqs-aligns
+  T,40,NCBI-Mime:Biostruc-seqs-aligns-cdd
+  T,53,NCBI-Mime:Biostruc-align
+  T,63,NCBI-Mime:Biostruc-align-seq
+  T,70,NCBI-Mime:Biostruc-seq
+  T,77,NCBI-Mime:Biostruc-seqs
+  T,85,NCBI-Mime:Entrez-style
+  T,100,NCBI-Mime:Entrez-general
+
+T,20,Ncbi-mime-asn1,CHOICE
+  F,21,Ncbi-mime-asn1:entrez,/Entrez-general
+  -- just a structure
+  F,22,Ncbi-mime-asn1:alignstruc,/Biostruc-align
+  -- structures & sequences & alignments
+  F,23,Ncbi-mime-asn1:alignseq,/Biostruc-align-seq
+  -- sequence alignment
+  F,24,Ncbi-mime-asn1:strucseq,/Biostruc-seq
+  -- structure & sequences
+  F,25,Ncbi-mime-asn1:strucseqs,/Biostruc-seqs
+  -- structure & sequences & alignments
+  F,26,Ncbi-mime-asn1:general,/Biostruc-seqs-aligns-cdd
+  -- all-purpose "grab bag"
+  -- others may be added here in the future
+
+T,31,Bundle-seqs-aligns,SEQUENCE
+-- generic bundle of sequence and alignment info
+  F,32,Bundle-seqs-aligns:sequences,SET /Seq-entry,OPTIONAL
+  -- sequences
+  F,33,Bundle-seqs-aligns:seqaligns,SET /Seq-annot,OPTIONAL
+  -- sequence alignments
+  F,34,Bundle-seqs-aligns:strucaligns,/Biostruc-annot-set,OPTIONAL
+  -- structure alignments
+  F,35,Bundle-seqs-aligns:imports,SET /Seq-annot,OPTIONAL
+  -- imports (updates in Cn3D)
+  F,36,Bundle-seqs-aligns:style-dictionary,/Cn3d-style-dictionary,OPTIONAL
+  -- Cn3D stuff
+  F,37,Bundle-seqs-aligns:user-annotations,/Cn3d-user-annotations,OPTIONAL
+
+T,40,Biostruc-seqs-aligns-cdd,SEQUENCE
+  F,41,Biostruc-seqs-aligns-cdd:seq-align-data,CHOICE
+    F,42,Biostruc-seqs-aligns-cdd:seq-align-data:bundle,/Bundle-seqs-aligns
+    -- either seqs + alignments
+    F,43,Biostruc-seqs-aligns-cdd:seq-align-data:cdd,/Cdd
+    -- or CDD (which contains these)
+  F,45,Biostruc-seqs-aligns-cdd:structures,SET /Biostruc,OPTIONAL
+  -- structures
+  F,46,Biostruc-seqs-aligns-cdd:structure-type,ENUMERATED,OPTIONAL
+  -- type of structures to load if
+    V,47,Biostruc-seqs-aligns-cdd:structure-type:ncbi-backbone,2
+    -- not present; meanings and
+    V,48,Biostruc-seqs-aligns-cdd:structure-type:ncbi-all-atom,3
+    -- values are same as MMDB's
+    V,49,Biostruc-seqs-aligns-cdd:structure-type:pdb-model,4
+    -- Model-type
+
+T,53,Biostruc-align,SEQUENCE
+  F,54,Biostruc-align:master,/Biostruc
+  F,55,Biostruc-align:slaves,SET /Biostruc
+  F,56,Biostruc-align:alignments,/Biostruc-annot-set
+  -- structure alignments
+  F,57,Biostruc-align:sequences,SET /Seq-entry
+  -- sequences
+  F,58,Biostruc-align:seqalign,SET /Seq-annot
+  F,59,Biostruc-align:style-dictionary,/Cn3d-style-dictionary,OPTIONAL
+  F,60,Biostruc-align:user-annotations,/Cn3d-user-annotations,OPTIONAL
+
+T,63,Biostruc-align-seq,SEQUENCE
+-- display seq structure align only
+  F,64,Biostruc-align-seq:sequences,SET /Seq-entry
+  -- sequences
+  F,65,Biostruc-align-seq:seqalign,SET /Seq-annot
+  F,66,Biostruc-align-seq:style-dictionary,/Cn3d-style-dictionary,OPTIONAL
+  F,67,Biostruc-align-seq:user-annotations,/Cn3d-user-annotations,OPTIONAL
+
+T,70,Biostruc-seq,SEQUENCE
+-- display  structure seq added by yanli
+  F,71,Biostruc-seq:structure,/Biostruc
+  F,72,Biostruc-seq:sequences,SET /Seq-entry
+  F,73,Biostruc-seq:style-dictionary,/Cn3d-style-dictionary,OPTIONAL
+  F,74,Biostruc-seq:user-annotations,/Cn3d-user-annotations,OPTIONAL
+
+T,77,Biostruc-seqs,SEQUENCE
+-- display blast alignment along with neighbor's structure added by yanli
+  F,78,Biostruc-seqs:structure,/Biostruc
+  F,79,Biostruc-seqs:sequences,SET /Seq-entry
+  -- sequences
+  F,80,Biostruc-seqs:seqalign,SET /Seq-annot
+  F,81,Biostruc-seqs:style-dictionary,/Cn3d-style-dictionary,OPTIONAL
+  F,82,Biostruc-seqs:user-annotations,/Cn3d-user-annotations,OPTIONAL
+
+T,85,Entrez-style,ENUMERATED
+  V,86,Entrez-style:docsum,1
+  V,87,Entrez-style:genbank,2
+  V,88,Entrez-style:genpept,3
+  V,89,Entrez-style:fasta,4
+  V,90,Entrez-style:asn1,5
+  V,91,Entrez-style:graphic,6
+  V,92,Entrez-style:alignment,7
+  V,93,Entrez-style:globalview,8
+  V,94,Entrez-style:report,9
+  V,95,Entrez-style:medlars,10
+  V,96,Entrez-style:embl,11
+  V,97,Entrez-style:pdb,12
+  V,98,Entrez-style:kinemage,13
+
+T,100,Entrez-general,SEQUENCE
+  F,101,Entrez-general:title,VisibleString,OPTIONAL
+  F,102,Entrez-general:data,CHOICE
+    F,103,Entrez-general:data:ml,/Medline-entry
+    F,104,Entrez-general:data:prot,/Seq-entry
+    F,105,Entrez-general:data:nuc,/Seq-entry
+    F,106,Entrez-general:data:genome,/Seq-entry
+    F,107,Entrez-general:data:structure,/Biostruc
+    F,108,Entrez-general:data:strucAnnot,/Biostruc-annot-set
+  F,109,Entrez-general:style,/Entrez-style
+  F,110,Entrez-general:location,VisibleString,OPTIONAL

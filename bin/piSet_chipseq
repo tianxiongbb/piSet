@@ -1,0 +1,315 @@
+#!/bin/bash
+
+# function
+function checkTools(){
+	if [ `which $1` ];then
+		echo0 3 "$1: `which $1`"
+	else
+		echo0 0 "$1 not found, please install it or add it into your PATH!"
+		exit 1
+	fi
+}
+
+# help information
+help_info(){
+	echo0 5 "$0"
+	echo0 5 "\t-l <file>\tleft reads of ChIPseq, You can input multiple sample like -l \"left1.fq left2.fq left3.fq \""
+	echo0 5 "\t-r <file>\tright reads of ChIPseq. not set if it is single-end sequencing\n\t\t\t\ttips for multiple sample mode: if all data is single-end, use like -l \"left1.fq left2.fq\" without -r; if all data is paired-end data, use like -l \"left1.fq left2.fq\" -r \"right1.fq right2.fq\"; if some sample is single-end and other is paired-end, then use like -l \"left1.fq left2.fq left3.fq\" -r \"right1.fq none right3.fq\", which none indicates signle-end data."
+	echo0 5 "\t-I \t\tset -I if you have input file for peak calling. Please make sure the input file is the last one in your left and right file list"
+	echo0 5 "\t-g <genome>\tgenome used."
+	echo0 0 "picluster and TE analysis:"
+	echo0 0 "\t-P \t\tset -P to enable get normalized signal across piclusters. default: not set"
+	echo0 0 "\t-T \t\tset -T to enable get normalized signal across TEs. default: not set"
+	echo0 4 "mapping:"
+	echo0 4 "\t-M <bowtie2|bwa_mem|bwa_aln>\tengine used for mapping. default: bowtie2"
+	echo0 4 "\t-X <int>\tmax fragment length for pair-end data. default: 700"
+	echo0 4 "\t-R \t\tset -R to remove duplicate reads via samtools markdup. default: not set"
+	echo0 1 "output:"
+	echo0 4 "\t-o <dir>\toutput directory. default: ./chipseq_pipeline"
+	echo0 4 "\t-p <string\toutput prefix name. if you want to set -p in multiple sample mode, plesae use like -p \"prefix1 prefix2 prefix3\" and keep coordinate with sample_prefix_name in sample information file. default: sample name"
+	echo0 6 "other optional:"
+	echo0 6 "\t-q qvalue used for macs2 peak calling"
+	echo0 6 "\t-i <index>\tbowtie2 index for mapping. default: genome/Bowtie2Index/genome"
+	echo0 6 "\t-C <file>\tchrom.size file. default: genome/genome.chrom.size"
+	echo0 6 "\t-c <int>\tCPU number used. default: 1"
+}
+
+if [ $# -lt 1 ];then
+	help_info && exit 1
+fi
+
+# parameters
+PATH_PROG=`dirname $0` && PATH_ANNO=${PATH_PROG%/bin}/annotation
+CPU=1
+OUTDIR=./chipseq_pipeline
+MAX_FRAGMENT=700
+MAP_ENGINE=bowtie2
+QVALUE=0.05
+
+while getopts "hl:r:g:i:C:ao:p:c:X:PTRM:q:I" OPTION; do
+	case $OPTION in
+		h)	help_info && exit 1;;
+		l)	LEFT=(${OPTARG});;
+		r)	RIGHT=(${OPTARG});;
+		g)	GENOME=${OPTARG};;
+		i)	INDEX=`readlink -f ${OPTARG}`;;
+		C)	CHROMSIZE=`readlink -f ${OPTARG}`;;
+		a)	REPORT="-a";;
+		o)	OUTDIR=${OPTARG};;
+		p)	PREFIX=${OPTARG};;
+		X)	MAX_FRAGMENT=${OPTARG};;
+		P)	IF_PIC=1;;
+		T)	IF_TE=1;;
+		c)	CPU=${OPTARG};;
+		R)	IF_RMDUP=1;;
+		M)	MAP_ENGINE=${OPTARG};;
+		q)	QVALUE=${OPTARG};;
+		I)	IF_INPUT=1;;
+		*)	help_info && exit 1
+	esac
+done
+
+# check parameters
+echo0 1 "check parameters......"
+[ -z ${LEFT} ] && echo0 0 "please provide left.fastq file via -l" && exit 1
+[ -z ${RIGHT} ] && echo0 4 "right file not provide, use signle-end mode"
+[ -z ${GENOME} ] && echo0 0 "please provideg genome via -g" && exit 1
+
+for i in ${LEFT[*]}
+do
+	[ ! -f "${i}" ] && echo0 0 "no file found in ${i}" && exit 1
+done
+
+if [ ${#LEFT[*]} -gt 1 ];then # check if -l -r -p are the same length
+	[ ! -z ${RIGHT} ] && [ ! ${#RIGHT[*]} -eq ${#LEFT[*]} ] && echo0 0 "Error: Multiple sample mode enabled, but the number of left fastq file is not equal to right fastq file" && exit 1
+	[ ! -z ${PREFIX} ] && [ ! ${#PREFIX[*]} -eq ${#LEFT[*]} ] && echo0 0 "Error: Multiple sample mode enabled, but the number of left fastq file is not equal to prefix number" && exit 1
+fi
+
+if [ ! -z ${RIGHT} ];then
+	for i in ${RIGHT[*]}
+	do
+		[ ! -f "${i}" ] && echo0 0 "no file found in ${i}" && exit 1
+	done
+fi
+
+if [ -z ${INDEX} ];then
+	if [ "${MAP_ENGINE}" == "bowtie2" ];then
+		INDEX=${PATH_ANNO}/${GENOME}/Bowtie2Index/genome
+	else
+		INDEX=${PATH_ANNO}/${GENOME}/BWAIndex/genome
+	fi
+fi
+
+[ -z ${CHROMSIZE} ] && CHROMSIZE=${PATH_ANNO}/${GENOME}/${GENOME}.chrom.size
+! [ -f ${INDEX}.1.bt2 -o -f ${INDEX}.amb ] && echo0 0 "no index found for ${INDEX}" && exit 1
+! [ "${CPU}" -gt 0 ] 2>/dev/null && echo0 0 "threads need to be integer bigger than 0"
+! [ "${MAX_FRAGMENT}" -gt 10 ] 2>/dev/null && echo0 0 "max fragment need to be integer bigger than 10"
+
+if [ -z ${PREFIX} ];then
+	NUM=0
+	if [ -z ${RIGHT} ];then
+		for i in ${LEFT[*]}
+		do
+			PREFIX[$NUM]=`basename ${i%.f*q*}`
+			NUM=$(($NUM + 1))
+		done
+	else
+		for i in ${LEFT[*]}
+		do
+			PREFIX[$NUM]=`basename ${i%[._]1.f*q*}`
+			NUM=$(($NUM + 1))
+		done
+	fi
+	echo0 4 "WARNING: no PREFIX name. set "${PREFIX[*]}" as PREFIX name"
+fi
+
+! [ "${MAP_ENGINE}" == "bowtie2" -o "${MAP_ENGINE}" == "bwa_mem" -o "${MAP_ENGINE}" == "bwa_aln" ] && echo0 0 "-M must be one of bowtie2, bwa_mem or bwa_aln" && exit 1
+echo0 1 "OK"
+
+# check dependencies
+echo0 1 "check dependencies......"
+checkTools bowtie2
+checkTools bwa
+checkTools samtools
+checkTools fastqc
+checkTools bedtools
+checkTools bedGraphToBigWig
+echo0 1 "OK"
+
+###########
+# process #
+###########
+
+# mkdir
+[ ! -d ${OUTDIR} ] && mkdir -p ${OUTDIR}
+[ ! -d ${OUTDIR}/bowtie2 ] && mkdir -p ${OUTDIR}/bowtie2
+[ ! -d ${OUTDIR}/log ] && mkdir -p ${OUTDIR}/log
+[ ! -d ${OUTDIR}/fastQC ] && mkdir -p ${OUTDIR}/fastQC
+[ ! -d ${OUTDIR}/macs2 ] && mkdir -p ${OUTDIR}/macs2
+[ ! -d ${OUTDIR}/bigWig ] && mkdir -p ${OUTDIR}/bigWig
+[ ! -d ${OUTDIR}/signal ] && mkdir -p ${OUTDIR}/signal
+
+
+### run mapping and rpm calculation for each sample
+SAMPLE_INDEX=0
+for TEMP_LEFT in ${LEFT[*]}
+do
+	# judge if this fastq is already mapped
+	if [ -f ${OUTDIR}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.rpm.all.bw ];then
+		[ -z ${IF_RMDUP} ] && [ -z ${RIGHT[${SAMPLE_INDEX}]} -o "${RIGHT[${SAMPLE_INDEX}]}" == "none" ] && BAM=${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.sort.bam
+		[ ! -z ${IF_RMDUP} ] && [ "${RIGHT[${SAMPLE_INDEX}]}" == "" -o "${RIGHT[${SAMPLE_INDEX}]}" == "none" ] && BAM=${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.rmdup.bam
+		[ -z ${IF_RMDUP} ] && [ ! -z ${RIGHT[${SAMPLE_INDEX}]} ] && [ "${RIGHT[${SAMPLE_INDEX}]}" != "none" ] && BAM=${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.sortByName.bam
+		[ ! -z ${IF_RMDUP} ] && [ ! -z ${RIGHT[${SAMPLE_INDEX}]} ] && [ "${RIGHT[${SAMPLE_INDEX}]}" != "none" ] && BAM=${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.sortByName.rmdup.bam
+		LIST_BAM+=(${BAM}) # add final bam file name to LIST_BAM
+		echo0 4 "${PREFIX[${SAMPLE_INDEX}]} already done, skip it"
+		SAMPLE_INDEX=$((${SAMPLE_INDEX} + 1))
+		continue
+	fi
+	# fastQC
+	echo0 2 "quality check via fastQC......"
+	fastqc -o ${OUTDIR}/fastQC -f fastq -q -t ${CPU} --noextract ${TEMP_LEFT} ${RIGHT[${SAMPLE_INDEX}]}
+	# mapping via bowtie2|bwa mem|bwa aln
+	if [ "${MAP_ENGINE}" == "bowtie2" ];then # bowtie2 as engine
+		echo0 2 "mapping to genome via bowtie2......"
+		if [ -z ${RIGHT[${SAMPLE_INDEX}]} ];then # single-end
+			bowtie2 -p ${CPU} --very-sensitive --no-unal -x ${INDEX} -U ${TEMP_LEFT} -S ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.sam > ${OUTDIR}/log/${PREFIX[${SAMPLE_INDEX}]}.bowtie2.log 2>&1 || (echo0 0 "bowtie2 error, please check ${OUTDIR}/log/${PREFIX[${SAMPLE_INDEX}]}.bowtie2.log" && exit 1)
+		else # paired-end
+			bowtie2 -p ${CPU} --very-sensitive --no-unal --no-mixed --no-discordant -I 10 -X ${MAX_FRAGMENT} -x ${INDEX} -1 ${TEMP_LEFT} -2 ${RIGHT[${SAMPLE_INDEX}]} -S ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.sam > ${OUTDIR}/log/${PREFIX[${SAMPLE_INDEX}]}.bowtie2.log 2>&1 || (echo0 0 "bowtie2 error, please check ${OUTDIR}/log/${PREFIX[${SAMPLE_INDEX}]}.bowtie2.log" && exit 1)
+		fi
+		#NUM_READS=`head -1 ${OUTDIR}/log/${PREFIX[${SAMPLE_INDEX}]}.bowtie2.log` && NUM_READS=${NUM_READS%% *}
+		#PERCENT_MAP=`tail -1 ${OUTDIR}/log/${PREFIX[${SAMPLE_INDEX}]}.bowtie2.log` && PERCENT_MAP=${PERCENT_MAP%%\%*}
+		#FACTOR=`awk -v nr=${NUM_READS} -v pm=${PERCENT_MAP} 'BEGIN{print nr*pm/100/1000000}'`
+	elif [ "${MAP_ENGINE}" == "bwa_mem" ];then # bwa mem as engine
+		echo0 2 "mapping to genome via bwa mem......"
+		if [ -z ${RIGHT[${SAMPLE_INDEX}]} ];then # single-end
+			bwa mem -t ${CPU} ${INDEX} ${TEMP_LEFT} > ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.sam 2>${OUTDIR}/log/${PREFIX[${SAMPLE_INDEX}]}.bwa_mem.log || (echo0 0 "bwa mem error, please check ${OUTDIR}/log/${PREFIX[${SAMPLE_INDEX}]}.bwa_mem.log" && exit 1)
+		else # paired-end
+			bwa mem -t ${CPU} ${INDEX} ${TEMP_LEFT} ${RIGHT[${SAMPLE_INDEX}]} > ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.sam 2>${OUTDIR}/log/${PREFIX[${SAMPLE_INDEX}]}.bwa_mem.log || (echo0 0 "bwa mem error, please check ${OUTDIR}/log/${PREFIX[${SAMPLE_INDEX}]}.bwa_mem.log" && exit 1)
+		fi
+	else # bwa aln as engine
+		echo0 2 "mapping to genome via bwa aln......"
+		if [ -z ${RIGHT[${SAMPLE_INDEX}]} ];then # single-end
+			bwa aln -Y -t ${CPU} ${INDEX} ${TEMP_LEFT} -f ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.sai >> ${OUTDIR}/log/${PREFIX[${SAMPLE_INDEX}]}.bwa_aln.log 2>&1 || (echo0 0 "bwa mem error, please check ${OUTDIR}/log/${PREFIX[${SAMPLE_INDEX}]}.bwa_aln.log" && exit 1)
+			bwa samse ${INDEX} ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.sai ${TEMP_LEFT} -f ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.sam > ${OUTDIR}/log/${PREFIX[${SAMPLE_INDEX}]}.bwa_samse.log 2>&1 || (echo0 0 "bwa samse error, please check ${OUTDIR}/log/${PREFIX[${SAMPLE_INDEX}]}.bwa_samse.log" && exit 1)
+			rm ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.sai 
+		else # paired-end
+			bwa aln -Y -t ${CPU} ${INDEX} ${TEMP_LEFT} -f ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.1.sai >> ${OUTDIR}/log/${PREFIX[${SAMPLE_INDEX}]}.bwa_aln.log 2>&1 || (echo0 0 "bwa mem error, please check ${OUTDIR}/log/${PREFIX[${SAMPLE_INDEX}]}.bwa_aln.log" && exit 1)
+			bwa aln -Y -t ${CPU} ${INDEX} ${RIGHT[${SAMPLE_INDEX}]} -f ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.2.sai >> ${OUTDIR}/log/${PREFIX[${SAMPLE_INDEX}]}.bwa_aln.log 2>&1 || (echo0 0 "bwa mem error, please check ${OUTDIR}/log/${PREFIX[${SAMPLE_INDEX}]}.bwa_aln.log" && exit 1)
+			bwa sampe -P ${INDEX} ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.1.sai ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.2.sai ${TEMP_LEFT} ${RIGHT[${SAMPLE_INDEX}]} -f ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.sam > ${OUTDIR}/log/${PREFIX[${SAMPLE_INDEX}]}.bwa_sampe.log 2>&1 || (echo0 0 "bwa sampe error, please check ${OUTDIR}/log/${PREFIX[${SAMPLE_INDEX}]}.bwa_sampe.log" && exit 1)
+			rm ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.1.sai ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.2.sai 
+		fi
+	fi
+	# sam to sort.bam
+	echo0 2 "sam to sort.bam......"
+	samtools view -@ ${CPU} -bhS -o ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.bam ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.sam || (echo0 0 "samtools view error" && exit 1)
+	if [ -z ${RIGHT[${SAMPLE_INDEX}]} ];then
+		samtools sort -@ ${CPU} -o ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.sort.bam ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.bam || (echo0 0 "samtools sort error" && exit 1)
+	else
+		samtools sort -n -@ ${CPU} -o ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.sortByName.bam ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.bam || (echo0 0 "samtools sort error" && exit 1)
+	fi
+	if [ -z ${IF_RMDUP} ];then
+		if [ -z ${RIGHT[${SAMPLE_INDEX}]} ];then
+			BAM=${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.sort.bam 
+		else
+			samtools sort -@ ${CPU} -o ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.sort.bam ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.sortByName.bam
+			BAM=${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.sortByName.bam 
+		fi
+		samtools index -@ ${CPU} ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.sort.bam || (echo0 0 "samtools index error" && exit 1) 
+	else
+		if [ -z ${RIGHT[${SAMPLE_INDEX}]} ];then
+			samtools rmdup -s ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.sort.bam ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.rmdup.bam
+			samtools index -@ ${CPU} ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.rmdup.bam || (echo0 0 "samtools index error" && exit 1) 
+			BAM=${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.rmdup.bam
+		else
+			samtools fixmate -@ ${CPU} -m ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.sortByName.bam ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.fixmate.bam 
+			samtools sort -@ ${CPU} -o ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.sort.bam ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.fixmate.bam && rm ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.fixmate.bam
+			samtools markdup -r -@ ${CPU} ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.sort.bam ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.rmdup.bam 
+			samtools index -@ ${CPU} ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.rmdup.bam || (echo0 0 "samtools index error" && exit 1) 
+			samtools sort -n -@ ${CPU} -o ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.sortByName.rmdup.bam ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.rmdup.bam 
+			BAM=${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.sortByName.rmdup.bam
+		fi
+	fi
+	LIST_BAM+=(${BAM}) # add final bam file name to LIST_BAM
+	samtools flagstat ${BAM} > ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.flagstat
+	FACTOR=`awk 'BEGIN{FS=" "} {if($0~/mapped \(/){print 1000000/$1}}' ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.flagstat`
+	echo0 3 "factor used for normalization: ${FACTOR}"
+	echo -e "${FACTOR}" > ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.factor
+	# bam to bed and then to bigWig
+	echo0 2 "bam to uniqMapped bigWig"
+	if [ -z ${RIGHT[${SAMPLE_INDEX}]} ];then
+		bedtools bamtobed -i ${BAM} > ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.bed
+	else
+		bedtools bamtobed -bedpe -i ${BAM} | \
+			awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$6,$7,$8,"+"}' | sort -k1,1 -k2,2n \
+			> ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.bed
+	fi
+	if [ "${MAP_ENGINE}" == "bowtie2" ];then
+		awk '$5>5' ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.bed > ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.uniq.bed # separate uniqMappers
+	else
+		samtools view -h ${BAM} | egrep "^@|XT:A:U" | samtools view -bhS - > ${BAM}.temp.bam 2>/dev/null
+		if [ -z ${RIGHT[${SAMPLE_INDEX}]} ];then
+			bedtools bamtobed -i ${BAM}.temp.bam > ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.uniq.bed 2>/dev/null
+		else
+			samtools sort -@ ${CPU} -n -o ${BAM}.temp2.bam ${BAM}.temp.bam > /dev/null 2>&1 || (echo0 0 "samtools sort error" && exit 1)
+			bedtools bamtobed -bedpe -i ${BAM}.temp2.bam | \
+				awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$6,$7,$8,"+"}' \
+				> ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.uniq.bed
+			rm ${BAM}.temp2.bam
+		fi
+		rm ${BAM}.temp.bam
+	fi
+	if [ "${MAP_ENGINE}" != "bowtie2" ];then # remove unmapped reads if engine is not bowtie2
+		awk '$1!="." && $3-$2>0 && $3-$2<700' ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.uniq.bed > ${PREFIX[${SAMPLE_INDEX}]}.temp && mv ${PREFIX[${SAMPLE_INDEX}]}.temp ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.uniq.bed
+		awk '$1!="." && $3-$2>0 && $3-$2<700' ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.bed > ${PREFIX[${SAMPLE_INDEX}]}.temp && mv ${PREFIX[${SAMPLE_INDEX}]}.temp ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.bed
+	fi
+	bedtools genomecov -scale ${FACTOR} -bg -i ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.uniq.bed -g ${CHROMSIZE} | sort -k1,1 -k2,2n > ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.uniq.bdg 
+	bedtools genomecov -scale ${FACTOR} -bg -i ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.bed -g ${CHROMSIZE} | sort -k1,1 -k2,2n > ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.all.bdg 
+	bedGraphToBigWig ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.uniq.bdg ${CHROMSIZE} ${OUTDIR}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.rpm.uniq.bw 
+	bedGraphToBigWig ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.all.bdg ${CHROMSIZE} ${OUTDIR}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.rpm.all.bw 
+	#rm ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.uniq.bdg ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.all.bdg 
+	# get allMapper signal for TEs
+	if [ ! -z ${IF_TE} ];then
+		echo0 2 "get allMapper signal for TEs......"
+		bedtools intersect -nonamecheck -c -a ${PATH_ANNO}/${GENOME}/${GENOME}.rmsk.bed9 -b ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.bed -F 0.5 | cut -f 4,10 | awk -v factor=${FACTOR} 'BEGIN{FS=OFS="\t"} {if(NR==FNR){a[$1]+=$2}else{print $1,a[$1]*factor}}' - ${PATH_ANNO}/${GENOME}/${GENOME}.transposon.size > ${OUTDIR}/signal/${PREFIX[${SAMPLE_INDEX}]}.TE.allMappers.rpm
+		awk 'BEGIN{FS=OFS="\t"} {if(NR==FNR){a[$1]=$2}else{if(a[$1]){print $1,$2*1000/a[$1]}else{print $1,0}}}' ${PATH_ANNO}/${GENOME}/${GENOME}.transposon.size ${OUTDIR}/signal/${PREFIX[${SAMPLE_INDEX}]}.TE.allMappers.rpm > ${OUTDIR}/signal/${PREFIX[${SAMPLE_INDEX}]}.TE.allMappers.rpkm
+	fi
+	# get uniqMapper signal for piclusters
+	if [ ! -z ${IF_PIC} ];then
+		echo0 2 "get uniqMapper signal for piclusters......"
+		bedtools intersect -nonamecheck -c -a ${PATH_ANNO}/${GENOME}/${GENOME}.picluster.bed -b ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.uniq.bed -F 0.5 | cut -f 4,7 | awk -v factor=${FACTOR} 'BEGIN{FS=OFS="\t"} {print $1,$2*factor}' > ${OUTDIR}/signal/${PREFIX[${SAMPLE_INDEX}]}.piC.uniqMappers.rpm
+		bedtools intersect -nonamecheck -c -a ${PATH_ANNO}/${GENOME}/${GENOME}.picluster.bed -b ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.bed -F 0.5 | cut -f 4,7 | awk -v factor=${FACTOR} 'BEGIN{FS=OFS="\t"} {print $1,$2*factor}' > ${OUTDIR}/signal/${PREFIX[${SAMPLE_INDEX}]}.piC.allMappers.rpm
+		awk 'BEGIN{FS=OFS="\t"} {if(NR==FNR){a[$4]+=($3-$2)}else{print $1,$2*1000/a[$1]}}' ${PATH_ANNO}/${GENOME}/${GENOME}.picluster.bed ${OUTDIR}/signal/${PREFIX[${SAMPLE_INDEX}]}.piC.uniqMappers.rpm > ${OUTDIR}/signal/${PREFIX[${SAMPLE_INDEX}]}.piC.uniqMappers.rpkm
+		awk 'BEGIN{FS=OFS="\t"} {if(NR==FNR){a[$4]+=($3-$2)}else{print $1,$2*1000/a[$1]}}' ${PATH_ANNO}/${GENOME}/${GENOME}.picluster.bed ${OUTDIR}/signal/${PREFIX[${SAMPLE_INDEX}]}.piC.allMappers.rpm > ${OUTDIR}/signal/${PREFIX[${SAMPLE_INDEX}]}.piC.allMappers.rpkm
+	fi
+	# remove mediate files
+	rm ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.sam ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.bam 
+	TIME=${SECONDS}
+	echo0 3 "Time used for ${PREFIX[${SAMPLE_ID}]}:\t$((${TIME} / 3600))h $(((${TIME} / 60) % 60))m"
+	SAMPLE_INDEX=$((${SAMPLE_INDEX} + 1))
+	SECONDS=0
+done
+
+### run macs2 for peak calling and FE, pvalue generation
+INPUT_INDEX=$((${#LEFT[*]} - 1))
+GENOME_LENGTH=`awk '{sum+=$2} END{print sum}' ${CHROMSIZE}`
+CHROM_NUMBER=(`wc -l ${CHROMSIZE}`)
+if [ ${CHROM_NUMBER} -gt 100000 ];then
+	BUFF_SIZE=1000
+else
+	BUFF_SIZE=100000
+fi
+if [ ! -z ${IF_INPUT} ];then
+	PARAFILE=${RANDOM}.${RANDOM}.${RANDOM}.${RANDOM}.parafile
+	echo0 4 "-I have been specified, use macs2 to call peaks and generate FE, pvalue signal"
+	echo0 4 "commands below will be ran:"
+	for ((i=0;i<${INPUT_INDEX};i++));do
+		# write macs2 jobs into ParaFly files
+		echo0 5 "BB_callpeak_pipeline.sh -t ${LIST_BAM[${i}]} -c ${LIST_BAM[${INPUT_INDEX}]} -o ${OUTDIR}/macs2/${PREFIX[${i}]} -C ${CHROMSIZE} -f AUTO -g ${GENOME_LENGTH} -q ${QVALUE} -B ${BUFF_SIZE}"
+		echo -e "BB_callpeak_pipeline.sh -t ${LIST_BAM[${i}]} -c ${LIST_BAM[${INPUT_INDEX}]} -o ${OUTDIR}/macs2/${PREFIX[${i}]} -C ${CHROMSIZE} -f AUTO -g ${GENOME_LENGTH} -q ${QVALUE} -B ${BUFF_SIZE}" >> ${PARAFILE}
+	done
+	ParaFly -c ${PARAFILE} -CPU ${CPU} && rm ${PARAFILE}*
+	TIME=${SECONDS}
+	echo0 3 "Time used for peak calling:\t$((${TIME} / 3600))h $(((${TIME} / 60) % 60))m"
+fi
+echo0 4 "------ finished!🍺🍺🍺 ------"
+

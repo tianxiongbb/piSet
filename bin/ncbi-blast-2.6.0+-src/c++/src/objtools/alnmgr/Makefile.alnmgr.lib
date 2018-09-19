@@ -1,0 +1,19 @@
+# $Id: Makefile.alnmgr.lib 502200 2016-05-23 14:42:40Z vakatov $
+
+# Build library "xalnmgr"
+#################################
+ASN_DEP = seqset
+
+LIB = xalnmgr
+SRC = aln_builders aln_converters aln_generators aln_seqid aln_serial	\
+      alndiag alnmap alnmapprint alnmatch alnmerger alnmix alnpos_ci	\
+      alnsegments alnseq alnvec alnvec_iterator alnvecprint		\
+      pairwise_aln sparse_aln sparse_ci alntext score_builder_base
+
+DLL_LIB = tables
+
+WATCHERS = grichenk
+
+
+USES_LIBRARIES =  \
+    tables xobjutil

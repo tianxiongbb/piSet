@@ -1,0 +1,11 @@
+make[4]: Entering directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/build/objects/seqcode'
+Updating dependency information for /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objects/seqcode/seqcode___.cpp.
+Updating dependency information for /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objects/seqcode/seqcode__.cpp.
+/usr/bin/ccache /usr/bin/g++  -std=gnu++11 -c  -Wall -Wno-format-y2k  -pthread -fopenmp -O2 -fPIC   -DNDEBUG -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE   -D_MT -D_REENTRANT -D_THREAD_SAFE -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/inc -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/include  -fdiagnostics-color=always /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objects/seqcode/seqcode__.cpp -o seqcode__.o 
+/usr/bin/ccache /usr/bin/g++  -std=gnu++11 -c  -Wall -Wno-format-y2k  -pthread -fopenmp -O2 -fPIC   -DNDEBUG -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE   -D_MT -D_REENTRANT -D_THREAD_SAFE -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/inc -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/include  -fdiagnostics-color=always /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objects/seqcode/seqcode___.cpp -o seqcode___.o 
+/bin/rm -f libseqcode.a .libseqcode.a.stamp
+ar cr libseqcode.a seqcode__.o seqcode___.o  
+/bin/bash /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/scripts/common/impl/if_diff.sh /bin/ln -f libseqcode.a /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib
+/bin/ln -f libseqcode.a /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib/libseqcode.a
+/bin/ln -f .seqcode.dep /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/status/.seqcode.dep
+make[4]: Leaving directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/build/objects/seqcode'

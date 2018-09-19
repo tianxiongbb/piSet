@@ -1,0 +1,80 @@
+M,11,seqset.asn:NCBI-Seqset
+--$Revision: 279710 $
+--**********************************************************************
+--
+--  NCBI Sequence Collections
+--  by James Ostell, 1990
+--
+--  Version 3.0 - 1994
+--
+--**********************************************************************
+  T,22,NCBI-Seqset:Bioseq-set
+  T,58,NCBI-Seqset:Seq-entry
+
+T,22,Bioseq-set,SEQUENCE
+--*** Sequence Collections ********************************
+--*
+-- just a collection
+  F,23,Bioseq-set:id,/Object-id,OPTIONAL
+  F,24,Bioseq-set:coll,/Dbtag,OPTIONAL
+  -- to identify a collection
+  F,25,Bioseq-set:level,INTEGER,OPTIONAL
+  -- nesting level
+  F,26,Bioseq-set:class,ENUMERATED,DEFAULT,not-set
+    V,27,Bioseq-set:class:not-set,0
+    V,28,Bioseq-set:class:nuc-prot,1
+    -- nuc acid and coded proteins
+    V,29,Bioseq-set:class:segset,2
+    -- segmented sequence + parts
+    V,30,Bioseq-set:class:conset,3
+    -- constructed sequence + parts
+    V,31,Bioseq-set:class:parts,4
+    -- parts for 2 or 3
+    V,32,Bioseq-set:class:gibb,5
+    -- geninfo backbone
+    V,33,Bioseq-set:class:gi,6
+    -- geninfo
+    V,34,Bioseq-set:class:genbank,7
+    -- converted genbank
+    V,35,Bioseq-set:class:pir,8
+    -- converted pir
+    V,36,Bioseq-set:class:pub-set,9
+    -- all the seqs from a single publication
+    V,37,Bioseq-set:class:equiv,10
+    -- a set of equivalent maps or seqs
+    V,38,Bioseq-set:class:swissprot,11
+    -- converted SWISSPROT
+    V,39,Bioseq-set:class:pdb-entry,12
+    -- a complete PDB entry
+    V,40,Bioseq-set:class:mut-set,13
+    -- set of mutations
+    V,41,Bioseq-set:class:pop-set,14
+    -- population study
+    V,42,Bioseq-set:class:phy-set,15
+    -- phylogenetic study
+    V,43,Bioseq-set:class:eco-set,16
+    -- ecological sample study
+    V,44,Bioseq-set:class:gen-prod-set,17
+    -- genomic products, chrom+mRNA+protein
+    V,45,Bioseq-set:class:wgs-set,18
+    -- whole genome shotgun project
+    V,46,Bioseq-set:class:named-annot,19
+    -- named annotation set
+    V,47,Bioseq-set:class:named-annot-prod,20
+    -- with instantiated mRNA+protein
+    V,48,Bioseq-set:class:read-set,21
+    -- set from a single read
+    V,49,Bioseq-set:class:paired-end-reads,22
+    -- paired sequences within a read-set
+    V,50,Bioseq-set:class:small-genome-set,23
+    -- viral segments or mitochondrial minicircles
+    V,51,Bioseq-set:class:other,255
+  F,52,Bioseq-set:release,VisibleString,OPTIONAL
+  F,53,Bioseq-set:date,/Date,OPTIONAL
+  F,54,Bioseq-set:descr,/Seq-descr,OPTIONAL
+  F,55,Bioseq-set:seq-set,SEQUENCE /Seq-entry
+  F,56,Bioseq-set:annot,SET /Seq-annot,OPTIONAL
+
+T,58,Seq-entry,CHOICE
+  F,59,Seq-entry:seq,/Bioseq
+  F,60,Seq-entry:set,/Bioseq-set

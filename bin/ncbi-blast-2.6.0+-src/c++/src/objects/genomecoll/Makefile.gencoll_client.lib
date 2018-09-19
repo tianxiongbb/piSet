@@ -1,0 +1,19 @@
+# $Id: Makefile.gencoll_client.lib 482112 2015-10-20 19:24:36Z zherikov $
+
+ASN = gencoll_client
+
+# SRC = $(ASN:%=%__) $(ASN:%=%___)
+
+SRC = gencoll_client__ gencoll_client___ genomic_collections_cli genomic_collections_cli_ cached_assembly
+
+LIB = gencoll_client
+
+LIB_OR_DLL = lib
+
+#REQUIRES = objects dbapi
+
+WATCHERS = shchekot dicuccio zherikov
+
+
+USES_LIBRARIES =  \
+    genome_collection xconnect $(COMPRESS_LIBS)

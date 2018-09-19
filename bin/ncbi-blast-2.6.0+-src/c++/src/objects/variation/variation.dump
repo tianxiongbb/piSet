@@ -1,0 +1,264 @@
+M,14,variation.asn:NCBI-VariationPackage
+--$Revision: 460847 $
+--**********************************************************************
+--
+--  NCBI Variation container
+--  by Variation Working Group, 2011
+--
+--  The Variation type describes a sequence change at location(s),
+--  or a hierarchical combination thereof.
+--
+--  Related location-centric type is SeqFeatData.Variation-ref
+--
+--**********************************************************************
+  T,27,NCBI-VariationPackage:VariationException
+  T,58,NCBI-VariationPackage:VariantPlacement
+  T,115,NCBI-VariationPackage:VariationMethod
+  T,156,NCBI-VariationPackage:Variation
+
+T,27,VariationException,SEQUENCE
+  F,29,VariationException:code,INTEGER,OPTIONAL
+    V,30,VariationException:code:hgvs-parsing,1
+    --invalid hgvs expression
+    V,31,VariationException:code:hgvs-exon-boundary,2
+    --anchor position in an intronic HGVS expression is not at an exon boundary
+    V,34,VariationException:code:inconsistent-consequence,3
+    --consequence protein variation attached to precursor variation's consequence
+    --could not be derived from it.
+    V,37,VariationException:code:inconsistent-asserted-allele,4
+    --asserted allele is inconsistent with the reference
+    V,39,VariationException:code:no-mapping,5
+    --could not remap
+    V,40,VariationException:code:partial-mapping,6
+    --mapped location is shorter than the query
+    V,41,VariationException:code:split-mapping,7
+    --a source interval maps to multiple non-abutting intervals.
+    V,42,VariationException:code:mismatches-in-mapping,8
+    --the source sequence differs from sequence at mapped loc
+    V,43,VariationException:code:inconsistent-asserted-moltype,9
+    --asserted mol-type is inconsistent with seq-id (e.g. NM_12345.6:g.)
+    V,44,VariationException:code:bioseq-state,10
+    V,45,VariationException:code:ambiguous-sequence,11
+    V,46,VariationException:code:ref-same-as-variant,12
+    --reference sequence at the location is same as variant sequence in the variation
+    V,47,VariationException:code:seqfetch-too-long,13
+    --can't fetch sequence because location is longer than specified threshold
+    V,48,VariationException:code:seqfetch-intronic,14
+    --can't fetch sequence for an intronic (anchor+offset)-based location
+    V,49,VariationException:code:seqfetch-invalid,15
+    --can't fetch sequence because location is invalid (e.g. extends past the end)
+    V,50,VariationException:code:no-mapping-from-newer-version,16
+    --have mapping from older version of a sequence, but not from newer
+    V,51,VariationException:code:source-location-overhang,17
+    --The source location overhangs the alignment by at least 5kb (VAR-1307)
+    V,52,VariationException:code:hgvs-exon-boundary-induced,18
+    --Similar to (2), except induced by 5'/3'-terminal or an exon extension (VAR-1309)
+  F,55,VariationException:message,VisibleString
+
+T,58,VariantPlacement,SEQUENCE
+  F,61,VariantPlacement:loc,/Seq-loc
+  -- actual concrete placement we are considering
+  F,63,VariantPlacement:mol,INTEGER
+    V,64,VariantPlacement:mol:unknown,0
+    V,65,VariantPlacement:mol:genomic,1
+    --"g." coordinates in HGVS
+    V,66,VariantPlacement:mol:cdna,2
+    --"c." coordinates in HGVS
+    V,67,VariantPlacement:mol:rna,3
+    --"n." coordinates in HGVS
+    V,68,VariantPlacement:mol:protein,4
+    --"p." coordinates in HGVS
+    V,69,VariantPlacement:mol:mitochondrion,5
+    --"mt." coordinates in HGVS
+  F,73,VariantPlacement:placement-method,INTEGER,OPTIONAL
+  -- location flags
+    V,74,VariantPlacement:placement-method:projected,1
+    V,75,VariantPlacement:placement-method:asserted,2
+    V,76,VariantPlacement:placement-method:aligned,3
+  F,82,VariantPlacement:start-offset,INTEGER,OPTIONAL
+  -- location refinements, describing offsets into introns from product coordinates.
+  -- Biological semantics: start-offset/stop-offset apply to bio-start/bio-stop respectively.
+  -- positive = downstream; negative = upstream.
+  F,83,VariantPlacement:start-offset-fuzz,/Int-fuzz,OPTIONAL
+  F,84,VariantPlacement:stop-offset,INTEGER,OPTIONAL
+  F,85,VariantPlacement:stop-offset-fuzz,/Int-fuzz,OPTIONAL
+  F,88,VariantPlacement:frame,INTEGER,OPTIONAL
+  -- 0-based position of bio-start relative to containing codon
+  F,91,VariantPlacement:seq,/Seq-literal,OPTIONAL
+  -- for situations in which a raw location isn't sufficient
+  F,94,VariantPlacement:assembly,/Dbtag,OPTIONAL
+  -- reference to the assembly (GenColl ID) for this location
+  F,96,VariantPlacement:hgvs-name,VisibleString,OPTIONAL
+  F,99,VariantPlacement:comment,VisibleString,OPTIONAL
+  -- the reference location for this variant
+  F,101,VariantPlacement:exceptions,SET /VariationException,OPTIONAL
+  F,103,VariantPlacement:dbxrefs,SET /Dbtag,OPTIONAL
+  --e.g. rs#, that are placement-specific
+  F,105,VariantPlacement:ext,SET /User-object,OPTIONAL
+  --for process-specific placement tags/labels
+  F,107,VariantPlacement:gene-location,INTEGER,OPTIONAL
+  --Same semantics as VariantProperties.gene-location, except placement-specific
+  F,109,VariantPlacement:id,/Object-id,OPTIONAL
+  F,110,VariantPlacement:parent-id,/Object-id,OPTIONAL
+  --id of the placement from which this one was derived
+  F,112,VariantPlacement:so-terms,SEQUENCE INTEGER,OPTIONAL
+  --Sequence Ontology terms for this placement
+
+T,115,VariationMethod,SEQUENCE
+  F,118,VariationMethod:method,SET INTEGER
+  -- sequencing / acuisition method
+    V,119,VariationMethod:method::unknown,0
+    V,120,VariationMethod:method::bac-acgh,1
+    V,121,VariationMethod:method::computational,2
+    V,122,VariationMethod:method::curated,3
+    V,123,VariationMethod:method::digital-array,4
+    V,124,VariationMethod:method::expression-array,5
+    V,125,VariationMethod:method::fish,6
+    V,126,VariationMethod:method::flanking-sequence,7
+    V,127,VariationMethod:method::maph,8
+    V,128,VariationMethod:method::mcd-analysis,9
+    V,129,VariationMethod:method::mlpa,10
+    V,130,VariationMethod:method::oea-assembly,11
+    V,131,VariationMethod:method::oligo-acgh,12
+    V,132,VariationMethod:method::paired-end,13
+    V,133,VariationMethod:method::pcr,14
+    V,134,VariationMethod:method::qpcr,15
+    V,135,VariationMethod:method::read-depth,16
+    V,136,VariationMethod:method::roma,17
+    V,137,VariationMethod:method::rt-pcr,18
+    V,138,VariationMethod:method::sage,19
+    V,139,VariationMethod:method::sequence-alignment,20
+    V,140,VariationMethod:method::sequencing,21
+    V,141,VariationMethod:method::snp-array,22
+    V,142,VariationMethod:method::snp-genoytyping,23
+    V,143,VariationMethod:method::southern,24
+    V,144,VariationMethod:method::western,25
+    V,145,VariationMethod:method::optical-mapping,26
+    V,147,VariationMethod:method::other,255
+  F,152,VariationMethod:reference-location,/Seq-loc,OPTIONAL
+  -- if sequence-based validation methods are used,
+  -- what reference sequence location validated the presence of this?
+
+T,156,Variation,SEQUENCE
+  F,165,Variation:id,/Dbtag,OPTIONAL
+  -- ids (i.e., SNP rsid / ssid, dbVar nsv/nssv)
+  -- expected values include 'dbSNP|rs12334', 'dbSNP|ss12345', 'dbVar|nsv1'
+  --
+  -- we relate three kinds of IDs here:
+  --  - our current object's id
+  --  - the id of this object's parent, if it exists
+  --  - the sample ID that this item originates from
+  F,166,Variation:parent-id,/Dbtag,OPTIONAL
+  F,167,Variation:sample-id,SET /Object-id,OPTIONAL
+  F,168,Variation:other-ids,SET /Dbtag,OPTIONAL
+  F,173,Variation:name,VisibleString,OPTIONAL
+  -- names and synonyms
+  -- some variants have well-known canonical names and possible accepted
+  -- synonyms
+  F,174,Variation:synonyms,SET VisibleString,OPTIONAL
+  F,177,Variation:description,VisibleString,OPTIONAL
+  -- tag for comment and descriptions
+  F,182,Variation:placements,SEQUENCE /VariantPlacement,OPTIONAL
+  -- where this beast is seen
+  -- note that this is a set of locations, and there are no restrictions to
+  -- the contents to this set. 
+  F,185,Variation:phenotype,SET /Phenotype,OPTIONAL
+  -- phenotype
+  F,188,Variation:method,/VariationMethod,OPTIONAL
+  -- sequencing / acuisition method
+  F,198,Variation:population-data,SET /Population-data,OPTIONAL
+  -- Note about SNP representation and pretinent fields: allele-frequency,
+  -- population, quality-codes:
+  -- The case of multiple alleles for a SNP would be described by
+  -- parent-feature of type Variation-set.diff-alleles, where the child
+  -- features of type Variation-inst, all at the same location, would
+  -- describe individual alleles.
+  -- population data
+  F,201,Variation:variant-prop,/VariantProperties,OPTIONAL
+  -- variant properties bit fields
+  F,204,Variation:pub,/Pub-set,OPTIONAL
+  -- publication support; same type as in seq-feat
+  F,207,Variation:clinical-test,/Dbtag,OPTIONAL
+  -- References to external 
+  F,209,Variation:data,CHOICE
+    F,210,Variation:data:unknown,NULL
+    F,211,Variation:data:note,VisibleString
+    --free-form
+    F,212,Variation:data:uniparental-disomy,NULL
+    F,215,Variation:data:instance,/Variation-inst
+    -- actual sequence-edit at feat.location
+    F,219,Variation:data:set,SEQUENCE
+    -- Set of related Variations.
+    -- Location of the set equals to the union of member locations
+      F,220,Variation:data:set:type,INTEGER
+        V,221,Variation:data:set:type:unknown,0
+        V,222,Variation:data:set:type:compound,1
+        -- complex change at the same location on the
+        -- same molecule
+        V,224,Variation:data:set:type:products,2
+        -- different products arising from the same
+        -- variation in a precursor, e.g. r.[13g>a,
+        -- 13_88del]
+        V,227,Variation:data:set:type:haplotype,3
+        -- changes on the same allele, e.g
+        -- r.[13g>a;15u>c]
+        V,229,Variation:data:set:type:genotype,4
+        -- changes on different alleles in the same
+        -- genotype, e.g. g.[476C>T]+[476C>T]
+        V,231,Variation:data:set:type:mosaic,5
+        -- different genotypes in the same individual
+        V,232,Variation:data:set:type:individual,6
+        -- same organism; allele relationship unknown,
+        -- e.g. g.[476C>T(+)183G>C]
+        V,234,Variation:data:set:type:population,7
+        -- population
+        V,235,Variation:data:set:type:alleles,8
+        -- set represents a set of observed alleles
+        V,236,Variation:data:set:type:package,9
+        -- set represents a package of observations at
+        -- a given location, generally containing
+        -- asserted + reference
+        V,239,Variation:data:set:type:chimeric,10
+        -- e.g. c.[1C>T//2G>T]
+        V,240,Variation:data:set:type:other,255
+      F,242,Variation:data:set:variations,SET /Variation
+      F,243,Variation:data:set:name,VisibleString,OPTIONAL
+    F,248,Variation:data:complex,NULL
+    -- variant is a complex and undescribed change at the location
+    -- This type of variant is known to occur in dbVar submissions
+    F,250,Variation:data:seq,/Bioseq
+    -- Sequnece as it exists post-alteration
+  F,253,Variation:consequence,SET CHOICE,OPTIONAL
+    F,254,Variation:consequence:unknown,NULL
+    F,255,Variation:consequence:splicing,NULL
+    --some effect on splicing
+    F,256,Variation:consequence:note,VisibleString
+    --freeform
+    F,261,Variation:consequence:variation,/Variation
+    -- Describe resulting variation in the product, e.g. missense,
+    -- nonsense, silent, neutral, etc in a protein, that arises from
+    -- THIS variation.
+    F,263,Variation:consequence:loss-of-heterozygosity,SEQUENCE
+      F,267,Variation:consequence:loss-of-heterozygosity:reference,VisibleString,OPTIONAL
+      -- In germline comparison, it will be reference genome assembly
+      -- (default) or reference/normal population. In somatic mutation,
+      -- it will be a name of the normal tissue.
+      F,270,Variation:consequence:loss-of-heterozygosity:test,VisibleString,OPTIONAL
+      -- Name of the testing subject type or the testing tissue.
+  F,276,Variation:frameshift,SEQUENCE,OPTIONAL
+  -- Frameshift-related info. Applies only to protein-level variations.
+  -- see http://www.hgvs.org/mutnomen/recs-prot.html
+    F,277,Variation:frameshift:phase,INTEGER,OPTIONAL
+    F,278,Variation:frameshift:x-length,INTEGER,OPTIONAL
+  F,282,Variation:ext,SET /User-object,OPTIONAL
+  -- Additional undescribed extensions
+  F,284,Variation:somatic-origin,SET SEQUENCE,OPTIONAL
+    F,286,Variation:somatic-origin:source,/SubSource,OPTIONAL
+    -- description of the somatic origin itself
+    F,288,Variation:somatic-origin:condition,SEQUENCE,OPTIONAL
+    -- condition related to this origin's type
+      F,289,Variation:somatic-origin:condition:description,VisibleString,OPTIONAL
+      F,291,Variation:somatic-origin:condition:object-id,SET /Dbtag,OPTIONAL
+      -- reference to BioTerm / other descriptive database
+  F,295,Variation:exceptions,SET /VariationException,OPTIONAL
+  F,297,Variation:so-terms,SET INTEGER,OPTIONAL

@@ -1,0 +1,12 @@
+#include <objects/seqtable/BVector_data.hpp>
+#include <objects/seqtable/CommonBytes_table.hpp>
+#include <objects/seqtable/CommonString_table.hpp>
+#include <objects/seqtable/Scaled_int_multi_data.hpp>
+#include <objects/seqtable/Scaled_real_multi_data.hpp>
+#include <objects/seqtable/SeqTable_column.hpp>
+#include <objects/seqtable/SeqTable_column_info.hpp>
+#include <objects/seqtable/SeqTable_multi_data.hpp>
+#include <objects/seqtable/SeqTable_single_data.hpp>
+#include <objects/seqtable/SeqTable_sparse_index.hpp>
+#include <objects/seqtable/Seq_table.hpp>
+#include <objects/seqtable/NCBI_SeqTable_module.hpp>

@@ -1,0 +1,11 @@
+make[4]: Entering directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/build/objects/trackmgr'
+Updating dependency information for /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objects/trackmgr/trackmgr_client_.cpp.
+Updating dependency information for /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objects/trackmgr/trackmgr_client.cpp.
+/usr/bin/ccache /usr/bin/g++  -std=gnu++11 -c  -Wall -Wno-format-y2k  -pthread -fopenmp -O2 -fPIC   -DNDEBUG -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE   -D_MT -D_REENTRANT -D_THREAD_SAFE -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/inc -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/include  -fdiagnostics-color=always /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objects/trackmgr/trackmgr_client.cpp -o trackmgr_client.o 
+/usr/bin/ccache /usr/bin/g++  -std=gnu++11 -c  -Wall -Wno-format-y2k  -pthread -fopenmp -O2 -fPIC   -DNDEBUG -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE   -D_MT -D_REENTRANT -D_THREAD_SAFE -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/inc -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/include  -fdiagnostics-color=always /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objects/trackmgr/trackmgr_client_.cpp -o trackmgr_client_.o 
+/bin/rm -f libtrackmgrcli.a .libtrackmgrcli.a.stamp
+ar cr libtrackmgrcli.a trackmgr_client.o trackmgr_client_.o  
+/bin/bash /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/scripts/common/impl/if_diff.sh /bin/ln -f libtrackmgrcli.a /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib
+/bin/ln -f libtrackmgrcli.a /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib/libtrackmgrcli.a
+/bin/ln -f .trackmgrcli.dep /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/status/.trackmgrcli.dep
+make[4]: Leaving directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/build/objects/trackmgr'

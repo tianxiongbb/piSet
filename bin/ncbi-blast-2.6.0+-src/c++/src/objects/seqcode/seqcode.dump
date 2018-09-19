@@ -1,0 +1,89 @@
+M,25,seqcode.asn:NCBI-SeqCode
+--$Revision: 96973 $
+--  *********************************************************************
+--
+--  These are code and conversion tables for NCBI sequence codes
+--  ASN.1 for the sequences themselves are define in seq.asn
+--
+--  Seq-map-table and Seq-code-table REQUIRE that codes start with 0
+--    and increase continuously.  So IUPAC codes, which are upper case
+--    letters will always have 65 0 cells before the codes begin.  This
+--    allows all codes to do indexed lookups for things
+--
+--  Valid names for code tables are:
+--    IUPACna
+--    IUPACaa
+--    IUPACeaa
+--    IUPACaa3     3 letter amino acid codes : parallels IUPACeaa
+--                   display only, not a data exchange type
+--    NCBI2na
+--    NCBI4na
+--    NCBI8na
+--    NCBI8aa
+--    NCBIstdaa
+--     probability types map to IUPAC types for display as characters
+  T,30,NCBI-SeqCode:Seq-code-type
+  T,43,NCBI-SeqCode:Seq-map-table
+  T,50,NCBI-SeqCode:Seq-code-table
+  T,61,NCBI-SeqCode:Seq-code-set
+
+T,30,Seq-code-type,ENUMERATED
+-- sequence representations
+  V,31,Seq-code-type:iupacna,1
+  -- IUPAC 1 letter nuc acid code
+  V,32,Seq-code-type:iupacaa,2
+  -- IUPAC 1 letter amino acid code
+  V,33,Seq-code-type:ncbi2na,3
+  -- 2 bit nucleic acid code
+  V,34,Seq-code-type:ncbi4na,4
+  -- 4 bit nucleic acid code
+  V,35,Seq-code-type:ncbi8na,5
+  -- 8 bit extended nucleic acid code
+  V,36,Seq-code-type:ncbipna,6
+  -- nucleic acid probabilities
+  V,37,Seq-code-type:ncbi8aa,7
+  -- 8 bit extended amino acid codes
+  V,38,Seq-code-type:ncbieaa,8
+  -- extended ASCII 1 letter aa codes
+  V,39,Seq-code-type:ncbipaa,9
+  -- amino acid probabilities
+  V,40,Seq-code-type:iupacaa3,10
+  -- 3 letter code only for display
+  V,41,Seq-code-type:ncbistdaa,11
+  -- consecutive codes for std aas, 0-25
+
+T,43,Seq-map-table,SEQUENCE
+-- for tables of sequence mappings 
+  F,44,Seq-map-table:from,/Seq-code-type
+  -- code to map from
+  F,45,Seq-map-table:to,/Seq-code-type
+  -- code to map to
+  F,46,Seq-map-table:num,INTEGER
+  -- number of rows in table
+  F,47,Seq-map-table:start-at,INTEGER,DEFAULT,0
+  -- index offset of first element
+  F,48,Seq-map-table:table,SEQUENCE INTEGER
+  -- table of values, in from-to order
+
+T,50,Seq-code-table,SEQUENCE
+-- for names of coded values
+  F,51,Seq-code-table:code,/Seq-code-type
+  -- name of code
+  F,52,Seq-code-table:num,INTEGER
+  -- number of rows in table
+  F,53,Seq-code-table:one-letter,BOOLEAN
+  -- symbol is ALWAYS 1 letter?
+  F,54,Seq-code-table:start-at,INTEGER,DEFAULT,0
+  -- index offset of first element
+  F,55,Seq-code-table:table,SEQUENCE SEQUENCE
+  -- an explanatory name or string
+    F,57,Seq-code-table:table:symbol,VisibleString
+    -- the printed symbol or letter
+    F,58,Seq-code-table:table:name,VisibleString
+  F,59,Seq-code-table:comps,SEQUENCE INTEGER,OPTIONAL
+  -- pointers to complement nuc acid
+
+T,61,Seq-code-set,SEQUENCE
+-- for distribution
+  F,62,Seq-code-set:codes,SET /Seq-code-table,OPTIONAL
+  F,63,Seq-code-set:maps,SET /Seq-map-table,OPTIONAL

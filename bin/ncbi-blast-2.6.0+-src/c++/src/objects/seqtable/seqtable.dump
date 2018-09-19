@@ -1,0 +1,301 @@
+M,31,seqtable.asn:NCBI-SeqTable
+--$Revision: 457991 $
+--  
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--                            PUBLIC DOMAIN NOTICE
+--                National Center for Biotechnology Information
+--
+--  This software/database is a "United States Government Work" under the terms
+--  of the United States Copyright Act.  It was written as part of the author's
+--  official duties as a United States Government employee and thus cannot be
+--  copyrighted.  This software/database is freely available to the public for
+--  use.  The National Library of Medicine and the U.S. Government have not
+--  placed any restriction on its use or reproduction.
+--
+--  Although all reasonable efforts have been taken to ensure the accuracy and
+--  reliability of the software and data, the NLM and the U.S. Government do not
+--  and cannot warrant the performance or results that may be obtained by using
+--  this software or data.  The NLM and the U.S. Government disclaim all
+--  warranties, express or implied, including warranties of performance,
+--  merchantability or fitness for any particular purpose.
+--
+--  Please cite the authors in any work or product based on this material.
+--
+--  
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--  Authors: Mike DiCuccio, Eugene Vasilchenko
+--
+--  ASN.1 interface to table readers
+--
+--  
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+  T,42,NCBI-SeqTable:SeqTable-column-info
+  T,113,NCBI-SeqTable:CommonString-table
+  T,122,NCBI-SeqTable:CommonBytes-table
+  T,131,NCBI-SeqTable:Scaled-int-multi-data
+  T,144,NCBI-SeqTable:Scaled-real-multi-data
+  T,155,NCBI-SeqTable:BVector-data
+  T,161,NCBI-SeqTable:SeqTable-multi-data
+  T,213,NCBI-SeqTable:SeqTable-single-data
+  T,238,NCBI-SeqTable:SeqTable-sparse-index
+  T,255,NCBI-SeqTable:SeqTable-column
+  T,273,NCBI-SeqTable:Seq-table
+
+T,42,SeqTable-column-info,SEQUENCE
+  F,44,SeqTable-column-info:title,VisibleString,OPTIONAL
+  -- user friendly column name, can be skipped
+  F,47,SeqTable-column-info:field-id,INTEGER,OPTIONAL
+  -- identification of the column data in the objects described by the table
+  -- known column data types
+  -- position types
+    V,49,SeqTable-column-info:field-id:location,0
+    -- location as Seq-loc
+    V,50,SeqTable-column-info:field-id:location-id,1
+    -- location Seq-id
+    V,51,SeqTable-column-info:field-id:location-gi,2
+    -- gi
+    V,52,SeqTable-column-info:field-id:location-from,3
+    -- interval from
+    V,53,SeqTable-column-info:field-id:location-to,4
+    -- interval to
+    V,54,SeqTable-column-info:field-id:location-strand,5
+    -- location strand
+    V,55,SeqTable-column-info:field-id:location-fuzz-from-lim,6
+    V,56,SeqTable-column-info:field-id:location-fuzz-to-lim,7
+    V,58,SeqTable-column-info:field-id:product,10
+    -- product as Seq-loc
+    V,59,SeqTable-column-info:field-id:product-id,11
+    -- product Seq-id
+    V,60,SeqTable-column-info:field-id:product-gi,12
+    -- product gi
+    V,61,SeqTable-column-info:field-id:product-from,13
+    -- product interval from
+    V,62,SeqTable-column-info:field-id:product-to,14
+    -- product interval to
+    V,63,SeqTable-column-info:field-id:product-strand,15
+    -- product strand
+    V,64,SeqTable-column-info:field-id:product-fuzz-from-lim,16
+    V,65,SeqTable-column-info:field-id:product-fuzz-to-lim,17
+    V,68,SeqTable-column-info:field-id:id-local,20
+    -- main feature fields
+    -- id.local.id
+    V,69,SeqTable-column-info:field-id:xref-id-local,21
+    -- xref.id.local.id
+    V,70,SeqTable-column-info:field-id:partial,22
+    V,71,SeqTable-column-info:field-id:comment,23
+    V,72,SeqTable-column-info:field-id:title,24
+    V,73,SeqTable-column-info:field-id:ext,25
+    -- field-name must be "E.xxx", see below
+    V,74,SeqTable-column-info:field-id:qual,26
+    -- field-name must be "Q.xxx", see below
+    V,75,SeqTable-column-info:field-id:dbxref,27
+    -- field-name must be "D.xxx", see below
+    V,78,SeqTable-column-info:field-id:data-imp-key,30
+    -- various data fields
+    V,79,SeqTable-column-info:field-id:data-region,31
+    V,80,SeqTable-column-info:field-id:data-cdregion-frame,32
+    V,83,SeqTable-column-info:field-id:ext-type,40
+    -- extra fields, see also special values for str below
+    V,84,SeqTable-column-info:field-id:qual-qual,41
+    V,85,SeqTable-column-info:field-id:qual-val,42
+    V,86,SeqTable-column-info:field-id:dbxref-db,43
+    V,87,SeqTable-column-info:field-id:dbxref-tag,44
+  F,109,SeqTable-column-info:field-name,VisibleString,OPTIONAL
+  -- any column can be identified by ASN.1 text locator string
+  -- with omitted object type.
+  -- examples:
+  --   "data.gene.locus" for Seq-feat.data.gene.locus
+  --   "data.imp.key" for Seq-feat.data.imp.key
+  --   "qual.qual"
+  --    - Seq-feat.qual is SEQUENCE so several columns are allowed
+  --      see also "Q.xxx" special value for shorter qual representation
+  --   "ext.type.str"
+  --   "ext.data.label.str"
+  --   "ext.data.data.int"
+  --      see also "E.xxx" special value for shorter ext representation
+  -- special values start with capital letter:
+  --   "E.xxx" - ext.data.label.str = xxx, ext.data.data = data
+  --    - Seq-feat.ext.data is SEQUENCE so several columns are allowed
+  --   "Q.xxx" - qual.qual = xxx, qual.val = data
+  --    - Seq-feat.qual is SEQUENCE so several columns are allowed
+  --   "D.xxx" - dbxref.id = xxx, dbxref.tag = data
+  --    - Seq-feat.dbxref is SET so several columns are allowed
+
+T,113,CommonString-table,SEQUENCE
+  F,115,CommonString-table:strings,SEQUENCE UTF8String
+  -- set of possible values
+  F,118,CommonString-table:indexes,SEQUENCE INTEGER
+  -- indexes of values in array 'strings' for each data row
+
+T,122,CommonBytes-table,SEQUENCE
+  F,124,CommonBytes-table:bytes,SEQUENCE OCTET STRING
+  -- set of possible values
+  F,127,CommonBytes-table:indexes,SEQUENCE INTEGER
+  -- indexes of values in array 'bytes' for each data row
+
+T,131,Scaled-int-multi-data,SEQUENCE
+  F,133,Scaled-int-multi-data:mul,INTEGER
+  -- output data[i] = data[i]*mul+add
+  F,134,Scaled-int-multi-data:add,INTEGER
+  F,135,Scaled-int-multi-data:data,/SeqTable-multi-data
+  F,139,Scaled-int-multi-data:min,INTEGER,OPTIONAL
+  -- min/max scaled value
+  -- should be set if scaled values may not fit in 32-bit signed integer
+  F,140,Scaled-int-multi-data:max,INTEGER,OPTIONAL
+
+T,144,Scaled-real-multi-data,SEQUENCE
+  F,146,Scaled-real-multi-data:mul,REAL
+  -- output data[i] = data[i]*mul+add
+  F,147,Scaled-real-multi-data:add,REAL
+  F,148,Scaled-real-multi-data:data,/SeqTable-multi-data
+
+T,155,BVector-data,SEQUENCE
+-- Class for serializing bm::bvector<>
+-- see include/util/bitset/bm.h
+-- Since bvector<> serialization doesn't keep size we have to add it explicitly
+  F,156,BVector-data:size,INTEGER
+  F,157,BVector-data:data,OCTET STRING
+
+T,161,SeqTable-multi-data,CHOICE
+  F,163,SeqTable-multi-data:int,SEQUENCE INTEGER
+  -- a set of 4-byte integers, one per row
+  F,166,SeqTable-multi-data:real,SEQUENCE REAL
+  -- a set of reals, one per row
+  F,169,SeqTable-multi-data:string,SEQUENCE UTF8String
+  -- a set of strings, one per row
+  F,172,SeqTable-multi-data:bytes,SEQUENCE OCTET STRING
+  -- a set of byte arrays, one per row
+  F,175,SeqTable-multi-data:common-string,/CommonString-table
+  -- a set of string with small set of possible values
+  F,178,SeqTable-multi-data:common-bytes,/CommonBytes-table
+  -- a set of byte arrays with small set of possible values
+  F,182,SeqTable-multi-data:bit,OCTET STRING
+  -- a set of bits, one per row
+  -- Most-significant bit in each octet comes first.
+  F,185,SeqTable-multi-data:loc,SEQUENCE /Seq-loc
+  -- a set of locations, one per row
+  F,186,SeqTable-multi-data:id,SEQUENCE /Seq-id
+  F,187,SeqTable-multi-data:interval,SEQUENCE /Seq-interval
+  F,190,SeqTable-multi-data:int-delta,/SeqTable-multi-data
+  -- delta-encoded data (int/bit -> int)
+  F,193,SeqTable-multi-data:int-scaled,/Scaled-int-multi-data
+  -- scaled data (int/bit -> int)
+  F,196,SeqTable-multi-data:real-scaled,/Scaled-real-multi-data
+  -- scaled data (int/bit -> real)
+  F,200,SeqTable-multi-data:bit-bvector,/BVector-data
+  -- a set of bit, represented as serialized bvector,
+  -- see include/util/bitset/bm.h
+  F,203,SeqTable-multi-data:int1,OCTET STRING
+  -- a set of signed 1-byte integers encoded as sequential octets
+  F,206,SeqTable-multi-data:int2,SEQUENCE INTEGER
+  -- a set of signed 2-byte integers
+  F,209,SeqTable-multi-data:int8,SEQUENCE INTEGER
+  -- a set of signed 8-byte integers
+
+T,213,SeqTable-single-data,CHOICE
+  F,215,SeqTable-single-data:int,INTEGER
+  -- integer
+  F,218,SeqTable-single-data:real,REAL
+  -- real
+  F,221,SeqTable-single-data:string,UTF8String
+  -- string
+  F,224,SeqTable-single-data:bytes,OCTET STRING
+  -- byte array
+  F,227,SeqTable-single-data:bit,BOOLEAN
+  -- bit
+  F,230,SeqTable-single-data:loc,/Seq-loc
+  -- location
+  F,231,SeqTable-single-data:id,/Seq-id
+  F,232,SeqTable-single-data:interval,/Seq-interval
+  F,234,SeqTable-single-data:int8,INTEGER
+
+T,238,SeqTable-sparse-index,CHOICE
+  F,240,SeqTable-sparse-index:indexes,SEQUENCE INTEGER
+  -- Indexes of rows with values
+  F,244,SeqTable-sparse-index:bit-set,OCTET STRING
+  -- Bitset of rows with values, set bit means the row has value.
+  -- Most-significant bit in each octet comes first.
+  F,247,SeqTable-sparse-index:indexes-delta,SEQUENCE INTEGER
+  -- Indexes of rows with values, delta-encoded
+  F,251,SeqTable-sparse-index:bit-set-bvector,/BVector-data
+  -- Bitset of rows with values, as serialized bvector<>,
+  -- see include/util/bitset/bm.h
+
+T,255,SeqTable-column,SEQUENCE
+  F,257,SeqTable-column:header,/SeqTable-column-info
+  -- column description or reference to previously defined info
+  -- information about data
+  F,260,SeqTable-column:data,/SeqTable-multi-data,OPTIONAL
+  -- row data
+  F,263,SeqTable-column:sparse,/SeqTable-sparse-index,OPTIONAL
+  -- in case not all rows contain data this field will contain sparse info
+  F,266,SeqTable-column:default,/SeqTable-single-data,OPTIONAL
+  -- default value for sparse table, or if row data is too short
+  F,269,SeqTable-column:sparse-other,/SeqTable-single-data,OPTIONAL
+  -- single value for indexes not listed in sparse table
+
+T,273,Seq-table,SEQUENCE
+  F,275,Seq-table:feat-type,INTEGER
+  -- type of features in this table, equal to Seq-feat.data variant index
+  F,278,Seq-table:feat-subtype,INTEGER,OPTIONAL
+  -- subtype of features in this table, defined in header SeqFeatData.hpp
+  F,281,Seq-table:num-rows,INTEGER
+  -- number of rows
+  F,284,Seq-table:columns,SEQUENCE /SeqTable-column
+  -- data in columns

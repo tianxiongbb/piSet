@@ -1,0 +1,44 @@
+#
+# Filename: Manifest
+#
+# $Id: Manifest 508788 2016-08-01 16:12:18Z fukanchi $
+#
+# Author: Sergey Satskiy
+#
+# Purpose: This file holds all the supported configurations of a package
+#          It is used by release configurator.
+#
+
+APP: project_tree_builder
+# APP: test_ncbi_disp -- not now
+
+# The -t key prevents inclusion of the tree builder into the release
+# SVN_TAG_RELEASE_ADD_FLAGS: -t
+
+# Each line describes a single configuration
+# The format is as follows:
+# <HardwareIdentifier> : <ReleaseSuffix> : <CompilerConfigurationScriptWithKeys>
+# Configuration script is relative to c++/compilers/unix/ .
+# Release configurator assumes that this script will eventually call standard configure script and pass all options
+# to it. So some standard options may be added by release configurator, such as --build-root-sfx, --with-projects,
+# --with-distcc, --with-action etc.
+
+#Linux32-Centos    : plain : ICC.sh           --without-debug --without-mt --with-static --without-runpath --with-flat-makefile --without-ncbi-c
+#Linux32-Centos    : plain : GCC.sh           --without-debug --without-mt --with-static --without-runpath --with-flat-makefile --without-ncbi-c
+#Linux32-Centos    : debug : GCC.sh           --with-debug    --without-mt --with-static --without-runpath --with-flat-makefile --without-ncbi-c
+
+#Linux64-Centos    : plain : ICC.sh           --without-debug --without-mt --with-static --without-runpath --with-flat-makefile --without-ncbi-c
+Linux64-Centos    : plain : GCC.sh           --without-debug --without-mt --with-static --without-runpath --with-flat-makefile --without-ncbi-c
+
+Linux64-Ubuntu    : plain : GCC.sh           --without-debug --without-mt --with-static --without-runpath --with-flat-makefile --without-ncbi-c
+
+FreeBSD64  : plain : Clang.sh           --without-debug --without-mt --with-static --without-runpath --with-flat-makefile --without-ncbi-c --without-pcre
+
+IntelMAC   : plain : GCC.sh           --without-debug --without-mt --with-static --without-runpath --with-flat-makefile --without-ncbi-c
+
+Win32_13    : msvc-13-static-32 : static  32  ReleaseMT
+
+XCode      : plain  : Xcode.sh 30 --without-debug --without-ncbi-c
+
+USE_COMPONENTS
+

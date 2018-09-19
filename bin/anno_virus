@@ -1,0 +1,129 @@
+#!/bin/bash
+
+# function
+function checkTools(){
+	if [ `which $1` ];then
+		echo0 3 "$1: `which $1`"
+	else
+		echo0 0 "$1 not found, please install it or add it into your PATH!"
+		exit 1
+	fi
+}
+
+# help infomation
+help_info(){
+	echo0 1 `readlink -f $0`
+	echo0 1 "\t-l <file>\tleft RNA sequencing fastq file"
+	echo0 1 "\t-r <file>\tright RNA sequencing fastq file"
+	echo0 1 "\t-g <genome>\tgenome used for anno_virus"
+	echo0 4 "optional:"
+	echo0 1 "\t-p <dir/name>\tprefix name with dir name for output. default: ./anno_virus"
+	echo0 1 "\t-i <index>\tSTAR index for genome mapping to remove genome sequence. default: genome/STARIndex"
+	echo0 1 "\t-d <database>\tdiamond blastp database for all annotated virus. default: common/diamond_database/virus"
+	echo0 1 "\t-D <database>\tdiamond blastp database for all nonredundant sequences default: common/diamond_database/nonredundant"
+	echo0 1 "\t-m <int>\tmismatch of genome mapping. default: 1"
+	echo0 1 "\t-c <int>\tCPU used for anno_virus. default: 1"
+	echo0 1 "\t-M <1-100G>\tmemory used for anno_virus. default: 20G"
+}
+
+if [ $# -lt 2 ];then
+	help_info
+	exit 1
+fi
+
+# parameters
+PATH_PROG=`dirname $0`
+PATH_ANNO=${PATH_PROG%/bin}/annotation
+PREFIX=./anno_virus
+MISMATCH=1
+CPU=1
+MEMORY=20G
+
+while getopts "hl:r:i:p:m:c:d:M:f:D:" OPTION; do
+	case $OPTION in
+		h)	help_info && exit 1;;
+		l)	LEFT=`readlink -f ${OPTARG}`;;
+		r)	RIGHT=`readlink -f ${OPTARG}`;;
+		g)	GENOME=${OPTARG};;
+		i)	INDEX=`readlink -f ${OPTARG}`;;
+		d)	DATABASE=`readlink -f ${OPTARG}`;;
+		D)	DATABASE1=`readlink -f ${OPTARG}`;;
+		p)	PREFIX=${OPTARG};;
+		m)	MISMATCH=${OPTARG};;
+		c)	CPU=${OPTARG};;
+		M)	MEMORY=${OPTARG};;
+		*)	help_info && exit 1;;
+	esac
+done
+
+# check parameters
+echo0 1 "check parameters"
+[ -z ${LEFT} ] && echo0 0 "please provide left RNAseq file via -l" && exit 1
+[ -z ${RIGHT} ] && echo0 0 "please provide left RNAseq file via -r" && exit 1
+[ -z ${INDEX} ] && INDEX=${PATH_ANNO}/${GENOME}/STARIndex
+[ -z ${DATABASE} ] && echo0 0 "please provide diamond virus database via -d" && exit 1
+[ -z ${DATABASE1} ] && echo0 0 "please provide diamond nonredundant database via -D" && exit 1
+[ ! -f ${LEFT} ] && echo0 0 "no file in ${LEFT}" && exit 1
+[ ! -f ${RIGHT} ] && echo0 0 "no file in ${RIGHT}" && exit 1
+[ ! -f ${INDEX}/Genome ] && echo0 0 "no STAR index ${INDEX}" && exit 1
+[ ! -f ${DATABASE}.dmnd ] && echo0 0 "no diamond database in ${DATABASE}" && exit 1
+[ ! -f ${DATABASE1}.dmnd ] && echo0 0 "no diamond database in ${DATABASE1}" && exit 1
+OUTDIR=`dirname ${PREFIX}`
+[ ! -d ${OUTDIR} ] && echo0 4 "make drectory ${OUTDIR}" && mkdir -p ${OUTDIR}
+PREFIX=`readlink -f ${PREFIX}`
+echo0 1 "OK"
+
+# check tools
+echo0 1 "check tools"
+checkTools STAR
+echo0 1 "OK"
+
+######################
+### program here ###
+######################
+
+# run STAR mapping
+echo0 2 "mapping to genome via STAR......"
+STAR --genomeDir ${INDEX} --runThreadN ${CPU} --readFilesIn ${LEFT} ${RIGHT} --outFileNamePrefix ${PREFIX} --outFilterMismatchNmax ${MISMATCH} --outFilterMultimapNmax 1000 --outSAMattributes All --outFilterIntronMotifs RemoveNoncanonicalUnannotated --outReadsUnmapped Fastx > ${PREFIX}.STAR.log 2>&1 || (echo0 0 "mapping to genome via STAR error, please check ${PREFIX}.STAR.log" && exit 1)
+TIME_STAR=${SECONDS}
+SECONDS=0
+
+# run Trinity
+echo0 2 "prepare unmapped.fq......"
+awk 'BEGIN{FS=OFS="\t"} {if(NR%4==1){print $1"/1"}else{print $0}}' ${PREFIX}Unmapped.out.mate1 > ${PREFIX}Unmapped.1.fq
+awk 'BEGIN{FS=OFS="\t"} {if(NR%4==1){print $1"/2"}else{print $0}}' ${PREFIX}Unmapped.out.mate2 > ${PREFIX}Unmapped.2.fq
+echo0 2 "run Trinity to denovo construct unmapped transcripts......"
+${PATH_PROG}/trinity-2.5.1-1/bin/Trinity --seqType fq --left ${PREFIX}Unmapped.1.fq --right ${PREFIX}Unmapped.2.fq --CPU ${CPU} --max_memory ${MEMORY} --output ${OUTDIR}/trinity_out_dir > ${PREFIX}.Trinity.log 2>&1 || (echo0 0 "denovo transcript construction error, please check ${PREFIX}.Trinity.log" && exit 1)
+TIME_TRINITY=${SECONDS}
+SECONDS=0
+
+# run Transcode
+echo0 2 "transCoder nucleotide to protein sequence......"
+cd ${OUTDIR}
+${PATH_PROG}/TransDecoder/TransDecoder.LongOrfs -t ./trinity_out_dir/Trinity.fasta -m 33 > ${PREFIX}.TransDecoder.log 2>&1 || (echo0 0 "transDecoder error, please check ${PREFIX}.TransDecoder.log" && exit 1)
+TIME_TRANSDECODER=${SECONDS}
+SECONDS=0
+
+# run diamond and filter result
+echo0 2 "run diamond blastp to refseq virus database and filter result......"
+${PATH_PROG}/diamond/diamond blastp -e 1e-100 -p ${CPU} -d ${DATABASE} -q Trinity.fasta.transdecoder_dir/longest_orfs.pep -o ${PREFIX}.diamond.out -f 6 qseqid evalue length stitle > ${PREFIX}.diamond.log 2>&1 || (echo0 0 "protein alignment to refseq virus via diamond error, please check ${PREFIX}.diamond.log" && exit 1)
+${PATH_PROG}/diamond/diamond blastp -e 1e-100 -p ${CPU} -d ${DATABASE1} -q Trinity.fasta.transdecoder_dir/longest_orfs.pep -o ${PREFIX}.nonredundant.diamond.out -f 6 qseqid evalue length stitle > ${PREFIX}.diamond.log 2>&1 || (echo0 0 "protein alignment to refseq nonredundant virus via diamond error, please check ${PREFIX}.diamond.log" && exit 1)
+sort -k2,2n ${PREFIX}.diamond.out | awk 'BEGIN{FS=OFS="\t"} {if(!a[$1]){print $0;a[$1]=1}}' > ${PREFIX}.diamond.out.sort.uniq # retain virus with highest score
+awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){if(!a[$1]){a[$1]=$2}else if($2<a[$1]){a[$1]=$2}}else{if(!a[$1]){print $0}else if($2<a[$1]){print $0}}}' ${PREFIX}.nonredundant.diamond.out ${PREFIX}.diamond.out.sort.uniq > ${PREFIX}.diamond.out.sort.uniq.filtered # filter nonredundant virus with highest score
+awk '{if(ARGIND==1){if($0~/[Vv]irus/ && $0!~/transpos/){split($1,b,".");a[b[1]]=1}}else{if($1~/^>/){if(a[substr($1,2,length($1)-1)]){k=1}else{k=0}};if(k){print $1}}}' ${PREFIX}.diamond.out.sort.uniq.filtered ./trinity_out_dir/Trinity.fasta > ${PREFIX}.virus.fa
+awk 'BEGIN{FS=OFS="\t"} {if($0~/[Vv]irus/ && $0!~/transpos/){split($1,b,".");if(!a[b[1]]){a[b[1]]=$2;$1=b[1];c[b[1]]=$0}else if($2<a[b[1]]){a[b[1]]=$2;$1=b[1];c[b[1]]=$0}}} END{for(i in c){print c[i]}}' ${PREFIX}.diamond.out.sort.uniq.filtered > ${PREFIX}.virus.homolog
+TIME_DIAMOND=${SECONDS}
+
+# visulization of results
+NWC=(`grep "^>" ${PREFIX}.virus.fa | wc -l`)
+if [ ${NWC} -gt 0 ];then
+	echo0 3 "${NWC} virus isforms found in total."
+else
+	echo0 4 "no sequence found similar to refseq virus sequence."
+fi
+
+echo0 4 "------finished, congras🍺🍺🍺------"
+echo0 3 "Mapping to genome:\t$((${TIME_STAR} / 3600))h $((${TIME_STAR} / 60))m"
+echo0 3 "Denovo transcript construction:\t$((${TIME_TRINITY} / 3600))h $((${TIME_TRINITY} / 60))m"
+echo0 3 "transCoder nucleotide to protein sequence:\t$((${TIME_TRANSDECODER} / 3600))h $((${TIME_TRANSDECODER} / 60))m"
+echo0 3 "use diamond blastp to find virus similar to refseq virus database:\t$((${TIME_DIAMOND} / 3600))h $((${TIME_DIAMOND} / 60))m"

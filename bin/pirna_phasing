@@ -1,0 +1,101 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+import sys
+import bb_basic as bb
+from multiprocessing import Pool
+
+
+def main():
+    print_help()
+    dict_bed2 = read_bed2(sys.argv[1])
+    pool = Pool(int(sys.argv[2]))
+    global mind
+    global maxd
+    mind = -10
+    maxd = 20
+    results = []
+    for strand in ["+", "-"]:
+        for chrom in dict_bed2[strand]:
+            tl = dict_bed2[strand][chrom]
+            result = pool.apply_async(phasing, args=(tl,))
+            results.append(result)
+    pool.close()
+    pool.join()
+    o = {}
+    for i in range(mind,maxd+1):
+        o[i] = [0, 0]
+    for i in range(len(results)):
+        for j in range(mind,maxd+1):
+            o[j][0] += results[i].get()[j][0]
+            o[j][1] += results[i].get()[j][1]
+    for i in range(mind,maxd+1):
+        print("%s\t%s\t%s"%(i, o[i][0], o[i][1]))
+
+
+# --------functions--------
+def phasing(l):
+    l.sort()
+    do = {}
+    # manually set mind to -10 and maxd to 20
+    for i in range(-10,20+1):
+        do[i] = [0, 0]
+    max_index = len(l)
+    for i in range(len(l)):
+        j = i
+        while True:
+            j += 1
+            if j >= max_index:
+                break
+            distance = int(l[j][0] - l[i][1] + 1)
+            if distance <= 20 and distance >= -10:
+                do[distance][0] += l[j][2] * l[i][2]
+                do[distance][1] += l[j][3] * l[i][3]
+            else:
+                break
+        j = i
+        while True:
+            j -= 1
+            if j < 0:
+                break
+            distance = int(l[j][0] - l[i][1] + 1)
+            if distance >= -10 and distance <= 20:
+                do[distance][0] += l[j][2] * l[i][2]
+                do[distance][1] += l[j][3] * l[i][3]
+            else:
+                break
+    return do
+
+
+def read_bed2(fi):
+    dict_bed2 = {"+":{}, "-":{}}
+    for li in bb.fun_open_file(fi, "r"):
+        l = li.strip().split()
+        recd = [int(l[1]), int(l[2]), float(l[3])/float(l[4]), 1/float(l[4])]
+        if recd[1] - recd[0] < 24 or recd[1] - recd[0] > 32:
+            continue
+        try:
+            dict_bed2[l[5]][l[0]].append(recd)
+        except KeyError:
+            dict_bed2[l[5]][l[0]] = [recd]
+    return dict_bed2
+
+            
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--version", action="version", version="%(prog)s 1.0")
+    parser.add_argument("args", help="", nargs="*")
+    args = parser.parse_args()
+    return args
+
+
+def print_help():
+    if len(sys.argv) < 2:
+        bb.fun_print_help("in.bed2", "cpu_number")
+
+# --------process--------
+if __name__ == '__main__':
+    try:
+        main()
+    except KeyboardInterrupt:
+        bb.fun_print_error("user interrupted, abort!")
+        sys.exit(0)

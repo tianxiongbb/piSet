@@ -1,0 +1,1 @@
+../opt/trinity-2.5.1/util/retrieve_sequences_from_fasta.pl

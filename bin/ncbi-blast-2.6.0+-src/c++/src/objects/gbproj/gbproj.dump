@@ -1,0 +1,228 @@
+M,8,gbproj.asn:NCBI-GBProject
+--- 
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+---
+--- Definitions for GB project
+--- GUI projects are the basic units of data used in Genome Workbench
+---
+--- 
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+---
+  T,24,NCBI-GBProject:DummyObsoleteType
+  T,35,NCBI-GBProject:GBProject-ver2
+  T,85,NCBI-GBProject:ViewDataLink
+  T,102,NCBI-GBProject:ViewDescriptor
+  T,123,NCBI-GBProject:ViewMemento
+  T,128,NCBI-GBProject:ProjectFolder
+  T,135,NCBI-GBProject:ProjectItem
+  T,190,NCBI-GBProject:AbstractProjectItem
+  T,196,NCBI-GBProject:ProjectHistoryItem
+  T,211,NCBI-GBProject:FolderInfo
+  T,228,NCBI-GBProject:ProjectDescr
+  T,241,NCBI-GBProject:ProjectAnnot
+  T,248,NCBI-GBProject:LoaderDescriptor
+
+T,24,DummyObsoleteType,CHOICE
+-- A dummy type used for replacing 'removed' or deprecated optional fields that
+-- have not been used and won't be used any more.
+  F,25,DummyObsoleteType:null,NULL
+
+T,35,GBProject-ver2,SEQUENCE
+--
+-- Version 2 project
+-- With version two we start a new paradigm
+-- The first item in the project *MUST* be a non-optional version stamp,
+-- composed as an integer.  This allows us to use a binary ASN.1 fingerprint to
+-- determine the version prior to reading a file.
+--
+  F,40,GBProject-ver2:project-version,VisibleString
+  -- the version for this project
+  -- for this particular instance, this should always be 2
+  -- this data element *MUST* be first
+  F,43,GBProject-ver2:counter,INTEGER,DEFAULT,0
+  -- next counter for project items
+  F,46,GBProject-ver2:descr,/ProjectDescr
+  -- standard descriptors
+  F,50,GBProject-ver2:data,/ProjectFolder
+  -- a set of extra analyses perfromed by the user
+  -- each of these may have descriptors
+  F,60,GBProject-ver2:obsolete-orig-message,/DummyObsoleteType,OPTIONAL
+  -- a copy of the original plugin message used to generate this project
+  -- This is deprecated. DO NOT USE THIS FIELD.
+  -- The original spec is: orig-message PluginMessage OPTIONAL.
+  -- It is intended to be removed, but a complete
+  -- removal will cause order shift for the rest of 
+  -- fields in this choice, and cause deserialization
+  -- failure for existing ASN file since this filed is
+  -- in the middle of the spec.
+  F,63,GBProject-ver2:history,SET /ProjectHistoryItem,OPTIONAL
+  -- history of things done to this object
+  F,66,GBProject-ver2:data-plugin,VisibleString,OPTIONAL
+  --name of the plugin that can handle External Data for the project
+  F,69,GBProject-ver2:plugin-param,VisibleString,OPTIONAL
+  --optional parameter for the data-plugin
+  F,72,GBProject-ver2:annot,SET /ProjectAnnot,OPTIONAL
+  -- arbitrary annotations
+  F,75,GBProject-ver2:loaders,SET /LoaderDescriptor,OPTIONAL
+  -- a set of data sources including data loader and data
+  F,78,GBProject-ver2:views,SET /ViewDescriptor,OPTIONAL
+  --- set of views, associated with project
+  F,81,GBProject-ver2:view-settings,SET /User-object,OPTIONAL
+  -- set of view-specific settings
+
+T,85,ViewDataLink,SEQUENCE
+  F,91,ViewDataLink:project-item-id,INTEGER,OPTIONAL
+  --- if both are absent - link goes to project
+  --- if both present - fingerprinted object inside project item
+  --- if only project-item-id present - link goes to project item
+  --- project item id
+  F,94,ViewDataLink:fingerprint,CHOICE,OPTIONAL
+  --- fingerprint of object to show in view
+    F,95,ViewDataLink:fingerprint:crc32,INTEGER
+    F,96,ViewDataLink:fingerprint:md5,OCTET STRING
+  F,99,ViewDataLink:type,VisibleString
+
+T,102,ViewDescriptor,SEQUENCE
+  F,104,ViewDescriptor:data,CHOICE
+  --- data for view opening
+    F,106,ViewDescriptor:data:link,/ViewDataLink
+    --- link to retrieve data
+    F,109,ViewDescriptor:data:item,/ProjectItem
+    --- virtual project item, if link cannot be created
+  F,113,ViewDescriptor:view-plugin,VisibleString
+  --- plugin name of saved view
+  F,116,ViewDescriptor:view-id,INTEGER
+  --- view id
+  F,119,ViewDescriptor:view-memento,/ViewMemento,OPTIONAL
+  --- optional settings, requered to open view
+
+T,123,ViewMemento,SEQUENCE
+  F,124,ViewMemento:options-id,INTEGER
+
+T,128,ProjectFolder,SEQUENCE
+  F,129,ProjectFolder:info,/FolderInfo
+  F,130,ProjectFolder:folders,SET /ProjectFolder,OPTIONAL
+  F,131,ProjectFolder:items,SET /ProjectItem,OPTIONAL
+
+T,135,ProjectItem,SEQUENCE
+  F,137,ProjectItem:id,INTEGER
+  -- serial number - must be unique in a project (GBProject)
+  F,140,ProjectItem:label,VisibleString,OPTIONAL
+  -- user-defined label
+  F,143,ProjectItem:descr,SET /Annotdesc,OPTIONAL
+  -- user-defined descriptors
+  F,146,ProjectItem:item,CHOICE
+  -- the item we represent
+    F,148,ProjectItem:item:id,/Seq-id
+    -- for projects that simply import a far-pointer
+    F,151,ProjectItem:item:entry,/Seq-entry
+    -- for projects that contain something else
+    F,154,ProjectItem:item:annot,/Seq-annot
+    -- annotation only
+    F,157,ProjectItem:item:submit,/Seq-submit
+    -- for submission
+    F,160,ProjectItem:item:seq-align,/Seq-align
+    -- seq-align and seq-align-set as registered items
+    F,161,ProjectItem:item:seq-align-set,/Seq-align-set
+    F,171,ProjectItem:item:obsolete-plugin,/DummyObsoleteType
+    -- plugin message
+    -- This is deprecated. DO NOT USE THIS FIELD.
+    -- The original spec is: plugin PluginMessage.
+    -- It is intended to be removed, but a complete
+    -- removal will cause order shift for the rest of 
+    -- fields in this choice, and cause deserialization
+    -- failure for existing ASN files since this filed is
+    -- in the middle of the spec.
+    F,174,ProjectItem:item:other,/AbstractProjectItem
+    -- arbitrary object (use with care!)
+    F,177,ProjectItem:item:pmid,SET INTEGER
+    -- PubMed ID
+    F,180,ProjectItem:item:taxid,SET INTEGER
+    -- Taxonomy ID
+  F,184,ProjectItem:data-plugin,VisibleString,OPTIONAL
+  --name of the plugin that can handle External Data for the project
+  F,187,ProjectItem:disabled,BOOLEAN,OPTIONAL
+  -- "folder open" state
+
+T,190,AbstractProjectItem,SEQUENCE
+  F,191,AbstractProjectItem:type,VisibleString
+  F,192,AbstractProjectItem:data,OCTET STRING
+
+T,196,ProjectHistoryItem,SEQUENCE
+  F,198,ProjectHistoryItem:id,INTEGER
+  -- ID of ProjectItem referenced
+  F,201,ProjectHistoryItem:date,/Date
+  -- date of modification
+  F,204,ProjectHistoryItem:label,VisibleString
+  -- label for this item (terse description)
+  F,207,ProjectHistoryItem:comment,VisibleString,OPTIONAL
+  -- optional longer description
+
+T,211,FolderInfo,SEQUENCE
+  F,212,FolderInfo:title,VisibleString
+  F,215,FolderInfo:create-date,/Date
+  -- basic descriptors
+  F,218,FolderInfo:comment,VisibleString,OPTIONAL
+  -- optional comments
+  F,221,FolderInfo:open,BOOLEAN,OPTIONAL
+  -- "folder open" state
+  F,224,FolderInfo:annot,SET /Annotdesc,OPTIONAL
+  -- arbitrary annotations
+
+T,228,ProjectDescr,SEQUENCE
+  F,230,ProjectDescr:title,VisibleString
+  -- user-defined title for the workspace
+  F,233,ProjectDescr:create-date,/Date
+  -- basic (required) descriptors
+  F,234,ProjectDescr:modified-date,/Date,OPTIONAL
+  F,237,ProjectDescr:comment,VisibleString,OPTIONAL
+  -- optional descriptors
+
+T,241,ProjectAnnot,SEQUENCE
+  F,242,ProjectAnnot:create-date,/Date
+  F,243,ProjectAnnot:modified-date,/Date,OPTIONAL
+  F,244,ProjectAnnot:annot,/Annotdesc
+
+T,248,LoaderDescriptor,SEQUENCE
+  F,250,LoaderDescriptor:label,VisibleString
+  -- data loader label 
+  F,253,LoaderDescriptor:loader-type,VisibleString
+  -- loader data source type
+  F,256,LoaderDescriptor:data,/User-object
+  -- data, depends on loader type
+  F,259,LoaderDescriptor:enabled,BOOLEAN,DEFAULT,TRUE
+  -- flag: is this data loader enabled?
+  F,262,LoaderDescriptor:priority,INTEGER,OPTIONAL
+  -- loader priority used in object manager

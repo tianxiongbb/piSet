@@ -1,0 +1,16 @@
+.cvsignore
+Taxon1_data_.hpp
+Taxon1_error_.hpp
+Taxon1_info_.hpp
+Taxon1_name_.hpp
+Taxon1_req_.hpp
+Taxon1_resp_.hpp
+Taxon2_data_.hpp
+Taxon1_data.hpp
+Taxon1_info.hpp
+Taxon1_name.hpp
+Taxon1_req.hpp
+Taxon1_resp.hpp
+NCBI_Taxon1_module.hpp
+taxon1__.hpp
+taxon1.dump

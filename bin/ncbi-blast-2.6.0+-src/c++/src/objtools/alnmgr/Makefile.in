@@ -1,0 +1,9 @@
+# $Id: Makefile.in 502200 2016-05-23 14:42:40Z vakatov $
+
+LIB_PROJ = alnmgr
+SUB_PROJ = demo unit_test
+
+WATCHERS = grichenk
+
+srcdir = @srcdir@
+include @builddir@/Makefile.meta

@@ -1,0 +1,4 @@
+/usr/bin/make -w -f /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/build-system/Makefile.module MODULE=taxon1 MODULE_PATH=objects/taxon1 MODULE_ASN=taxon1.asn MODULE_IMPORT='objects/seqfeat/seqfeat' IMPDEPS='/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objects/seqfeat/seqfeat.asn' IMPFILES='objects/seqfeat/seqfeat.asn' top_srcdir=/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++ DATATOOL=/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/bin/datatool MODULE_SEARCH=/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src all
+make[4]: Entering directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objects/taxon1'
+make[4]: Nothing to be done for 'all'.
+make[4]: Leaving directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objects/taxon1'

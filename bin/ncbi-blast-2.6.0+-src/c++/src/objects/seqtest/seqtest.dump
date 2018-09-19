@@ -1,0 +1,21 @@
+M,6,seqtest.asn:NCBI-SeqTest
+--
+-- $Id: seqtest.asn 99676 2007-03-05 20:41:55Z kazimird $
+--
+  T,18,NCBI-SeqTest:SeqTestResults
+  T,27,NCBI-SeqTest:Seq-test-result-set
+  T,29,NCBI-SeqTest:Seq-test-result
+
+T,18,SeqTestResults,SEQUENCE
+  F,19,SeqTestResults:source,CHOICE
+    F,20,SeqTestResults:source:seq-id,/Seq-id
+    F,21,SeqTestResults:source:seq-feat,/Seq-feat
+    F,22,SeqTestResults:source:seq-align,/Seq-align
+  F,24,SeqTestResults:results,/Seq-test-result-set
+
+T,27,Seq-test-result-set,SET /Seq-test-result
+
+T,29,Seq-test-result,SEQUENCE
+  F,30,Seq-test-result:test,VisibleString
+  F,31,Seq-test-result:date,/Date
+  F,32,Seq-test-result:output-data,/User-object

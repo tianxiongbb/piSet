@@ -1,0 +1,8 @@
+# $Id: Makefile.biotree.lib 427424 2014-02-20 13:38:50Z gouriano $
+
+LIB = biotree
+SRC = biotree__ biotree___
+
+
+USES_LIBRARIES =  \
+    general

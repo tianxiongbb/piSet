@@ -1,0 +1,7 @@
+# $Id: Makefile.compress_tests 453410 2014-12-03 16:25:18Z ucko $
+
+%.gz: %
+	gzip -Nf $<
+
+%.bz2: %
+	bzip2 -f $<

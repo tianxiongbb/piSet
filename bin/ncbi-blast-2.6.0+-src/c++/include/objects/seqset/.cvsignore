@@ -1,0 +1,6 @@
+.cvsignore
+Bioseq_set_.hpp
+Seq_entry_.hpp
+NCBI_Seqset_module.hpp
+seqset__.hpp
+seqset.dump

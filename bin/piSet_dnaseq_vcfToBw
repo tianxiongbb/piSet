@@ -1,0 +1,57 @@
+#!/bin/bash
+
+if [ $# -lt 4 ];then
+	echo0 5 "$0 in.vcf parent1.column,parent2.column lowest_depth chrom.size out.dir"
+	exit 1
+fi
+
+OUTDIR=${5%/}
+[ ! -d ${OUTDIR} ] && mkdir -p ${OUTDIR}
+NUM_FIELD=`awk '{if($1!~/^#/){print NF;exit}}' $1`
+awk -v pc=$2 -v nf=${NUM_FIELD} -v dp=$3 '
+BEGIN{FS=OFS="\t";split(pc,pcc,",")}
+{
+	if($1~/^#CHROM/){
+		printf "#chrom\tstart\tend";
+		for(i=10;i<=nf;i++){
+			split($i,tn,"/");
+			if(i!=pcc[1] && i!=pcc[2]){
+				printf "\t"tn[length(tn)]
+			}
+		};
+		printf "\n"}
+	else if($1!~/^#/){
+		split($(pcc[1]),tc1,":");split($(pcc[2]),tc2,":");
+		tcc1=tc1[length(tc1)];tcc2=tc2[length(tc2)];
+		split(tcc1,tf1,",");split(tcc2,tf2,",");
+		if((tf1[1]+tf1[2])<=dp || (tf2[1]+tf2[2])<=dp){next};
+		if(tc1[1]=="0/0" && tcc1~/,0$/ && tc2[1]=="1/1" && tcc2~/^0,/){
+			p1i=1
+		}else if(tc2[1]=="0/0" && tcc2~/,0$/ && tc1[1]=="1/1" && tcc1~/^0,/){
+			p1i=2
+		}else{next};
+		printf $1"\t"($2-1)"\t"$2
+		for(i=10;i<=nf;i++){
+			if(i!=pcc[1] && i!=pcc[2]){
+				split($(i),tc1,":");tcc1=tc1[length(tc1)];split(tcc1,tf1,",");
+				if((tf1[1]+tf1[2])==0){
+					printf "\t0"
+				}else{printf "\t"(tf1[p1i]/(tf1[1]+tf1[2]))}
+			}
+		};
+		printf "\n"
+	}
+}' $1 > $1.p1.freq
+
+COL_OFFSPRING=`awk 'BEGIN{FS=OFS="\t"} {if(NR==1){for(i=4;i<=NF;i++){printf i" "}}}' $1.p1.freq`
+for i in $COL_OFFSPRING
+do
+	echo ${i}
+	awk -v cl=$i -v d=${OUTDIR} 'BEGIN{FS=OFS="\t"} {if(NR==1){fn=$(cl)}else{print $1,$2,$3,$(cl) > d"/"fn".bdg"}}' $1.p1.freq
+done
+for i in ${OUTDIR}/*.bdg
+do
+	sort -k1,1 -k2,2n $i | awk '$1!="chrUextra"' > ${i/.bdg/.sort.bdg}
+	bedGraphToBigWig ${i/.bdg/.sort.bdg} $4 ${i%.bdg}.bw
+	rm $i ${i/.bdg/.sort.bdg}
+done

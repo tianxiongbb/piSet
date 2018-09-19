@@ -1,0 +1,9 @@
+# $Id: Makefile.objcoords.lib 427424 2014-02-20 13:38:50Z gouriano $
+
+SRC = objcoords__ objcoords___ 
+LIB = objcoords
+
+
+
+USES_LIBRARIES =  \
+    xser

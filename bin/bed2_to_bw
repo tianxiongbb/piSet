@@ -1,0 +1,97 @@
+#!/bin/bash
+
+if [ $# -lt 4 ];then
+	echo0 5 "$0 in.bed2 out.dir chrom.size CPU factor(default: 1)"
+	exit 1
+fi
+
+[ ! -d $2 ] && mkdir $2
+OUTDIR=${2%/}
+if [ $# -lt 5 ];then
+	FACTOR=1
+else
+	FACTOR=$5
+fi
+
+### separate uniqMapper/allMapper, watson/crick, pirna/sirna/otherrna and chr1/chr2... reads
+# watson/crick
+echo0 2 "separate watson/crick reads......"
+echo -e "awk '\$6==\"+\"' $1 > $1.temp.watson\nawk '\$6==\"-\"' $1 > $1.temp.crick" > $1.parafly
+ParaFly -c $1.parafly -CPU $4 && rm $1.parafly*
+# uniqMappper/allMapper
+echo0 2 "separate uniq/all mapped reads......"
+echo -e "awk '\$5==1' $1.temp.watson > $1.temp.uniq.watson\ncp $1.temp.watson $1.temp.all.watson\nawk '\$5==1' $1.temp.crick > $1.temp.uniq.crick\ncp $1.temp.crick $1.temp.all.crick" > $1.parafly
+ParaFly -c $1.parafly -CPU $4 && rm $1.parafly*
+# pirna/sirna/otherrna
+echo0 2 "separate pirna/sirna/otherrna reads......"
+echo -e "awk '\$3-\$2>=24 && \$3-\$2<=32' $1.temp.uniq.watson > $1.temp.uniq.watson.pirna\nawk '\$3-\$2>=20 && \$3-\$2<=23' $1.temp.uniq.watson > $1.temp.uniq.watson.sirna\nawk '\$3-\$2<20 || \$3-\$2>32' $1.temp.uniq.watson > $1.temp.uniq.watson.orna" >> $1.parafly
+echo -e "awk '\$3-\$2>=24 && \$3-\$2<=32' $1.temp.uniq.crick > $1.temp.uniq.crick.pirna\nawk '\$3-\$2>=20 && \$3-\$2<=23' $1.temp.uniq.crick > $1.temp.uniq.crick.sirna\nawk '\$3-\$2<20 || \$3-\$2>32' $1.temp.uniq.crick > $1.temp.uniq.crick.orna" >> $1.parafly
+echo -e "awk '\$3-\$2>=24 && \$3-\$2<=32' $1.temp.all.watson > $1.temp.all.watson.pirna\nawk '\$3-\$2>=20 && \$3-\$2<=23' $1.temp.all.watson > $1.temp.all.watson.sirna\nawk '\$3-\$2<20 || \$3-\$2>32' $1.temp.all.watson > $1.temp.all.watson.orna" >> $1.parafly
+echo -e "awk '\$3-\$2>=24 && \$3-\$2<=32' $1.temp.all.crick > $1.temp.all.crick.pirna\nawk '\$3-\$2>=20 && \$3-\$2<=23' $1.temp.all.crick > $1.temp.all.crick.sirna\nawk '\$3-\$2<20 || \$3-\$2>32' $1.temp.all.crick > $1.temp.all.crick.orna" >> $1.parafly
+ParaFly -c $1.parafly -CPU $4 && rm $1.parafly*
+# each chromosome or contigs
+echo0 2 "separate different chromosome|contig reads......"
+CHROM=`awk 'BEGIN{FS=OFS="\t"} {if($2>=20000000){printf $1" "}}' $3`
+for MAPTIME in uniq all
+do
+	for STRAND in watson crick
+	do
+		for TYPE in pirna sirna orna
+		do
+			for c in ${CHROM}
+			do
+				echo -e "awk -v chrom=$c '\$1==chrom' $1.temp.${MAPTIME}.${STRAND}.${TYPE} > $1.temp.${MAPTIME}.${STRAND}.${TYPE}.${c}" >> $1.parafly
+			done
+			echo -e "awk 'BEGIN{FS=OFS=\"\\\t\"} {if(NR==FNR){if(\$2>=20000000){a[\$1]=1}}else{if(!a[\$1]){print \$0}}}' $3 $1.temp.${MAPTIME}.${STRAND}.${TYPE} > $1.temp.${MAPTIME}.${STRAND}.${TYPE}.other" >> $1.parafly
+		done
+	done
+done
+ParaFly -c $1.parafly -CPU $4 && rm $1.parafly*
+CHROM=${CHROM}" other"
+TIME_SEPARATE=${SECONDS}
+SECONDS=0
+
+# make bedGraph for each separated bed2
+echo0 2 "make bedGraph for each separated bed2......"
+for MAPTIME in uniq all
+do
+	for STRAND in watson crick
+	do
+		for TYPE in pirna sirna orna
+		do
+			for c in $CHROM
+			do
+				INPUT_FILE=$1.temp.${MAPTIME}.${STRAND}.${TYPE}.${c}
+				echo -e "awk 'BEGIN{FS=OFS=\"\\\t\"} {print \$1,\$2,\$3,\$4/\$5}' ${INPUT_FILE} > ${INPUT_FILE}.bdg && sort -k1,1 -k2,2n ${INPUT_FILE}.bdg > ${INPUT_FILE}.sort.bdg && bedops --partition ${INPUT_FILE}.sort.bdg | bedmap --echo --echo-map-id --delim '\\\t' - ${INPUT_FILE}.sort.bdg | awk 'BEGIN{FS=OFS=\"\\\t\"} {split(\$4,a,\";\");sum=0;for(i in a){sum+=a[i]};if(\$2<\$3 && \$2>=0){print \$1,\$2,\$3,sum}}' > ${INPUT_FILE}.sort.merged.bdg" >> $1.parafly
+			done
+		done
+	done
+done
+ParaFly -c $1.parafly -CPU $4 && rm $1.parafly*
+TIME_MAKEBDG=${SECONDS}
+SECONDS=0
+
+# merge bedgraph in different chromosome and make bigWig
+echo0 2 "merge bedGraphs in different chromosomes and make bigWig"
+for MAPTIME in uniq all
+do
+	for STRAND in watson crick
+	do
+		for TYPE in pirna sirna orna
+		do
+			echo -e "cat $1.temp.${MAPTIME}.${STRAND}.${TYPE}.*.sort.merged.bdg | awk -v fac=${FACTOR} 'BEGIN{FS=OFS=\"\\\t\"} {\$4=\$4/fac;print \$0}' > $1.temp.${MAPTIME}.${STRAND}.${TYPE}.bdg && bedGraphToBigWig $1.temp.${MAPTIME}.${STRAND}.${TYPE}.bdg $3 ${OUTDIR}/${TYPE}.${STRAND}.${MAPTIME}.bw" >> $1.parafly
+		done
+	done
+done
+ParaFly -c $1.parafly -CPU $4 && rm $1.parafly*
+TIME_BIGWIG=${SECONDS}
+
+# remove temp files
+rm $1.temp*
+
+# print time used
+echo0 3 "Time used for separating reads: $((${TIME_SEPARATE} / 3600))h $((${TIME_SEPARATE} / 60))m"
+echo0 3 "Time used for making bedGraph: $((${TIME_MAKEBDG} / 3600))h $((${TIME_MAKEBDG} / 60))m"
+echo0 3 "Time used for merging bedGraph and bigWig: $((${TIME_BIGWIG} / 3600))h $((${TIME_BIGWIG} / 60))m"
+
+

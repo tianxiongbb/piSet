@@ -1,0 +1,69 @@
+M,10,objprt.asn:NCBI-ObjPrt
+--$Revision: 96973 $
+--********************************************************************
+--
+--  Print Templates
+--  James Ostell, 1993
+--
+--
+--********************************************************************
+  T,15,NCBI-ObjPrt:PrintTemplate
+  T,20,NCBI-ObjPrt:TemplateName
+  T,22,NCBI-ObjPrt:PrintTemplateSet
+  T,24,NCBI-ObjPrt:PrintFormat
+  T,31,NCBI-ObjPrt:PrintForm
+  T,40,NCBI-ObjPrt:UserFormat
+  T,44,NCBI-ObjPrt:PrintFormBlock
+  T,48,NCBI-ObjPrt:PrintFormBoolean
+  T,52,NCBI-ObjPrt:PrintFormEnum
+  T,55,NCBI-ObjPrt:PrintFormText
+
+T,15,PrintTemplate,SEQUENCE
+  F,16,PrintTemplate:name,/TemplateName
+  -- name for this template
+  F,17,PrintTemplate:labelfrom,VisibleString,OPTIONAL
+  -- ASN.1 path to get label from
+  F,18,PrintTemplate:format,/PrintFormat
+
+T,20,TemplateName,VisibleString
+
+T,22,PrintTemplateSet,SEQUENCE /PrintTemplate
+
+T,24,PrintFormat,SEQUENCE
+  F,25,PrintFormat:asn1,VisibleString
+  -- ASN.1 partial path for this
+  F,26,PrintFormat:label,VisibleString,OPTIONAL
+  -- printable label
+  F,27,PrintFormat:prefix,VisibleString,OPTIONAL
+  F,28,PrintFormat:suffix,VisibleString,OPTIONAL
+  F,29,PrintFormat:form,/PrintForm
+
+T,31,PrintForm,CHOICE
+-- Forms for various ASN.1 components
+  F,32,PrintForm:block,/PrintFormBlock
+  F,33,PrintForm:boolean,/PrintFormBoolean
+  F,34,PrintForm:enum,/PrintFormEnum
+  F,35,PrintForm:text,/PrintFormText
+  F,36,PrintForm:use-template,/TemplateName
+  F,37,PrintForm:user,/UserFormat
+  F,38,PrintForm:null,NULL
+  -- rarely used
+
+T,40,UserFormat,SEQUENCE
+  F,41,UserFormat:printfunc,VisibleString
+  F,42,UserFormat:defaultfunc,VisibleString,OPTIONAL
+
+T,44,PrintFormBlock,SEQUENCE
+-- for SEQUENCE, SET
+  F,45,PrintFormBlock:separator,VisibleString,OPTIONAL
+  F,46,PrintFormBlock:components,SEQUENCE /PrintFormat
+
+T,48,PrintFormBoolean,SEQUENCE
+  F,49,PrintFormBoolean:true,VisibleString,OPTIONAL
+  F,50,PrintFormBoolean:false,VisibleString,OPTIONAL
+
+T,52,PrintFormEnum,SEQUENCE
+  F,53,PrintFormEnum:values,SEQUENCE VisibleString,OPTIONAL
+
+T,55,PrintFormText,SEQUENCE
+  F,56,PrintFormText:textfunc,VisibleString,OPTIONAL

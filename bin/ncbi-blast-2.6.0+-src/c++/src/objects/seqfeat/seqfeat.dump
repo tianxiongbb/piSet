@@ -1,0 +1,1515 @@
+M,10,seqfeat.asn:NCBI-Seqfeat
+--$Revision: 509630 $
+--**********************************************************************
+--
+--  NCBI Sequence Feature elements
+--  by James Ostell, 1990
+--  Version 3.0 - June 1994
+--
+--**********************************************************************
+  T,32,NCBI-Seqfeat:Feat-id
+  T,41,NCBI-Seqfeat:Seq-feat
+  T,65,NCBI-Seqfeat:SeqFeatData
+  T,125,NCBI-Seqfeat:SeqFeatXref
+  T,129,NCBI-Seqfeat:SeqFeatSupport
+  T,135,NCBI-Seqfeat:EvidenceCategory
+  T,142,NCBI-Seqfeat:ExperimentSupport
+  T,149,NCBI-Seqfeat:Program-id
+  T,154,NCBI-Seqfeat:EvidenceBasis
+  T,159,NCBI-Seqfeat:InferenceSupport
+  T,184,NCBI-Seqfeat:ModelEvidenceItem
+  T,192,NCBI-Seqfeat:ModelEvidenceSupport
+  T,212,NCBI-Seqfeat:Cdregion
+  T,237,NCBI-Seqfeat:Genetic-code
+  T,247,NCBI-Seqfeat:Code-break
+  T,254,NCBI-Seqfeat:Genetic-code-table
+  T,261,NCBI-Seqfeat:Imp-feat
+  T,266,NCBI-Seqfeat:Gb-qual
+  T,276,NCBI-Seqfeat:Clone-ref
+  T,296,NCBI-Seqfeat:Clone-seq-set
+  T,299,NCBI-Seqfeat:Clone-seq
+
+T,32,Feat-id,CHOICE
+--*** Feature identifiers ********************************
+--*
+  F,33,Feat-id:gibb,INTEGER
+  -- geninfo backbone
+  F,34,Feat-id:giim,/Giimport-id
+  -- geninfo import
+  F,35,Feat-id:local,/Object-id
+  -- for local software use
+  F,36,Feat-id:general,/Dbtag
+  -- for use by various databases
+
+T,41,Seq-feat,SEQUENCE
+--*** Seq-feat *******************************************
+--*  sequence feature generalization
+  F,42,Seq-feat:id,/Feat-id,OPTIONAL
+  F,43,Seq-feat:data,/SeqFeatData
+  -- the specific data
+  F,44,Seq-feat:partial,BOOLEAN,OPTIONAL
+  -- incomplete in some way?
+  F,45,Seq-feat:except,BOOLEAN,OPTIONAL
+  -- something funny about this?
+  F,46,Seq-feat:comment,VisibleString,OPTIONAL
+  F,47,Seq-feat:product,/Seq-loc,OPTIONAL
+  -- product of process
+  F,48,Seq-feat:location,/Seq-loc
+  -- feature made from
+  F,49,Seq-feat:qual,SEQUENCE /Gb-qual,OPTIONAL
+  -- qualifiers
+  F,50,Seq-feat:title,VisibleString,OPTIONAL
+  -- for user defined label
+  F,51,Seq-feat:ext,/User-object,OPTIONAL
+  -- user defined structure extension
+  F,52,Seq-feat:cit,/Pub-set,OPTIONAL
+  -- citations for this feature
+  F,53,Seq-feat:exp-ev,ENUMERATED,OPTIONAL
+  -- evidence for existence of feature
+    V,54,Seq-feat:exp-ev:experimental,1
+    -- any reasonable experimental check
+    V,55,Seq-feat:exp-ev:not-experimental,2
+    -- similarity, pattern, etc
+  F,56,Seq-feat:xref,SET /SeqFeatXref,OPTIONAL
+  -- cite other relevant features
+  F,57,Seq-feat:dbxref,SET /Dbtag,OPTIONAL
+  -- support for xref to other databases
+  F,58,Seq-feat:pseudo,BOOLEAN,OPTIONAL
+  -- annotated on pseudogene?
+  F,59,Seq-feat:except-text,VisibleString,OPTIONAL
+  -- explain if except=TRUE
+  F,60,Seq-feat:ids,SET /Feat-id,OPTIONAL
+  -- set of Ids; will replace 'id' field
+  F,61,Seq-feat:exts,SET /User-object,OPTIONAL
+  -- set of extensions; will replace 'ext' field
+  F,62,Seq-feat:support,/SeqFeatSupport,OPTIONAL
+  -- will replace /experiment, /inference, model-evidence
+
+T,65,SeqFeatData,CHOICE
+  F,66,SeqFeatData:gene,/Gene-ref
+  F,67,SeqFeatData:org,/Org-ref
+  F,68,SeqFeatData:cdregion,/Cdregion
+  F,69,SeqFeatData:prot,/Prot-ref
+  F,70,SeqFeatData:rna,/RNA-ref
+  F,71,SeqFeatData:pub,/Pubdesc
+  -- publication applies to this seq
+  F,72,SeqFeatData:seq,/Seq-loc
+  -- to annotate origin from another seq
+  F,73,SeqFeatData:imp,/Imp-feat
+  F,74,SeqFeatData:region,VisibleString
+  -- named region (globin locus)
+  F,75,SeqFeatData:comment,NULL
+  -- just a comment
+  F,76,SeqFeatData:bond,ENUMERATED
+    V,77,SeqFeatData:bond:disulfide,1
+    V,78,SeqFeatData:bond:thiolester,2
+    V,79,SeqFeatData:bond:xlink,3
+    V,80,SeqFeatData:bond:thioether,4
+    V,81,SeqFeatData:bond:other,255
+  F,82,SeqFeatData:site,ENUMERATED
+    V,83,SeqFeatData:site:active,1
+    V,84,SeqFeatData:site:binding,2
+    V,85,SeqFeatData:site:cleavage,3
+    V,86,SeqFeatData:site:inhibit,4
+    V,87,SeqFeatData:site:modified,5
+    V,88,SeqFeatData:site:glycosylation,6
+    V,89,SeqFeatData:site:myristoylation,7
+    V,90,SeqFeatData:site:mutagenized,8
+    V,91,SeqFeatData:site:metal-binding,9
+    V,92,SeqFeatData:site:phosphorylation,10
+    V,93,SeqFeatData:site:acetylation,11
+    V,94,SeqFeatData:site:amidation,12
+    V,95,SeqFeatData:site:methylation,13
+    V,96,SeqFeatData:site:hydroxylation,14
+    V,97,SeqFeatData:site:sulfatation,15
+    V,98,SeqFeatData:site:oxidative-deamination,16
+    V,99,SeqFeatData:site:pyrrolidone-carboxylic-acid,17
+    V,100,SeqFeatData:site:gamma-carboxyglutamic-acid,18
+    V,101,SeqFeatData:site:blocked,19
+    V,102,SeqFeatData:site:lipid-binding,20
+    V,103,SeqFeatData:site:np-binding,21
+    V,104,SeqFeatData:site:dna-binding,22
+    V,105,SeqFeatData:site:signal-peptide,23
+    V,106,SeqFeatData:site:transit-peptide,24
+    V,107,SeqFeatData:site:transmembrane-region,25
+    V,108,SeqFeatData:site:nitrosylation,26
+    V,109,SeqFeatData:site:other,255
+  F,110,SeqFeatData:rsite,/Rsite-ref
+  -- restriction site  (for maps really)
+  F,111,SeqFeatData:user,/User-object
+  -- user defined structure
+  F,112,SeqFeatData:txinit,/Txinit
+  -- transcription initiation
+  F,113,SeqFeatData:num,/Numbering
+  -- a numbering system
+  F,114,SeqFeatData:psec-str,ENUMERATED
+  -- protein secondary structure
+    V,115,SeqFeatData:psec-str:helix,1
+    -- any helix
+    V,116,SeqFeatData:psec-str:sheet,2
+    -- beta sheet
+    V,117,SeqFeatData:psec-str:turn,3
+    -- beta or gamma turn
+  F,118,SeqFeatData:non-std-residue,VisibleString
+  -- non-standard residue here in seq
+  F,119,SeqFeatData:het,/Heterogen
+  -- cofactor, prosthetic grp, etc, bound to seq
+  F,120,SeqFeatData:biosrc,/BioSource
+  F,121,SeqFeatData:clone,/Clone-ref
+  F,122,SeqFeatData:variation,/Variation-ref
+
+T,125,SeqFeatXref,SEQUENCE
+-- both optional because can have one or both
+  F,126,SeqFeatXref:id,/Feat-id,OPTIONAL
+  -- the feature copied
+  F,127,SeqFeatXref:data,/SeqFeatData,OPTIONAL
+  -- the specific data
+
+T,129,SeqFeatSupport,SEQUENCE
+  F,130,SeqFeatSupport:experiment,SET /ExperimentSupport,OPTIONAL
+  F,131,SeqFeatSupport:inference,SET /InferenceSupport,OPTIONAL
+  F,132,SeqFeatSupport:model-evidence,SET /ModelEvidenceSupport,OPTIONAL
+
+T,135,EvidenceCategory,INTEGER
+  V,136,EvidenceCategory:not-set,0
+  V,137,EvidenceCategory:coordinates,1
+  V,138,EvidenceCategory:description,2
+  V,139,EvidenceCategory:existence,3
+
+T,142,ExperimentSupport,SEQUENCE
+  F,143,ExperimentSupport:category,/EvidenceCategory,OPTIONAL
+  F,144,ExperimentSupport:explanation,VisibleString
+  F,145,ExperimentSupport:pmids,SET /PubMedId,OPTIONAL
+  F,146,ExperimentSupport:dois,SET /DOI,OPTIONAL
+
+T,149,Program-id,SEQUENCE
+  F,150,Program-id:name,VisibleString
+  F,151,Program-id:version,VisibleString,OPTIONAL
+
+T,154,EvidenceBasis,SEQUENCE
+  F,155,EvidenceBasis:programs,SET /Program-id,OPTIONAL
+  F,156,EvidenceBasis:accessions,SET /Seq-id,OPTIONAL
+
+T,159,InferenceSupport,SEQUENCE
+  F,160,InferenceSupport:category,/EvidenceCategory,OPTIONAL
+  F,161,InferenceSupport:type,INTEGER,DEFAULT,not-set
+    V,162,InferenceSupport:type:not-set,0
+    V,163,InferenceSupport:type:similar-to-sequence,1
+    V,164,InferenceSupport:type:similar-to-aa,2
+    V,165,InferenceSupport:type:similar-to-dna,3
+    V,166,InferenceSupport:type:similar-to-rna,4
+    V,167,InferenceSupport:type:similar-to-mrna,5
+    V,168,InferenceSupport:type:similiar-to-est,6
+    V,169,InferenceSupport:type:similar-to-other-rna,7
+    V,170,InferenceSupport:type:profile,8
+    V,171,InferenceSupport:type:nucleotide-motif,9
+    V,172,InferenceSupport:type:protein-motif,10
+    V,173,InferenceSupport:type:ab-initio-prediction,11
+    V,174,InferenceSupport:type:alignment,12
+    V,175,InferenceSupport:type:other,255
+  F,177,InferenceSupport:other-type,VisibleString,OPTIONAL
+  F,178,InferenceSupport:same-species,BOOLEAN,DEFAULT,FALSE
+  F,179,InferenceSupport:basis,/EvidenceBasis
+  F,180,InferenceSupport:pmids,SET /PubMedId,OPTIONAL
+  F,181,InferenceSupport:dois,SET /DOI,OPTIONAL
+
+T,184,ModelEvidenceItem,SEQUENCE
+  F,185,ModelEvidenceItem:id,/Seq-id
+  F,186,ModelEvidenceItem:exon-count,INTEGER,OPTIONAL
+  F,187,ModelEvidenceItem:exon-length,INTEGER,OPTIONAL
+  F,188,ModelEvidenceItem:full-length,BOOLEAN,DEFAULT,FALSE
+  F,189,ModelEvidenceItem:supports-all-exon-combo,BOOLEAN,DEFAULT,FALSE
+
+T,192,ModelEvidenceSupport,SEQUENCE
+  F,193,ModelEvidenceSupport:method,VisibleString,OPTIONAL
+  F,194,ModelEvidenceSupport:mrna,SET /ModelEvidenceItem,OPTIONAL
+  F,195,ModelEvidenceSupport:est,SET /ModelEvidenceItem,OPTIONAL
+  F,196,ModelEvidenceSupport:protein,SET /ModelEvidenceItem,OPTIONAL
+  F,197,ModelEvidenceSupport:identification,/Seq-id,OPTIONAL
+  F,198,ModelEvidenceSupport:dbxref,SET /Dbtag,OPTIONAL
+  F,199,ModelEvidenceSupport:exon-count,INTEGER,OPTIONAL
+  F,200,ModelEvidenceSupport:exon-length,INTEGER,OPTIONAL
+  F,201,ModelEvidenceSupport:full-length,BOOLEAN,DEFAULT,FALSE
+  F,202,ModelEvidenceSupport:supports-all-exon-combo,BOOLEAN,DEFAULT,FALSE
+
+T,212,Cdregion,SEQUENCE
+--*** CdRegion ***********************************************
+--*
+--*  Instructions to translate from a nucleic acid to a peptide
+--*    conflict means it's supposed to translate but doesn't
+--*
+  F,213,Cdregion:orf,BOOLEAN,OPTIONAL
+  -- just an ORF ?
+  F,214,Cdregion:frame,ENUMERATED,DEFAULT,not-set
+    V,215,Cdregion:frame:not-set,0
+    -- not set, code uses one
+    V,216,Cdregion:frame:one,1
+    V,217,Cdregion:frame:two,2
+    V,218,Cdregion:frame:three,3
+    -- reading frame
+  F,219,Cdregion:conflict,BOOLEAN,OPTIONAL
+  -- conflict
+  F,220,Cdregion:gaps,INTEGER,OPTIONAL
+  -- number of gaps on conflict/except
+  F,221,Cdregion:mismatch,INTEGER,OPTIONAL
+  -- number of mismatches on above
+  F,222,Cdregion:code,/Genetic-code,OPTIONAL
+  -- genetic code used
+  F,223,Cdregion:code-break,SEQUENCE /Code-break,OPTIONAL
+  -- individual exceptions
+  F,224,Cdregion:stops,INTEGER,OPTIONAL
+  -- number of stop codons on above
+
+T,237,Genetic-code,SET CHOICE
+-- each code is 64 cells long, in the order where
+-- T=0,C=1,A=2,G=3, TTT=0, TTC=1, TCA=4, etc
+-- NOTE: this order does NOT correspond to a Seq-data
+-- encoding.  It is "natural" to codon usage instead.
+-- the value in each cell is the AA coded for
+-- start= AA coded only if first in peptide
+--   in start array, if codon is not a legitimate start
+--   codon, that cell will have the "gap" symbol for
+--   that alphabet.  Otherwise it will have the AA
+--   encoded when that codon is used at the start.
+  F,238,Genetic-code:name,VisibleString
+  -- name of a code
+  F,239,Genetic-code:id,INTEGER
+  -- id in dbase
+  F,240,Genetic-code:ncbieaa,VisibleString
+  -- indexed to IUPAC extended
+  F,241,Genetic-code:ncbi8aa,OCTET STRING
+  -- indexed to NCBI8aa
+  F,242,Genetic-code:ncbistdaa,OCTET STRING
+  -- indexed to NCBIstdaa
+  F,243,Genetic-code:sncbieaa,VisibleString
+  -- start, indexed to IUPAC extended
+  F,244,Genetic-code:sncbi8aa,OCTET STRING
+  -- start, indexed to NCBI8aa
+  F,245,Genetic-code:sncbistdaa,OCTET STRING
+  -- start, indexed to NCBIstdaa
+
+T,247,Code-break,SEQUENCE
+-- specific codon exceptions
+-- NCBIstdaa code
+  F,248,Code-break:loc,/Seq-loc
+  -- location of exception
+  F,249,Code-break:aa,CHOICE
+  -- the amino acid
+    F,250,Code-break:aa:ncbieaa,INTEGER
+    -- ASCII value of NCBIeaa code
+    F,251,Code-break:aa:ncbi8aa,INTEGER
+    -- NCBI8aa code
+    F,252,Code-break:aa:ncbistdaa,INTEGER
+
+T,254,Genetic-code-table,SET /Genetic-code
+-- table of genetic codes
+
+T,261,Imp-feat,SEQUENCE
+--*** Import ***********************************************
+--*
+--*  Features imported from other databases
+--*
+  F,262,Imp-feat:key,VisibleString
+  F,263,Imp-feat:loc,VisibleString,OPTIONAL
+  -- original location string
+  F,264,Imp-feat:descr,VisibleString,OPTIONAL
+  -- text description
+
+T,266,Gb-qual,SEQUENCE
+  F,267,Gb-qual:qual,VisibleString
+  F,268,Gb-qual:val,VisibleString
+
+T,276,Clone-ref,SEQUENCE
+--*** Clone-ref ***********************************************
+--*
+--*  Specification of clone features
+--*
+  F,277,Clone-ref:name,VisibleString
+  -- Official clone symbol
+  F,278,Clone-ref:library,VisibleString,OPTIONAL
+  -- Library name
+  F,280,Clone-ref:concordant,BOOLEAN,DEFAULT,FALSE
+  -- OPTIONAL?
+  F,281,Clone-ref:unique,BOOLEAN,DEFAULT,FALSE
+  -- OPTIONAL?
+  F,282,Clone-ref:placement-method,INTEGER,OPTIONAL
+    V,283,Clone-ref:placement-method:end-seq,0
+    -- Clone placed by end sequence
+    V,284,Clone-ref:placement-method:insert-alignment,1
+    -- Clone placed by insert alignment
+    V,285,Clone-ref:placement-method:sts,2
+    -- Clone placed by STS
+    V,286,Clone-ref:placement-method:fish,3
+    V,287,Clone-ref:placement-method:fingerprint,4
+    V,288,Clone-ref:placement-method:end-seq-insert-alignment,5
+    -- combined end-seq and insert align
+    V,289,Clone-ref:placement-method:external,253
+    -- Placement provided externally
+    V,290,Clone-ref:placement-method:curated,254
+    -- Human placed or approved
+    V,291,Clone-ref:placement-method:other,255
+  F,293,Clone-ref:clone-seq,/Clone-seq-set,OPTIONAL
+
+T,296,Clone-seq-set,SET /Clone-seq
+
+T,299,Clone-seq,SEQUENCE
+  F,300,Clone-seq:type,INTEGER
+    V,301,Clone-seq:type:insert,0
+    V,302,Clone-seq:type:end,1
+    V,303,Clone-seq:type:other,255
+  F,305,Clone-seq:confidence,INTEGER,OPTIONAL
+    V,306,Clone-seq:confidence:multiple,0
+    -- Multiple hits
+    V,307,Clone-seq:confidence:na,1
+    -- Unspecified
+    V,308,Clone-seq:confidence:nohit-rep,2
+    -- No hits, end flagged repetitive
+    V,309,Clone-seq:confidence:nohitnorep,3
+    -- No hits, end not flagged repetitive
+    V,310,Clone-seq:confidence:other-chrm,4
+    -- Hit on different chromosome
+    V,311,Clone-seq:confidence:unique,5
+    V,312,Clone-seq:confidence:virtual,6
+    -- Virtual (hasn't been sequenced)
+    V,313,Clone-seq:confidence:multiple-rep,7
+    -- Multiple hits, end flagged repetitive
+    V,314,Clone-seq:confidence:multiplenorep,8
+    -- Multiple hits, end not flagged repetitive
+    V,315,Clone-seq:confidence:no-hit,9
+    -- No hits
+    V,316,Clone-seq:confidence:other,255
+  F,318,Clone-seq:location,/Seq-loc
+  -- location on sequence
+  F,319,Clone-seq:seq,/Seq-loc,OPTIONAL
+  -- clone sequence location
+  F,320,Clone-seq:align-id,/Dbtag,OPTIONAL
+  -- internal alignment identifier
+  F,321,Clone-seq:support,INTEGER,OPTIONAL
+    V,322,Clone-seq:support:prototype,0
+    -- sequence used to place clone
+    V,323,Clone-seq:support:supporting,1
+    -- sequence supports placement
+    V,324,Clone-seq:support:supports-other,2
+    -- supports a different placement
+    V,325,Clone-seq:support:non-supporting,3
+    -- does not support any placement
+M,337,seqfeat.asn:NCBI-Variation
+--*** Variation-ref ***********************************************
+--*
+--*  Specification of variation features
+--*
+  T,357,NCBI-Variation:VariantProperties
+  T,540,NCBI-Variation:Phenotype
+  T,559,NCBI-Variation:Population-data
+  T,577,NCBI-Variation:Ext-loc
+  T,583,NCBI-Variation:Variation-ref
+  T,805,NCBI-Variation:Delta-item
+  T,841,NCBI-Variation:Variation-inst
+
+T,357,VariantProperties,SEQUENCE
+-- 
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+-- Historically, the dbSNP definitions document data structures used in the
+-- processing and annotation of variations by the dbSNP group.  The intention
+-- is to provide information to clients that reflect internal information
+-- produced during the mapping of SNPs
+-- 
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+  F,358,VariantProperties:version,INTEGER
+  F,367,VariantProperties:resource-link,INTEGER,OPTIONAL
+  -- NOTE:
+  -- The format for most of these values is as an integer
+  -- Unless otherwise noted, these integers represent a bitwise OR (= simple
+  -- sum) of the possible values, and as such, these values represent the
+  -- specific bit flags that may be set for each of the possible attributes
+  -- here.
+    V,368,VariantProperties:resource-link:preserved,1
+    -- Clinical, Pubmed, Cited, (0x01)
+    V,369,VariantProperties:resource-link:provisional,2
+    -- Provisional Third Party Annotations (0x02)
+    V,370,VariantProperties:resource-link:has3D,4
+    -- Has 3D strcture SNP3D table (0x04)
+    V,371,VariantProperties:resource-link:submitterLinkout,8
+    -- SNP->SubSNP->Batch link_out (0x08)
+    V,372,VariantProperties:resource-link:clinical,16
+    -- Clinical if LSDB, OMIM, TPA, Diagnostic (0x10)
+    V,373,VariantProperties:resource-link:genotypeKit,32
+    -- Marker exists on high density genotyping kit
+    -- (0x20)
+  F,377,VariantProperties:gene-location,INTEGER,OPTIONAL
+    V,378,VariantProperties:gene-location:in-gene,1
+    -- Sequence intervals covered by a gene ID but not
+    -- having an aligned transcript (0x01)
+    V,380,VariantProperties:gene-location:near-gene-5,2
+    -- Within 2kb of the 5' end of a gene feature
+    V,381,VariantProperties:gene-location:near-gene-3,4
+    -- Within 0.5kb of the 3' end of a gene feature
+    V,382,VariantProperties:gene-location:intron,8
+    -- In Intron (0x08)
+    V,383,VariantProperties:gene-location:donor,16
+    -- In donor splice-site (0x10)
+    V,384,VariantProperties:gene-location:acceptor,32
+    -- In acceptor splice-site (0x20)
+    V,385,VariantProperties:gene-location:utr-5,64
+    -- In 5' UTR (0x40)
+    V,386,VariantProperties:gene-location:utr-3,128
+    -- In 3' UTR (0x80)
+    V,387,VariantProperties:gene-location:in-start-codon,256
+    -- the variant is observed in a start codon
+    -- (0x100)
+    V,389,VariantProperties:gene-location:in-stop-codon,512
+    -- the variant is observed in a stop codon
+    -- (0x200)
+    V,391,VariantProperties:gene-location:intergenic,1024
+    -- variant located between genes (0x400)
+    V,392,VariantProperties:gene-location:conserved-noncoding,2048
+    -- variant is located in a conserved
+    -- non-coding region (0x800)
+  F,396,VariantProperties:effect,INTEGER,OPTIONAL
+    V,397,VariantProperties:effect:no-change,0
+    -- known to cause no functional changes
+    -- since 0 does not combine with any other bit
+    -- value, 'no-change' specifically implies that
+    -- there are no consequences
+    V,401,VariantProperties:effect:synonymous,1
+    -- one allele in the set does not change the encoded
+    -- amino acid (0x1)
+    V,403,VariantProperties:effect:nonsense,2
+    -- one allele in the set changes to STOP codon
+    -- (TER).  (0x2)
+    V,405,VariantProperties:effect:missense,4
+    -- one allele in the set changes protein peptide
+    -- (0x4)
+    V,407,VariantProperties:effect:frameshift,8
+    -- one allele in the set changes all downstream
+    -- amino acids (0x8)
+    V,410,VariantProperties:effect:up-regulator,16
+    -- the variant causes increased transcription
+    -- (0x10)
+    V,412,VariantProperties:effect:down-regulator,32
+    -- the variant causes decreased transcription
+    -- (0x20)
+    V,414,VariantProperties:effect:methylation,64
+    V,415,VariantProperties:effect:stop-gain,128
+    -- reference codon is not stop codon, but the snp
+    -- variant allele changes the codon to a
+    -- terminating codon.
+    V,418,VariantProperties:effect:stop-loss,256
+    -- reverse of STOP-GAIN: reference codon is a
+    -- stop codon, but a snp variant allele changes
+    -- the codon to a non-terminating codon.
+  F,423,VariantProperties:mapping,INTEGER,OPTIONAL
+    V,424,VariantProperties:mapping:has-other-snp,1
+    -- Another SNP has the same mapped positions
+    -- on reference assembly (0x01)
+    V,426,VariantProperties:mapping:has-assembly-conflict,2
+    -- Weight 1 or 2 SNPs that map to different
+    -- chromosomes on different assemblies (0x02)
+    V,428,VariantProperties:mapping:is-assembly-specific,4
+    -- Only maps to 1 assembly (0x04)
+  F,433,VariantProperties:map-weight,INTEGER,OPTIONAL
+  -- map-weight captures specificity of placement
+  -- NOTE: This is *NOT* a bitfield
+    V,434,VariantProperties:map-weight:is-uniquely-placed,1
+    V,435,VariantProperties:map-weight:placed-twice-on-same-chrom,2
+    V,436,VariantProperties:map-weight:placed-twice-on-diff-chrom,3
+    V,437,VariantProperties:map-weight:many-placements,10
+  F,440,VariantProperties:frequency-based-validation,INTEGER,OPTIONAL
+    V,441,VariantProperties:frequency-based-validation:is-mutation,1
+    -- low frequency variation that is cited in
+    -- journal or other reputable sources (0x01)
+    V,443,VariantProperties:frequency-based-validation:above-5pct-all,2
+    -- >5% minor allele freq in each and all
+    -- populations (0x02)
+    V,445,VariantProperties:frequency-based-validation:above-5pct-1plus,4
+    -- >5% minor allele freq in 1+ populations (0x04)
+    V,446,VariantProperties:frequency-based-validation:validated,8
+    -- Bit is set if the variant has a minor allele
+    -- observed in two or more separate chromosomes
+    V,448,VariantProperties:frequency-based-validation:above-1pct-all,16
+    -- >1% minor allele freq in each and all
+    -- populations (0x10)
+    V,450,VariantProperties:frequency-based-validation:above-1pct-1plus,32
+    -- >1% minor allele freq in 1+ populations (0x20)
+  F,453,VariantProperties:genotype,INTEGER,OPTIONAL
+    V,454,VariantProperties:genotype:in-haplotype-set,1
+    -- Exists in a haplotype tagging set (0x01)
+    V,455,VariantProperties:genotype:has-genotypes,2
+    -- SNP has individual genotype (0x02)
+  F,470,VariantProperties:project-data,SET INTEGER,OPTIONAL
+  -- project IDs are IDs from BioProjects
+  -- in order to report information about project relationships, we
+  -- require projects to be registered
+  -- This field in many ways duplicates dbxrefs; however, the
+  -- intention of this field is to more adequately reflect
+  -- ownership and data source
+  --
+  -- 11/9/2010: DO NOT USE
+  -- This field was changed in the spec in a breaking way; using it will
+  -- break clients.  We are officially suppressing / abandoning this field.
+  -- Clients who need to use this should instead place the data in
+  -- Seq-feat.dbxref, using the db name 'BioProject'
+  F,472,VariantProperties:quality-check,INTEGER,OPTIONAL
+    V,473,VariantProperties:quality-check:contig-allele-missing,1
+    -- Reference sequence allele at the mapped
+    -- position is not present in the SNP
+    -- allele list, adjusted for orientation
+    -- (0x01)
+    V,477,VariantProperties:quality-check:withdrawn-by-submitter,2
+    -- One member SS is withdrawn by submitter
+    -- (0x02)
+    V,479,VariantProperties:quality-check:non-overlapping-alleles,4
+    -- RS set has 2+ alleles from different
+    -- submissions and these sets share no
+    -- alleles in common (0x04)
+    V,482,VariantProperties:quality-check:strain-specific,8
+    -- Straing specific fixed difference (0x08)
+    V,483,VariantProperties:quality-check:genotype-conflict,16
+    -- Has Genotype Conflict (0x10)
+  F,486,VariantProperties:confidence,INTEGER,OPTIONAL
+    V,487,VariantProperties:confidence:unknown,0
+    V,488,VariantProperties:confidence:likely-artifact,1
+    V,489,VariantProperties:confidence:other,255
+  F,497,VariantProperties:other-validation,BOOLEAN,OPTIONAL
+  -- has this variant been validated?
+  -- While a boolean flag offers no subtle distinctions of validation
+  -- methods, occasionally it is only known as a single boolean value
+  -- NOTE: this flag is redundant and should be omitted if more comprehensive
+  -- validation information is present
+  F,502,VariantProperties:allele-origin,INTEGER,OPTIONAL
+  -- origin of this allele, if known
+  -- note that these are powers-of-two, and represent bits; thus, we can
+  -- represent more than one state simultaneously through a bitwise OR
+    V,503,VariantProperties:allele-origin:unknown,0
+    V,504,VariantProperties:allele-origin:germline,1
+    V,505,VariantProperties:allele-origin:somatic,2
+    V,506,VariantProperties:allele-origin:inherited,4
+    V,507,VariantProperties:allele-origin:paternal,8
+    V,508,VariantProperties:allele-origin:maternal,16
+    V,509,VariantProperties:allele-origin:de-novo,32
+    V,510,VariantProperties:allele-origin:biparental,64
+    V,511,VariantProperties:allele-origin:uniparental,128
+    V,512,VariantProperties:allele-origin:not-tested,256
+    V,513,VariantProperties:allele-origin:tested-inconclusive,512
+    V,514,VariantProperties:allele-origin:not-reported,1024
+    V,517,VariantProperties:allele-origin:other,1073741824
+    -- stopper - 2^31
+  F,522,VariantProperties:allele-state,INTEGER,OPTIONAL
+  -- observed allele state, if known
+  -- NOTE: THIS IS NOT A BITFIELD!
+    V,523,VariantProperties:allele-state:unknown,0
+    V,524,VariantProperties:allele-state:homozygous,1
+    V,525,VariantProperties:allele-state:heterozygous,2
+    V,526,VariantProperties:allele-state:hemizygous,3
+    V,527,VariantProperties:allele-state:nullizygous,4
+    V,528,VariantProperties:allele-state:other,255
+  F,534,VariantProperties:allele-frequency,REAL,OPTIONAL
+  -- NOTE:
+  -- 'allele-frequency' here refers to the minor allele frequency of the
+  -- default population
+  F,537,VariantProperties:is-ancestral-allele,BOOLEAN,OPTIONAL
+  -- is this variant the ancestral allele?
+
+T,540,Phenotype,SEQUENCE
+  F,541,Phenotype:source,VisibleString,OPTIONAL
+  F,542,Phenotype:term,VisibleString,OPTIONAL
+  F,543,Phenotype:xref,SET /Dbtag,OPTIONAL
+  F,546,Phenotype:clinical-significance,INTEGER,OPTIONAL
+  -- does this variant have known clinical significance?
+    V,547,Phenotype:clinical-significance:unknown,0
+    V,548,Phenotype:clinical-significance:untested,1
+    V,549,Phenotype:clinical-significance:non-pathogenic,2
+    V,550,Phenotype:clinical-significance:probable-non-pathogenic,3
+    V,551,Phenotype:clinical-significance:probable-pathogenic,4
+    V,552,Phenotype:clinical-significance:pathogenic,5
+    V,553,Phenotype:clinical-significance:drug-response,6
+    V,554,Phenotype:clinical-significance:histocompatibility,7
+    V,555,Phenotype:clinical-significance:other,255
+
+T,559,Population-data,SEQUENCE
+  F,561,Population-data:population,VisibleString
+  -- assayed population (e.g. HAPMAP-CEU)
+  F,562,Population-data:genotype-frequency,REAL,OPTIONAL
+  F,563,Population-data:chromosomes-tested,INTEGER,OPTIONAL
+  F,564,Population-data:sample-ids,SET /Object-id,OPTIONAL
+  F,565,Population-data:allele-frequency,REAL,OPTIONAL
+  F,570,Population-data:flags,INTEGER,OPTIONAL
+  -- This field is an explicit bit-field
+  -- Valid values should be a bitwise combination (= simple sum)
+  -- of any of the values below
+    V,571,Population-data:flags:is-default-population,1
+    V,572,Population-data:flags:is-minor-allele,2
+    V,573,Population-data:flags:is-rare-allele,4
+
+T,577,Ext-loc,SEQUENCE
+  F,578,Ext-loc:id,/Object-id
+  F,579,Ext-loc:location,/Seq-loc
+
+T,583,Variation-ref,SEQUENCE
+  F,591,Variation-ref:id,/Dbtag,OPTIONAL
+  -- ids (i.e., SNP rsid / ssid, dbVar nsv/nssv)
+  -- expected values include 'dbSNP|rs12334', 'dbSNP|ss12345', 'dbVar|nsv1'
+  --
+  -- we relate three kinds of IDs here:
+  --  - our current object's id
+  --  - the id of this object's parent, if it exists
+  --  - the sample ID that this item originates from
+  F,592,Variation-ref:parent-id,/Dbtag,OPTIONAL
+  F,593,Variation-ref:sample-id,/Object-id,OPTIONAL
+  F,594,Variation-ref:other-ids,SET /Dbtag,OPTIONAL
+  F,599,Variation-ref:name,VisibleString,OPTIONAL
+  -- names and synonyms
+  -- some variants have well-known canonical names and possible accepted
+  -- synonyms
+  F,600,Variation-ref:synonyms,SET VisibleString,OPTIONAL
+  F,603,Variation-ref:description,VisibleString,OPTIONAL
+  -- tag for comment and descriptions
+  F,606,Variation-ref:phenotype,SET /Phenotype,OPTIONAL
+  -- phenotype
+  F,609,Variation-ref:method,SET INTEGER,OPTIONAL
+  -- sequencing / acuisition method
+    V,610,Variation-ref:method::unknown,0
+    V,611,Variation-ref:method::bac-acgh,1
+    V,612,Variation-ref:method::computational,2
+    V,613,Variation-ref:method::curated,3
+    V,614,Variation-ref:method::digital-array,4
+    V,615,Variation-ref:method::expression-array,5
+    V,616,Variation-ref:method::fish,6
+    V,617,Variation-ref:method::flanking-sequence,7
+    V,618,Variation-ref:method::maph,8
+    V,619,Variation-ref:method::mcd-analysis,9
+    V,620,Variation-ref:method::mlpa,10
+    V,621,Variation-ref:method::oea-assembly,11
+    V,622,Variation-ref:method::oligo-acgh,12
+    V,623,Variation-ref:method::paired-end,13
+    V,624,Variation-ref:method::pcr,14
+    V,625,Variation-ref:method::qpcr,15
+    V,626,Variation-ref:method::read-depth,16
+    V,627,Variation-ref:method::roma,17
+    V,628,Variation-ref:method::rt-pcr,18
+    V,629,Variation-ref:method::sage,19
+    V,630,Variation-ref:method::sequence-alignment,20
+    V,631,Variation-ref:method::sequencing,21
+    V,632,Variation-ref:method::snp-array,22
+    V,633,Variation-ref:method::snp-genoytyping,23
+    V,634,Variation-ref:method::southern,24
+    V,635,Variation-ref:method::western,25
+    V,636,Variation-ref:method::optical-mapping,26
+    V,638,Variation-ref:method::other,255
+  F,650,Variation-ref:population-data,SET /Population-data,OPTIONAL
+  -- Note about SNP representation and pretinent fields: allele-frequency,
+  -- population, quality-codes:
+  -- The case of multiple alleles for a SNP would be described by
+  -- parent-feature of type Variation-set.diff-alleles, where the child
+  -- features of type Variation-inst, all at the same location, would
+  -- describe individual alleles.
+  -- population data
+  -- DEPRECATED - do not use
+  F,653,Variation-ref:variant-prop,/VariantProperties,OPTIONAL
+  -- variant properties bit fields
+  F,657,Variation-ref:validated,BOOLEAN,OPTIONAL
+  -- has this variant been validated?
+  -- DEPRECATED: new field = VariantProperties.other-validation
+  F,661,Variation-ref:clinical-test,SET /Dbtag,OPTIONAL
+  -- link-outs to GeneTests database
+  -- DEPRECATED - do not use
+  F,667,Variation-ref:allele-origin,INTEGER,OPTIONAL
+  -- origin of this allele, if known
+  -- note that these are powers-of-two, and represent bits; thus, we can
+  -- represent more than one state simultaneously through a bitwise OR
+  -- DEPRECATED: new field = VariantProperties.allele-origin
+    V,668,Variation-ref:allele-origin:unknown,0
+    V,669,Variation-ref:allele-origin:germline,1
+    V,670,Variation-ref:allele-origin:somatic,2
+    V,671,Variation-ref:allele-origin:inherited,4
+    V,672,Variation-ref:allele-origin:paternal,8
+    V,673,Variation-ref:allele-origin:maternal,16
+    V,674,Variation-ref:allele-origin:de-novo,32
+    V,675,Variation-ref:allele-origin:biparental,64
+    V,676,Variation-ref:allele-origin:uniparental,128
+    V,677,Variation-ref:allele-origin:not-tested,256
+    V,678,Variation-ref:allele-origin:tested-inconclusive,512
+    V,681,Variation-ref:allele-origin:other,1073741824
+    -- stopper - 2^31
+  F,686,Variation-ref:allele-state,INTEGER,OPTIONAL
+  -- observed allele state, if known
+  -- DEPRECATED: new field = VariantProperties.allele-state
+    V,687,Variation-ref:allele-state:unknown,0
+    V,688,Variation-ref:allele-state:homozygous,1
+    V,689,Variation-ref:allele-state:heterozygous,2
+    V,690,Variation-ref:allele-state:hemizygous,3
+    V,691,Variation-ref:allele-state:nullizygous,4
+    V,692,Variation-ref:allele-state:other,255
+  F,699,Variation-ref:allele-frequency,REAL,OPTIONAL
+  -- NOTE:
+  -- 'allele-frequency' here refers to the minor allele frequency of the
+  -- default population
+  -- DEPRECATED: new field = VariantProperties.allele-frequency
+  F,703,Variation-ref:is-ancestral-allele,BOOLEAN,OPTIONAL
+  -- is this variant the ancestral allele?
+  -- DEPRECATED: new field = VariantProperties.is-ancestral-allele
+  F,710,Variation-ref:pub,/Pub,OPTIONAL
+  -- publication support.
+  -- Note: made this pub instead of pub-equiv, since
+  -- Pub can be pub-equiv and pub-equiv is a set of pubs, but it looks like
+  -- Pub is more often used as top-level container
+  -- DEPRECATED - do not use; use Seq-feat.dbxref instead
+  F,712,Variation-ref:data,CHOICE
+    F,713,Variation-ref:data:unknown,NULL
+    F,714,Variation-ref:data:note,VisibleString
+    --free-form
+    F,715,Variation-ref:data:uniparental-disomy,NULL
+    F,718,Variation-ref:data:instance,/Variation-inst
+    -- actual sequence-edit at feat.location
+    F,722,Variation-ref:data:set,SEQUENCE
+    -- Set of related Variations.
+    -- Location of the set equals to the union of member locations
+      F,723,Variation-ref:data:set:type,INTEGER
+        V,724,Variation-ref:data:set:type:unknown,0
+        V,725,Variation-ref:data:set:type:compound,1
+        -- complex change at the same location on the
+        -- same molecule
+        V,727,Variation-ref:data:set:type:products,2
+        -- different products arising from the same
+        -- variation in a precursor, e.g. r.[13g>a,
+        -- 13_88del]
+        V,730,Variation-ref:data:set:type:haplotype,3
+        -- changes on the same allele, e.g
+        -- r.[13g>a;15u>c]
+        V,732,Variation-ref:data:set:type:genotype,4
+        -- changes on different alleles in the same
+        -- genotype, e.g. g.[476C>T]+[476C>T]
+        V,734,Variation-ref:data:set:type:mosaic,5
+        -- different genotypes in the same individual
+        V,735,Variation-ref:data:set:type:individual,6
+        -- same organism; allele relationship unknown,
+        -- e.g. g.[476C>T(+)183G>C]
+        V,737,Variation-ref:data:set:type:population,7
+        -- population
+        V,738,Variation-ref:data:set:type:alleles,8
+        -- set represents a set of observed alleles
+        V,739,Variation-ref:data:set:type:package,9
+        -- set represents a package of observations at
+        -- a given location, generally containing
+        -- asserted + reference
+        V,742,Variation-ref:data:set:type:other,255
+      F,744,Variation-ref:data:set:variations,SET /Variation-ref
+      F,745,Variation-ref:data:set:name,VisibleString,OPTIONAL
+    F,750,Variation-ref:data:complex,NULL
+    -- variant is a complex and undescribed change at the location
+    -- This type of variant is known to occur in dbVar submissions
+  F,753,Variation-ref:consequence,SET CHOICE,OPTIONAL
+    F,754,Variation-ref:consequence:unknown,NULL
+    F,755,Variation-ref:consequence:splicing,NULL
+    --some effect on splicing
+    F,756,Variation-ref:consequence:note,VisibleString
+    --freeform
+    F,761,Variation-ref:consequence:variation,/Variation-ref
+    -- Describe resulting variation in the product, e.g. missense,
+    -- nonsense, silent, neutral, etc in a protein, that arises from
+    -- THIS variation.
+    F,764,Variation-ref:consequence:frameshift,SEQUENCE
+    -- see http://www.hgvs.org/mutnomen/recs-prot.html
+      F,765,Variation-ref:consequence:frameshift:phase,INTEGER,OPTIONAL
+      F,766,Variation-ref:consequence:frameshift:x-length,INTEGER,OPTIONAL
+    F,769,Variation-ref:consequence:loss-of-heterozygosity,SEQUENCE
+      F,773,Variation-ref:consequence:loss-of-heterozygosity:reference,VisibleString,OPTIONAL
+      -- In germline comparison, it will be reference genome assembly
+      -- (default) or reference/normal population. In somatic mutation,
+      -- it will be a name of the normal tissue.
+      F,776,Variation-ref:consequence:loss-of-heterozygosity:test,VisibleString,OPTIONAL
+      -- Name of the testing subject type or the testing tissue.
+  F,782,Variation-ref:location,/Seq-loc,OPTIONAL
+  -- Observed location, if different from the parent set or feature.location.
+  -- DEPRECATED - do not use
+  F,786,Variation-ref:ext-locs,SET /Ext-loc,OPTIONAL
+  -- reference other locs, e.g. mapped source
+  -- DEPRECATED - do not use
+  F,789,Variation-ref:ext,/User-object,OPTIONAL
+  -- DEPRECATED - do not use; use Seq-feat.exts instead
+  F,791,Variation-ref:somatic-origin,SET SEQUENCE,OPTIONAL
+    F,793,Variation-ref:somatic-origin:source,/SubSource,OPTIONAL
+    -- description of the somatic origin itself
+    F,795,Variation-ref:somatic-origin:condition,SEQUENCE,OPTIONAL
+    -- condition related to this origin's type
+      F,796,Variation-ref:somatic-origin:condition:description,VisibleString,OPTIONAL
+      F,798,Variation-ref:somatic-origin:condition:object-id,SET /Dbtag,OPTIONAL
+      -- reference to BioTerm / other descriptive database
+
+T,805,Delta-item,SEQUENCE
+  F,806,Delta-item:seq,CHOICE,OPTIONAL
+    F,807,Delta-item:seq:literal,/Seq-literal
+    F,808,Delta-item:seq:loc,/Seq-loc
+    F,809,Delta-item:seq:this,NULL
+    --same location as variation-ref itself
+  F,816,Delta-item:multiplier,INTEGER,OPTIONAL
+  -- Multiplier allows representing a tandem, e.g.  ATATAT as AT*3
+  -- This allows describing CNV/SSR where delta=self  with a
+  -- multiplier which specifies the count of the repeat unit.
+  --assumed 1 if not specified.
+  F,817,Delta-item:multiplier-fuzz,/Int-fuzz,OPTIONAL
+  F,819,Delta-item:action,INTEGER,DEFAULT,morph
+    V,822,Delta-item:action:morph,0
+    -- replace len(seq) positions starting with location.start with seq
+    V,826,Delta-item:action:offset,1
+    -- go downstream by distance specified by multiplier (upstream if < 0),
+    -- in genomic context.
+    V,831,Delta-item:action:del-at,2
+    -- excise sequence at location
+    -- if multiplier is specified, delete len(location)*multiplier
+    -- positions downstream
+    V,834,Delta-item:action:ins-before,3
+    -- insert seq before the location.start
+
+T,841,Variation-inst,SEQUENCE
+-- Variation instance
+  F,842,Variation-inst:type,INTEGER
+    V,843,Variation-inst:type:unknown,0
+    -- delta=[]
+    V,844,Variation-inst:type:identity,1
+    -- delta=[]
+    V,845,Variation-inst:type:inv,2
+    -- delta=[del, ins.seq=
+    -- RevComp(variation-location)]
+    V,847,Variation-inst:type:snv,3
+    -- delta=[morph of length 1]
+    -- NOTE: this is snV not snP; the latter
+    -- requires frequency-based validation to be
+    -- established in VariantProperties
+    -- the strict definition of SNP is an SNV with
+    -- an established population frequency of at
+    -- least 1% in at least 1 popuplation
+    V,854,Variation-inst:type:mnp,4
+    -- delta=[morph of length >1]
+    V,855,Variation-inst:type:delins,5
+    -- delta=[del, ins]
+    V,856,Variation-inst:type:del,6
+    -- delta=[del]
+    V,857,Variation-inst:type:ins,7
+    -- delta=[ins]
+    V,858,Variation-inst:type:microsatellite,8
+    -- delta=[del, ins.seq= repeat-unit with fuzzy
+    -- multiplier]
+    -- variation-location is the microsat expansion
+    -- on the sequence
+    V,862,Variation-inst:type:transposon,9
+    -- delta=[del, ins.seq= known donor or 'this']
+    -- variation-location is equiv of transposon
+    -- locs.
+    V,865,Variation-inst:type:cnv,10
+    -- delta=[del, ins= 'this' with fuzzy
+    -- multiplier]
+    V,867,Variation-inst:type:direct-copy,11
+    -- delta=[ins.seq= upstream location on the
+    -- same strand]
+    V,869,Variation-inst:type:rev-direct-copy,12
+    -- delta=[ins.seq= downstream location on the
+    -- same strand]
+    V,871,Variation-inst:type:inverted-copy,13
+    -- delta=[ins.seq= upstream location on the
+    -- opposite strand]
+    V,873,Variation-inst:type:everted-copy,14
+    -- delta=[ins.seq= downstream location on the
+    -- opposite strand]
+    V,875,Variation-inst:type:translocation,15
+    -- delta=like delins
+    V,876,Variation-inst:type:prot-missense,16
+    -- delta=[morph of length 1]
+    V,877,Variation-inst:type:prot-nonsense,17
+    -- delta=[del]; variation-location is the tail
+    -- of the protein being truncated
+    V,879,Variation-inst:type:prot-neutral,18
+    -- delta=[morph of length 1]
+    V,880,Variation-inst:type:prot-silent,19
+    -- delta=[morph of length 1, same AA as at
+    -- variation-location]
+    V,882,Variation-inst:type:prot-other,20
+    -- delta=any
+    V,884,Variation-inst:type:other,255
+    -- delta=any
+  F,888,Variation-inst:delta,SEQUENCE /Delta-item
+  -- Sequence that replaces the location, in biological order.
+  F,893,Variation-inst:observation,INTEGER,OPTIONAL
+  -- 'observation' is used to label items in a Variation-ref package
+  -- This field is explicitly a bit-field, so the bitwise OR (= sum) of any
+  -- of the values may be observed.
+    V,894,Variation-inst:observation:asserted,1
+    -- inst represents the asserted base at a
+    -- position
+    V,896,Variation-inst:observation:reference,2
+    -- inst represents the reference base at the
+    -- position
+    V,898,Variation-inst:observation:variant,4
+    -- inst represent the observed variant at a
+    -- given position
+M,914,seqfeat.asn:NCBI-Rsite
+--**********************************************************************
+--
+--  NCBI Restriction Sites
+--  by James Ostell, 1990
+--  version 0.8
+--
+--**********************************************************************
+  T,921,NCBI-Rsite:Rsite-ref
+
+T,921,Rsite-ref,CHOICE
+  F,922,Rsite-ref:str,VisibleString
+  -- may be unparsable
+  F,923,Rsite-ref:db,/Dbtag
+  -- pointer to a restriction site database
+M,935,seqfeat.asn:NCBI-RNA
+--**********************************************************************
+--
+--  NCBI RNAs
+--  by James Ostell, 1990
+--  version 0.8
+--
+--**********************************************************************
+  T,947,NCBI-RNA:RNA-ref
+  T,968,NCBI-RNA:Trna-ext
+  T,977,NCBI-RNA:RNA-gen
+  T,984,NCBI-RNA:RNA-qual
+  T,988,NCBI-RNA:RNA-qual-set
+
+T,947,RNA-ref,SEQUENCE
+--*** rnas ***********************************************
+--*
+--*  various rnas
+--*
+-- minimal RNA sequence
+  F,948,RNA-ref:type,ENUMERATED
+  -- type of RNA feature
+    V,949,RNA-ref:type:unknown,0
+    V,950,RNA-ref:type:premsg,1
+    V,951,RNA-ref:type:mRNA,2
+    V,952,RNA-ref:type:tRNA,3
+    V,953,RNA-ref:type:rRNA,4
+    V,954,RNA-ref:type:snRNA,5
+    -- will become ncRNA, with RNA-gen.class = snRNA
+    V,955,RNA-ref:type:scRNA,6
+    -- will become ncRNA, with RNA-gen.class = scRNA
+    V,956,RNA-ref:type:snoRNA,7
+    -- will become ncRNA, with RNA-gen.class = snoRNA
+    V,957,RNA-ref:type:ncRNA,8
+    -- non-coding RNA; subsumes snRNA, scRNA, snoRNA
+    V,958,RNA-ref:type:tmRNA,9
+    V,959,RNA-ref:type:miscRNA,10
+    V,960,RNA-ref:type:other,255
+  F,961,RNA-ref:pseudo,BOOLEAN,OPTIONAL
+  F,962,RNA-ref:ext,CHOICE,OPTIONAL
+  -- generic fields for ncRNA, tmRNA, miscRNA
+    F,963,RNA-ref:ext:name,VisibleString
+    -- for naming "other" type
+    F,964,RNA-ref:ext:tRNA,/Trna-ext
+    -- for tRNAs
+    F,965,RNA-ref:ext:gen,/RNA-gen
+
+T,968,Trna-ext,SEQUENCE
+-- tRNA feature extensions
+  F,969,Trna-ext:aa,CHOICE,OPTIONAL
+  -- aa this carries
+    F,970,Trna-ext:aa:iupacaa,INTEGER
+    F,971,Trna-ext:aa:ncbieaa,INTEGER
+    F,972,Trna-ext:aa:ncbi8aa,INTEGER
+    F,973,Trna-ext:aa:ncbistdaa,INTEGER
+  F,974,Trna-ext:codon,SET INTEGER,OPTIONAL
+  -- codon(s) as in Genetic-code
+  F,975,Trna-ext:anticodon,/Seq-loc,OPTIONAL
+  -- location of anticodon
+
+T,977,RNA-gen,SEQUENCE
+  F,978,RNA-gen:class,VisibleString,OPTIONAL
+  -- for ncRNAs, the class of non-coding RNA:
+  -- examples: antisense_RNA, guide_RNA, snRNA
+  F,980,RNA-gen:product,VisibleString,OPTIONAL
+  F,981,RNA-gen:quals,/RNA-qual-set,OPTIONAL
+  -- e.g., tag_peptide qualifier for tmRNAs
+
+T,984,RNA-qual,SEQUENCE
+-- Additional data values for RNA-gen,
+  F,985,RNA-qual:qual,VisibleString
+  -- in a tag (qual), value (val) format
+  F,986,RNA-qual:val,VisibleString
+
+T,988,RNA-qual-set,SEQUENCE /RNA-qual
+M,1000,seqfeat.asn:NCBI-Gene
+--**********************************************************************
+--
+--  NCBI Genes
+--  by James Ostell, 1990
+--  version 0.8
+--
+--**********************************************************************
+  T,1012,NCBI-Gene:Gene-ref
+  T,1024,NCBI-Gene:Gene-nomenclature
+
+T,1012,Gene-ref,SEQUENCE
+--*** Gene ***********************************************
+--*
+--*  reference to a gene
+--*
+  F,1013,Gene-ref:locus,VisibleString,OPTIONAL
+  -- Official gene symbol
+  F,1014,Gene-ref:allele,VisibleString,OPTIONAL
+  -- Official allele designation
+  F,1015,Gene-ref:desc,VisibleString,OPTIONAL
+  -- descriptive name
+  F,1016,Gene-ref:maploc,VisibleString,OPTIONAL
+  -- descriptive map location
+  F,1017,Gene-ref:pseudo,BOOLEAN,DEFAULT,FALSE
+  -- pseudogene
+  F,1018,Gene-ref:db,SET /Dbtag,OPTIONAL
+  -- ids in other dbases
+  F,1019,Gene-ref:syn,SET VisibleString,OPTIONAL
+  -- synonyms for locus
+  F,1020,Gene-ref:locus-tag,VisibleString,OPTIONAL
+  -- systematic gene name (e.g., MI0001, ORF0069)
+  F,1021,Gene-ref:formal-name,/Gene-nomenclature,OPTIONAL
+
+T,1024,Gene-nomenclature,SEQUENCE
+  F,1025,Gene-nomenclature:status,ENUMERATED
+    V,1026,Gene-nomenclature:status:unknown,0
+    V,1027,Gene-nomenclature:status:official,1
+    V,1028,Gene-nomenclature:status:interim,2
+  F,1030,Gene-nomenclature:symbol,VisibleString,OPTIONAL
+  F,1031,Gene-nomenclature:name,VisibleString,OPTIONAL
+  F,1032,Gene-nomenclature:source,/Dbtag,OPTIONAL
+M,1046,seqfeat.asn:NCBI-Organism
+--**********************************************************************
+--
+--  NCBI Organism
+--  by James Ostell, 1994
+--  version 3.0
+--
+--**********************************************************************
+  T,1060,NCBI-Organism:Org-ref
+  T,1069,NCBI-Organism:OrgName
+  T,1085,NCBI-Organism:OrgMod
+  T,1130,NCBI-Organism:BinomialOrgName
+  T,1135,NCBI-Organism:MultiOrgName
+  T,1137,NCBI-Organism:PartialOrgName
+  T,1139,NCBI-Organism:TaxElement
+
+T,1060,Org-ref,SEQUENCE
+--*** Org-ref ***********************************************
+--*
+--*  Reference to an organism
+--*     defines only the organism.. lower levels of detail for biological
+--*     molecules are provided by the Source object
+--*
+  F,1061,Org-ref:taxname,VisibleString,OPTIONAL
+  -- preferred formal name
+  F,1062,Org-ref:common,VisibleString,OPTIONAL
+  -- common name
+  F,1063,Org-ref:mod,SET VisibleString,OPTIONAL
+  -- unstructured modifiers
+  F,1064,Org-ref:db,SET /Dbtag,OPTIONAL
+  -- ids in taxonomic or culture dbases
+  F,1065,Org-ref:syn,SET VisibleString,OPTIONAL
+  -- synonyms for taxname or common
+  F,1066,Org-ref:orgname,/OrgName,OPTIONAL
+
+T,1069,OrgName,SEQUENCE
+  F,1070,OrgName:name,CHOICE,OPTIONAL
+    F,1071,OrgName:name:binomial,/BinomialOrgName
+    -- genus/species type name
+    F,1072,OrgName:name:virus,VisibleString
+    -- virus names are different
+    F,1073,OrgName:name:hybrid,/MultiOrgName
+    -- hybrid between organisms
+    F,1074,OrgName:name:namedhybrid,/BinomialOrgName
+    -- some hybrids have genus x species name
+    F,1075,OrgName:name:partial,/PartialOrgName
+    -- when genus not known
+  F,1076,OrgName:attrib,VisibleString,OPTIONAL
+  -- attribution of name
+  F,1077,OrgName:mod,SEQUENCE /OrgMod,OPTIONAL
+  F,1078,OrgName:lineage,VisibleString,OPTIONAL
+  -- lineage with semicolon separators
+  F,1079,OrgName:gcode,INTEGER,OPTIONAL
+  -- genetic code (see CdRegion)
+  F,1080,OrgName:mgcode,INTEGER,OPTIONAL
+  -- mitochondrial genetic code
+  F,1081,OrgName:div,VisibleString,OPTIONAL
+  -- GenBank division code
+  F,1082,OrgName:pgcode,INTEGER,OPTIONAL
+  -- plastid genetic code
+
+T,1085,OrgMod,SEQUENCE
+  F,1086,OrgMod:subtype,INTEGER
+    V,1087,OrgMod:subtype:strain,2
+    V,1088,OrgMod:subtype:substrain,3
+    V,1089,OrgMod:subtype:type,4
+    V,1090,OrgMod:subtype:subtype,5
+    V,1091,OrgMod:subtype:variety,6
+    V,1092,OrgMod:subtype:serotype,7
+    V,1093,OrgMod:subtype:serogroup,8
+    V,1094,OrgMod:subtype:serovar,9
+    V,1095,OrgMod:subtype:cultivar,10
+    V,1096,OrgMod:subtype:pathovar,11
+    V,1097,OrgMod:subtype:chemovar,12
+    V,1098,OrgMod:subtype:biovar,13
+    V,1099,OrgMod:subtype:biotype,14
+    V,1100,OrgMod:subtype:group,15
+    V,1101,OrgMod:subtype:subgroup,16
+    V,1102,OrgMod:subtype:isolate,17
+    V,1103,OrgMod:subtype:common,18
+    V,1104,OrgMod:subtype:acronym,19
+    V,1105,OrgMod:subtype:dosage,20
+    -- chromosome dosage of hybrid
+    V,1106,OrgMod:subtype:nat-host,21
+    -- natural host of this specimen
+    V,1107,OrgMod:subtype:sub-species,22
+    V,1108,OrgMod:subtype:specimen-voucher,23
+    V,1109,OrgMod:subtype:authority,24
+    V,1110,OrgMod:subtype:forma,25
+    V,1111,OrgMod:subtype:forma-specialis,26
+    V,1112,OrgMod:subtype:ecotype,27
+    V,1113,OrgMod:subtype:synonym,28
+    V,1114,OrgMod:subtype:anamorph,29
+    V,1115,OrgMod:subtype:teleomorph,30
+    V,1116,OrgMod:subtype:breed,31
+    V,1117,OrgMod:subtype:gb-acronym,32
+    -- used by taxonomy database
+    V,1118,OrgMod:subtype:gb-anamorph,33
+    -- used by taxonomy database
+    V,1119,OrgMod:subtype:gb-synonym,34
+    -- used by taxonomy database
+    V,1120,OrgMod:subtype:culture-collection,35
+    V,1121,OrgMod:subtype:bio-material,36
+    V,1122,OrgMod:subtype:metagenome-source,37
+    V,1123,OrgMod:subtype:type-material,38
+    V,1124,OrgMod:subtype:old-lineage,253
+    V,1125,OrgMod:subtype:old-name,254
+    V,1126,OrgMod:subtype:other,255
+    -- ASN5: old-name (254) will be added to next spec
+  F,1127,OrgMod:subname,VisibleString
+  F,1128,OrgMod:attrib,VisibleString,OPTIONAL
+  -- attribution/source of name
+
+T,1130,BinomialOrgName,SEQUENCE
+  F,1131,BinomialOrgName:genus,VisibleString
+  -- required
+  F,1132,BinomialOrgName:species,VisibleString,OPTIONAL
+  -- species required if subspecies used
+  F,1133,BinomialOrgName:subspecies,VisibleString,OPTIONAL
+
+T,1135,MultiOrgName,SEQUENCE /OrgName
+-- the first will be used to assign division
+
+T,1137,PartialOrgName,SEQUENCE /TaxElement
+-- when we don't know the genus
+
+T,1139,TaxElement,SEQUENCE
+  F,1140,TaxElement:fixed-level,INTEGER
+    V,1141,TaxElement:fixed-level:other,0
+    -- level must be set in string
+    V,1142,TaxElement:fixed-level:family,1
+    V,1143,TaxElement:fixed-level:order,2
+    V,1144,TaxElement:fixed-level:class,3
+  F,1145,TaxElement:level,VisibleString,OPTIONAL
+  F,1146,TaxElement:name,VisibleString
+M,1159,seqfeat.asn:NCBI-BioSource
+--**********************************************************************
+--
+--  NCBI BioSource
+--  by James Ostell, 1994
+--  version 3.0
+--
+--**********************************************************************
+  T,1173,NCBI-BioSource:BioSource
+  T,1215,NCBI-BioSource:PCRReactionSet
+  T,1217,NCBI-BioSource:PCRReaction
+  T,1221,NCBI-BioSource:PCRPrimerSet
+  T,1223,NCBI-BioSource:PCRPrimer
+  T,1227,NCBI-BioSource:PCRPrimerSeq
+  T,1229,NCBI-BioSource:PCRPrimerName
+  T,1231,NCBI-BioSource:SubSource
+
+T,1173,BioSource,SEQUENCE
+--********************************************************************
+--
+-- BioSource gives the source of the biological material
+--   for sequences
+--
+--********************************************************************
+  F,1174,BioSource:genome,INTEGER,DEFAULT,unknown
+  -- biological context
+    V,1175,BioSource:genome:unknown,0
+    V,1176,BioSource:genome:genomic,1
+    V,1177,BioSource:genome:chloroplast,2
+    V,1178,BioSource:genome:chromoplast,3
+    V,1179,BioSource:genome:kinetoplast,4
+    V,1180,BioSource:genome:mitochondrion,5
+    V,1181,BioSource:genome:plastid,6
+    V,1182,BioSource:genome:macronuclear,7
+    V,1183,BioSource:genome:extrachrom,8
+    V,1184,BioSource:genome:plasmid,9
+    V,1185,BioSource:genome:transposon,10
+    V,1186,BioSource:genome:insertion-seq,11
+    V,1187,BioSource:genome:cyanelle,12
+    V,1188,BioSource:genome:proviral,13
+    V,1189,BioSource:genome:virion,14
+    V,1190,BioSource:genome:nucleomorph,15
+    V,1191,BioSource:genome:apicoplast,16
+    V,1192,BioSource:genome:leucoplast,17
+    V,1193,BioSource:genome:proplastid,18
+    V,1194,BioSource:genome:endogenous-virus,19
+    V,1195,BioSource:genome:hydrogenosome,20
+    V,1196,BioSource:genome:chromosome,21
+    V,1197,BioSource:genome:chromatophore,22
+    V,1198,BioSource:genome:plasmid-in-mitochondrion,23
+    V,1199,BioSource:genome:plasmid-in-plastid,24
+  F,1201,BioSource:origin,INTEGER,DEFAULT,unknown
+    V,1202,BioSource:origin:unknown,0
+    V,1203,BioSource:origin:natural,1
+    -- normal biological entity
+    V,1204,BioSource:origin:natmut,2
+    -- naturally occurring mutant
+    V,1205,BioSource:origin:mut,3
+    -- artificially mutagenized
+    V,1206,BioSource:origin:artificial,4
+    -- artificially engineered
+    V,1207,BioSource:origin:synthetic,5
+    -- purely synthetic
+    V,1208,BioSource:origin:other,255
+  F,1210,BioSource:org,/Org-ref
+  F,1211,BioSource:subtype,SEQUENCE /SubSource,OPTIONAL
+  F,1212,BioSource:is-focus,NULL,OPTIONAL
+  -- to distinguish biological focus
+  F,1213,BioSource:pcr-primers,/PCRReactionSet,OPTIONAL
+
+T,1215,PCRReactionSet,SET /PCRReaction
+
+T,1217,PCRReaction,SEQUENCE
+  F,1218,PCRReaction:forward,/PCRPrimerSet,OPTIONAL
+  F,1219,PCRReaction:reverse,/PCRPrimerSet,OPTIONAL
+
+T,1221,PCRPrimerSet,SET /PCRPrimer
+
+T,1223,PCRPrimer,SEQUENCE
+  F,1224,PCRPrimer:seq,/PCRPrimerSeq,OPTIONAL
+  F,1225,PCRPrimer:name,/PCRPrimerName,OPTIONAL
+
+T,1227,PCRPrimerSeq,VisibleString
+
+T,1229,PCRPrimerName,VisibleString
+
+T,1231,SubSource,SEQUENCE
+  F,1232,SubSource:subtype,INTEGER
+    V,1233,SubSource:subtype:chromosome,1
+    V,1234,SubSource:subtype:map,2
+    V,1235,SubSource:subtype:clone,3
+    V,1236,SubSource:subtype:subclone,4
+    V,1237,SubSource:subtype:haplotype,5
+    V,1238,SubSource:subtype:genotype,6
+    V,1239,SubSource:subtype:sex,7
+    V,1240,SubSource:subtype:cell-line,8
+    V,1241,SubSource:subtype:cell-type,9
+    V,1242,SubSource:subtype:tissue-type,10
+    V,1243,SubSource:subtype:clone-lib,11
+    V,1244,SubSource:subtype:dev-stage,12
+    V,1245,SubSource:subtype:frequency,13
+    V,1246,SubSource:subtype:germline,14
+    V,1247,SubSource:subtype:rearranged,15
+    V,1248,SubSource:subtype:lab-host,16
+    V,1249,SubSource:subtype:pop-variant,17
+    V,1250,SubSource:subtype:tissue-lib,18
+    V,1251,SubSource:subtype:plasmid-name,19
+    V,1252,SubSource:subtype:transposon-name,20
+    V,1253,SubSource:subtype:insertion-seq-name,21
+    V,1254,SubSource:subtype:plastid-name,22
+    V,1255,SubSource:subtype:country,23
+    V,1256,SubSource:subtype:segment,24
+    V,1257,SubSource:subtype:endogenous-virus-name,25
+    V,1258,SubSource:subtype:transgenic,26
+    V,1259,SubSource:subtype:environmental-sample,27
+    V,1260,SubSource:subtype:isolation-source,28
+    V,1261,SubSource:subtype:lat-lon,29
+    -- +/- decimal degrees
+    V,1262,SubSource:subtype:collection-date,30
+    -- DD-MMM-YYYY format
+    V,1263,SubSource:subtype:collected-by,31
+    -- name of person who collected the sample
+    V,1264,SubSource:subtype:identified-by,32
+    -- name of person who identified the sample
+    V,1265,SubSource:subtype:fwd-primer-seq,33
+    -- sequence (possibly more than one; semicolon-separated)
+    V,1266,SubSource:subtype:rev-primer-seq,34
+    -- sequence (possibly more than one; semicolon-separated)
+    V,1267,SubSource:subtype:fwd-primer-name,35
+    V,1268,SubSource:subtype:rev-primer-name,36
+    V,1269,SubSource:subtype:metagenomic,37
+    V,1270,SubSource:subtype:mating-type,38
+    V,1271,SubSource:subtype:linkage-group,39
+    V,1272,SubSource:subtype:haplogroup,40
+    V,1273,SubSource:subtype:whole-replicon,41
+    V,1274,SubSource:subtype:phenotype,42
+    V,1275,SubSource:subtype:altitude,43
+    V,1276,SubSource:subtype:other,255
+  F,1277,SubSource:name,VisibleString
+  F,1278,SubSource:attrib,VisibleString,OPTIONAL
+  -- attribution/source of this name
+M,1290,seqfeat.asn:NCBI-Protein
+--**********************************************************************
+--
+--  NCBI Protein
+--  by James Ostell, 1990
+--  version 0.8
+--
+--**********************************************************************
+  T,1302,NCBI-Protein:Prot-ref
+
+T,1302,Prot-ref,SEQUENCE
+--*** Prot-ref ***********************************************
+--*
+--*  Reference to a protein name
+--*
+  F,1303,Prot-ref:name,SET VisibleString,OPTIONAL
+  -- protein name
+  F,1304,Prot-ref:desc,VisibleString,OPTIONAL
+  -- description (instead of name)
+  F,1305,Prot-ref:ec,SET VisibleString,OPTIONAL
+  -- E.C. number(s)
+  F,1306,Prot-ref:activity,SET VisibleString,OPTIONAL
+  -- activities
+  F,1307,Prot-ref:db,SET /Dbtag,OPTIONAL
+  -- ids in other dbases
+  F,1308,Prot-ref:processed,ENUMERATED,DEFAULT,not-set
+  -- processing status
+    V,1309,Prot-ref:processed:not-set,0
+    V,1310,Prot-ref:processed:preprotein,1
+    V,1311,Prot-ref:processed:mature,2
+    V,1312,Prot-ref:processed:signal-peptide,3
+    V,1313,Prot-ref:processed:transit-peptide,4
+    V,1314,Prot-ref:processed:propeptide,5
+M,1328,seqfeat.asn:NCBI-TxInit
+--********************************************************************
+--
+--  Transcription Initiation Site Feature Data Block
+--  James Ostell, 1991
+--  Philip Bucher, David Ghosh
+--  version 1.1
+--
+--
+--
+--********************************************************************
+--  close homolog
+-- NOTE (1) length measurement of a reverse direction primer-extension
+--          product (blocked  by  RNA  5'end)  by  comparison with
+--          homologous sequence ladder (J. Mol. Biol. 199, 587)
+  T,1337,NCBI-TxInit:Txinit
+  T,1365,NCBI-TxInit:Tx-evidence
+
+T,1337,Txinit,SEQUENCE
+  F,1338,Txinit:name,VisibleString
+  -- descriptive name of initiation site
+  F,1339,Txinit:syn,SEQUENCE VisibleString,OPTIONAL
+  -- synonyms
+  F,1340,Txinit:gene,SEQUENCE /Gene-ref,OPTIONAL
+  -- gene(s) transcribed
+  F,1341,Txinit:protein,SEQUENCE /Prot-ref,OPTIONAL
+  -- protein(s) produced
+  F,1342,Txinit:rna,SEQUENCE VisibleString,OPTIONAL
+  -- rna(s) produced
+  F,1343,Txinit:expression,VisibleString,OPTIONAL
+  -- tissue/time of expression
+  F,1344,Txinit:txsystem,ENUMERATED
+  -- transcription apparatus used at this site
+    V,1345,Txinit:txsystem:unknown,0
+    V,1346,Txinit:txsystem:pol1,1
+    -- eukaryotic Pol I
+    V,1347,Txinit:txsystem:pol2,2
+    -- eukaryotic Pol II
+    V,1348,Txinit:txsystem:pol3,3
+    -- eukaryotic Pol III
+    V,1349,Txinit:txsystem:bacterial,4
+    V,1350,Txinit:txsystem:viral,5
+    V,1351,Txinit:txsystem:rna,6
+    -- RNA replicase
+    V,1352,Txinit:txsystem:organelle,7
+    V,1353,Txinit:txsystem:other,255
+  F,1354,Txinit:txdescr,VisibleString,OPTIONAL
+  -- modifiers on txsystem
+  F,1355,Txinit:txorg,/Org-ref,OPTIONAL
+  -- organism supplying transcription apparatus
+  F,1356,Txinit:mapping-precise,BOOLEAN,DEFAULT,FALSE
+  -- mapping precise or approx
+  F,1357,Txinit:location-accurate,BOOLEAN,DEFAULT,FALSE
+  -- does Seq-loc reflect mapping
+  F,1358,Txinit:inittype,ENUMERATED,OPTIONAL
+    V,1359,Txinit:inittype:unknown,0
+    V,1360,Txinit:inittype:single,1
+    V,1361,Txinit:inittype:multiple,2
+    V,1362,Txinit:inittype:region,3
+  F,1363,Txinit:evidence,SET /Tx-evidence,OPTIONAL
+
+T,1365,Tx-evidence,SEQUENCE
+  F,1366,Tx-evidence:exp-code,ENUMERATED
+    V,1367,Tx-evidence:exp-code:unknown,0
+    V,1368,Tx-evidence:exp-code:rna-seq,1
+    -- direct RNA sequencing
+    V,1369,Tx-evidence:exp-code:rna-size,2
+    -- RNA length measurement
+    V,1370,Tx-evidence:exp-code:np-map,3
+    -- nuclease protection mapping with homologous sequence ladder
+    V,1371,Tx-evidence:exp-code:np-size,4
+    -- nuclease protected fragment length measurement
+    V,1372,Tx-evidence:exp-code:pe-seq,5
+    -- dideoxy RNA sequencing
+    V,1373,Tx-evidence:exp-code:cDNA-seq,6
+    -- full-length cDNA sequencing
+    V,1374,Tx-evidence:exp-code:pe-map,7
+    -- primer extension mapping with homologous sequence ladder
+    V,1375,Tx-evidence:exp-code:pe-size,8
+    -- primer extension product length measurement
+    V,1376,Tx-evidence:exp-code:pseudo-seq,9
+    -- full-length processed pseudogene sequencing
+    V,1377,Tx-evidence:exp-code:rev-pe-map,10
+    -- see NOTE (1) below
+    V,1378,Tx-evidence:exp-code:other,255
+  F,1379,Tx-evidence:expression-system,ENUMERATED,DEFAULT,physiological
+    V,1380,Tx-evidence:expression-system:unknown,0
+    V,1381,Tx-evidence:expression-system:physiological,1
+    V,1382,Tx-evidence:expression-system:in-vitro,2
+    V,1383,Tx-evidence:expression-system:oocyte,3
+    V,1384,Tx-evidence:expression-system:transfection,4
+    V,1385,Tx-evidence:expression-system:transgenic,5
+    V,1386,Tx-evidence:expression-system:other,255
+  F,1387,Tx-evidence:low-prec-data,BOOLEAN,DEFAULT,FALSE
+  F,1388,Tx-evidence:from-homolog,BOOLEAN,DEFAULT,FALSE
+  -- experiment actually done on

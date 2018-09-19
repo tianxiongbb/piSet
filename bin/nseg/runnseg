@@ -1,0 +1,17 @@
+
+#!/bin/csh
+
+nseg $1 12 1.0 1.0 -z 1 -x >fz1
+nseg $1 8 .25 .25 -z 2 -x >fz2
+nseg $1 8 .25 .25 -z 3 -x >fz3
+nseg $1 8 .25 .25 -z 4 -x >fz4
+nseg $1 8 .25 .25 -z 5 -x >fz5
+nseg $1 8 .25 .25 -z 6 -x >fz6
+nseg $1 8 .25 .25 -z 7 -x >fz7
+nseg $1 8 .25 .25 -z 8 -x >fz8
+nseg $1 8 .25 .25 -z 9 -x >fz9
+nseg $1 8 .25 .25 -z 10 -x >fz10
+nseg $1 8 .25 .25 -z 11 -x >fz11
+nseg $1 8 .25 .25 -z 12 -x >fz12
+nmerge fz1 fz2 fz3 fz4 fz5 fz6 fz7 fz8 fz9 fz10 fz11 fz12
+rm fz1 fz2 fz3 fz4 fz5 fz6 fz7 fz8 fz9 fz10 fz11 fz12

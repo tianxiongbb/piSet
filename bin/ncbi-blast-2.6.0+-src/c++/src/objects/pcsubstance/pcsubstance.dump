@@ -1,0 +1,963 @@
+M,33,pcsubstance.asn:NCBI-PCSubstance
+-- $Id: pcsubstance.asn 353239 2012-02-14 12:28:28Z bolton $
+-- ===========================================================================
+--
+--                            PUBLIC DOMAIN NOTICE
+--               National Center for Biotechnology Information
+--
+--  This software/database is a "United States Government Work" under the
+--  terms of the United States Copyright Act.  It was written as part of
+--  the author's official duties as a United States Government employee and
+--  thus cannot be copyrighted.  This software/database is freely available
+--  to the public for use. The National Library of Medicine and the U.S.
+--  Government have not placed any restriction on its use or reproduction.
+--
+--  Although all reasonable efforts have been taken to ensure the accuracy
+--  and reliability of the software and data, the NLM and the U.S.
+--  Government do not and cannot warrant the performance or results that
+--  may be obtained by using this software or data. The NLM and the U.S.
+--  Government disclaim all warranties, express or implied, including
+--  warranties of performance, merchantability or fitness for any particular
+--  purpose.
+--
+--  Please cite the author in any work or product based on this material.
+--
+-- ===========================================================================
+--
+-- Authors:  NCBI Structure Group
+--
+-- File Description:
+--      ASN.1 definitions for PubChem small molecule database
+--
+-- ===========================================================================
+  T,43,NCBI-PCSubstance:PC-Substance
+  T,63,NCBI-PCSubstance:PC-Substances
+  T,67,NCBI-PCSubstance:PC-ID
+  T,76,NCBI-PCSubstance:PC-Source
+  T,84,NCBI-PCSubstance:PC-DBTracking
+  T,94,NCBI-PCSubstance:PC-MMDBSource
+  T,110,NCBI-PCSubstance:PC-XRefData
+  T,153,NCBI-PCSubstance:PC-Compound
+  T,169,NCBI-PCSubstance:PC-Compounds
+  T,174,NCBI-PCSubstance:PC-CompoundType
+  T,199,NCBI-PCSubstance:PC-Count
+  T,226,NCBI-PCSubstance:PC-StereoGroup
+  T,239,NCBI-PCSubstance:PC-InfoData
+  T,259,NCBI-PCSubstance:PC-Urn
+  T,275,NCBI-PCSubstance:PC-UrnDataType
+  T,302,NCBI-PCSubstance:PC-Coordinates
+  T,317,NCBI-PCSubstance:PC-Conformer
+  T,330,NCBI-PCSubstance:PC-Conformers
+  T,334,NCBI-PCSubstance:PC-CoordinateType
+  T,355,NCBI-PCSubstance:PC-DrawAnnotations
+  T,366,NCBI-PCSubstance:PC-BondAnnotation
+  T,384,NCBI-PCSubstance:PC-Atoms
+  T,401,NCBI-PCSubstance:PC-AtomSource
+  T,409,NCBI-PCSubstance:PC-AtomInt
+  T,417,NCBI-PCSubstance:PC-AtomString
+  T,425,NCBI-PCSubstance:PC-AtomRadical
+  T,443,NCBI-PCSubstance:PC-Element
+  T,478,NCBI-PCSubstance:PC-Bonds
+  T,489,NCBI-PCSubstance:PC-BondType
+  T,503,NCBI-PCSubstance:PC-StereoCenter
+  T,520,NCBI-PCSubstance:PC-StereoTetrahedral
+  T,549,NCBI-PCSubstance:PC-StereoPlanar
+  T,578,NCBI-PCSubstance:PC-StereoSquarePlanar
+  T,602,NCBI-PCSubstance:PC-StereoOctahedral
+  T,623,NCBI-PCSubstance:PC-StereoTrigonalBiPyramid
+  T,642,NCBI-PCSubstance:PC-StereoTShape
+  T,657,NCBI-PCSubstance:PC-StereoPentagonalBiPyramid
+
+T,43,PC-Substance,SEQUENCE
+-- Root Record for Chemical Substance Definition
+  F,45,PC-Substance:sid,/PC-ID
+  -- Internal Tracking Information
+  -- Substance ID/Version  [Either valid ID or a "0" dummy
+  --   value, if "source" is to be used]
+  --   Note: Version is for internal use (only?)
+  --   Note: A valid ID is greater than "0"
+  F,49,PC-Substance:source,/PC-Source
+  -- Data Source for this Submission
+  F,52,PC-Substance:pub,SEQUENCE /Pub,OPTIONAL
+  -- Substance Description Information
+  -- Articles Describing this Substance
+  F,53,PC-Substance:synonyms,SEQUENCE VisibleString,OPTIONAL
+  -- Substance Names provided by Depositor
+  F,54,PC-Substance:comment,SEQUENCE VisibleString,OPTIONAL
+  -- Comments and Description provided by Depositor
+  F,55,PC-Substance:xref,SEQUENCE /PC-XRefData,OPTIONAL
+  -- X-Ref/LinkOut Data provided by Depositor
+  F,58,PC-Substance:compound,/PC-Compounds,OPTIONAL
+  -- Structure Description
+  -- Original Deposited Structure Information
+
+T,63,PC-Substances,SEQUENCE /PC-Substance
+-- Holder for groups of Substances
+
+T,67,PC-ID,SEQUENCE
+-- ID and Version Description Information
+  F,68,PC-ID:id,INTEGER
+  -- Unique "Global" ID
+  --   Note: Must be greater than "0" or, if invalid, "0"
+  F,70,PC-ID:version,INTEGER
+  -- Incremented when Depositor updates record
+  --   Note: For Internal Use (only?)
+
+T,76,PC-Source,CHOICE
+-- Describes Substance Source, if from another database
+  F,77,PC-Source:individual,/Pub
+  -- Individual Submission
+  F,78,PC-Source:db,/PC-DBTracking
+  -- External DB Submission
+  F,79,PC-Source:mmdb,/PC-MMDBSource
+  -- MMDB Submission (deprecated)
+
+T,84,PC-DBTracking,SEQUENCE
+-- External DB Tracking Information
+  F,85,PC-DBTracking:name,VisibleString
+  -- Unique Name of External Database
+  F,86,PC-DBTracking:source-id,/Object-id
+  -- Primary Unique ID used by External DB
+  F,87,PC-DBTracking:date,/Date,OPTIONAL
+  -- External Database Release Date
+  F,88,PC-DBTracking:description,VisibleString,OPTIONAL
+  -- External Database Release Code/Description
+  F,89,PC-DBTracking:pub,/Pub,OPTIONAL
+  -- Data Submission to same DB by original Author
+
+T,94,PC-MMDBSource,SEQUENCE
+-- MMDB Source Record detailing specific location or part of an MMDB Record
+  F,95,PC-MMDBSource:mmdb-id,INTEGER
+  -- MMDB Record ID
+  --   Note: Must be greater than "0" or, if invalid, "0"
+  F,97,PC-MMDBSource:molecule-id,INTEGER
+  -- MMDB Molecule ID
+  --   Note: Must be greater than "0" or, if invalid, "0"
+  F,99,PC-MMDBSource:molecule-name,SEQUENCE VisibleString
+  -- MMDB Molecule Name
+  F,100,PC-MMDBSource:residue-id,INTEGER,OPTIONAL
+  -- Residue ID
+  --   Note: Must be greater than "0" or, if invalid, "0"
+  F,102,PC-MMDBSource:residue-name,VisibleString,OPTIONAL
+  -- Residue Name
+  F,103,PC-MMDBSource:atom-id,INTEGER,OPTIONAL
+  -- Atom ID
+  --   Note: Must be greater than "0" or, if invalid, "0"
+  F,105,PC-MMDBSource:atom-name,VisibleString,OPTIONAL
+  -- Atom Name
+
+T,110,PC-XRefData,CHOICE
+-- Depositor Provided X-Ref and LinkOut data for Entrez
+  F,111,PC-XRefData:regid,VisibleString
+  -- External Database Registry ID
+  F,112,PC-XRefData:rn,VisibleString
+  -- Registry Number (e.g., EC Number, CAS Number)
+  F,113,PC-XRefData:mesh,VisibleString
+  -- MESH Index Term
+  F,114,PC-XRefData:pmid,INTEGER
+  -- PubMed ID
+  --   Note: Must be greater than "0" or, if invalid, "0"
+  F,116,PC-XRefData:gi,INTEGER
+  -- GenBank General ID
+  --   Note: Please use protein-gi or nucleotide-gi, if possible
+  --   Note: Must be greater than "0" or, if invalid, "0"
+  F,119,PC-XRefData:mmdb,INTEGER
+  -- MMDB ID
+  --   Note: Must be greater than "0" or, if invalid, "0"
+  F,121,PC-XRefData:sid,INTEGER
+  -- PubChem Substance ID
+  --   Note: Must be greater than "0" or, if invalid, "0"
+  F,123,PC-XRefData:cid,INTEGER
+  -- PubChem Compound ID
+  --   Note: Must be greater than "0" or, if invalid, "0"
+  F,125,PC-XRefData:dburl,VisibleString
+  -- Depositor Source Database Homepage
+  F,126,PC-XRefData:sburl,VisibleString
+  -- Depositor Homepage for a Substance
+  F,127,PC-XRefData:asurl,VisibleString
+  -- Depositor Homepage for an Assay
+  F,128,PC-XRefData:protein-gi,INTEGER
+  -- GenBank General ID for a Protein
+  --   Note: Must be greater than "0" or, if invalid, "0"
+  F,130,PC-XRefData:nucleotide-gi,INTEGER
+  -- GenBank General ID for a Nucleotide
+  --   Note: Must be greater than "0" or, if invalid, "0"
+  F,132,PC-XRefData:taxonomy,INTEGER
+  -- Taxonomy ID for an Organism
+  --   Note: Must be greater than "0" or, if invalid, "0"
+  F,134,PC-XRefData:aid,INTEGER
+  -- PubChem BioAssay ID
+  --   Note: Must be greater than "0" or, if invalid, "0"
+  F,136,PC-XRefData:mim,INTEGER
+  -- MIM, Mendelian Inheritance in Man, Number 
+  --   Note: Must be greater than "0" or, if invalid, "0"
+  F,138,PC-XRefData:gene,INTEGER
+  -- Entrez Gene ID
+  --   Note: Must be greater than "0" or, if invalid, "0"
+  F,140,PC-XRefData:probe,INTEGER
+  -- Probe ID
+  --   Note: Must be greater than "0" or, if invalid, "0"
+  F,142,PC-XRefData:biosystem,INTEGER
+  -- BioSystem ID
+  --   Note: Must be greater than "0" or, if invalid, "0"
+  F,144,PC-XRefData:geogse,INTEGER
+  -- Gene Expression Omnibus Series Accession (GEO GSE) ID
+  --   Note: Must be greater than "0" or, if invalid, "0"
+  F,146,PC-XRefData:geogsm,INTEGER
+  -- Gene Expression Omnibus Sample Accession (GEO GSM) ID
+  --   Note: Must be greater than "0" or, if invalid, "0"
+  F,148,PC-XRefData:patent,VisibleString
+  -- Patent Identifier (e.g., USPTO, EPO, WPO, JPO, CPO)
+
+T,153,PC-Compound,SEQUENCE
+-- Compound Record
+  F,155,PC-Compound:id,/PC-CompoundType
+  -- Tracking Information
+  -- Compound Qualifier (Type/ID)
+  F,156,PC-Compound:atoms,/PC-Atoms,OPTIONAL
+  -- AtomID/Type Information
+  F,157,PC-Compound:bonds,/PC-Bonds,OPTIONAL
+  -- BondID/Type/Atom Information
+  F,158,PC-Compound:stereo,SEQUENCE /PC-StereoCenter,OPTIONAL
+  -- StereoCenter Descriptions
+  F,159,PC-Compound:coords,SEQUENCE /PC-Coordinates,OPTIONAL
+  -- 2D/3D Coordinate Sets of Compound
+  F,160,PC-Compound:charge,INTEGER,OPTIONAL
+  -- Provided Total Formal Charge  (Signed Integer)
+  F,161,PC-Compound:props,SEQUENCE /PC-InfoData,OPTIONAL
+  -- Derived (computed) Properties
+  F,162,PC-Compound:stereogroups,SEQUENCE /PC-StereoGroup,OPTIONAL
+  -- Relative stereochemistry groups
+  F,163,PC-Compound:count,/PC-Count,OPTIONAL
+  -- Counts of various properties
+  F,164,PC-Compound:vbalt,/PC-Compounds,OPTIONAL
+  -- Alternate Valence-Bond Forms
+
+T,169,PC-Compounds,SEQUENCE /PC-Compound
+-- Holder for groups of Compounds
+
+T,174,PC-CompoundType,SEQUENCE
+-- Qualification used to describe the type of Compound deposited, standardized, or derived.
+--    Please note that mixtures/cocktails may be specified using previously deposited substances.
+  F,175,PC-CompoundType:type,INTEGER,OPTIONAL
+  --  Compound Qualifier or Type
+  -- For Compound Depositions
+    V,177,PC-CompoundType:type:deposited,0
+    -- Original Deposited Compound
+    -- For Standardized Compounds
+    V,179,PC-CompoundType:type:standardized,1
+    -- Standardized Form of a Deposited Compound
+    V,180,PC-CompoundType:type:component,2
+    -- Component of a Standardized Compound
+    V,181,PC-CompoundType:type:neutralized,3
+    -- Neutralized Form of a Standardized Compound
+    -- For Mixture/Cocktail Depositions
+    V,183,PC-CompoundType:type:mixture,4
+    -- Substance that is a component of a mixture
+    -- For Theoretical Compounds
+    V,185,PC-CompoundType:type:tautomer,5
+    -- Predicted Tautomer Form
+    V,186,PC-CompoundType:type:pka-state,6
+    -- Predicted Ionized pKa Form
+    V,188,PC-CompoundType:type:unknown,255
+    -- Unknown Compound Type
+  F,190,PC-CompoundType:id,CHOICE,OPTIONAL
+  --  Compound Namespace and ID  (absent for "deposited" type compounds)
+    F,191,PC-CompoundType:id:cid,INTEGER
+    --  Standardized Compound
+    F,192,PC-CompoundType:id:sid,INTEGER
+    --  PubChem Substance (for "mixture" type compounds)
+    F,193,PC-CompoundType:id:xid,INTEGER
+    --  PubChem Theoretical Compound
+
+T,199,PC-Count,SEQUENCE
+-- Counts of various properties of a Compound
+  F,200,PC-Count:heavy-atom,INTEGER
+  -- Total count of non-Hydrogen (Heavy) Atoms
+  F,203,PC-Count:atom-chiral,INTEGER
+  -- StereoChemistry Counts
+  -- Total count of (SP3) Chiral Atoms
+  F,204,PC-Count:atom-chiral-def,INTEGER
+  -- Total count of Defined (SP3) Chiral Atoms
+  F,205,PC-Count:atom-chiral-undef,INTEGER
+  -- Total count of Undefined (SP3) Chiral Atoms
+  F,206,PC-Count:bond-chiral,INTEGER
+  -- Total count of (SP2) Chiral Bonds
+  F,207,PC-Count:bond-chiral-def,INTEGER
+  -- Total count of (SP2) Defined Chiral Bonds
+  F,208,PC-Count:bond-chiral-undef,INTEGER
+  -- Total count of (SP2) Undefined Chiral Bonds
+  F,211,PC-Count:isotope-atom,INTEGER
+  -- Isotopic Counts
+  -- Total count of Atoms with Isotopic Information
+  F,214,PC-Count:covalent-unit,INTEGER
+  -- Discrete Structure Counts
+  -- Total count of covalently-bonded units in the record
+  F,215,PC-Count:tautomers,INTEGER
+  -- Number of possible tautomers (Max. 999)
+
+T,226,PC-StereoGroup,SEQUENCE
+-- List of atom identifiers which are in a common stereochemistry group.
+-- All atoms in this group possess the characteristic of the type specified.
+-- The convention adopted is intended to be compatible with MDL's Enhanced
+-- Stereochemical Representation white paper.
+-- An atom can only be member of a single stereo group, and all atoms
+-- in a stereo group must have a stereo descriptor.
+-- Stereogroups only apply to stereocenters that can have parity.
+  F,227,PC-StereoGroup:type,INTEGER
+    V,228,PC-StereoGroup:type:absolute,1
+    -- Absolute configuration is known
+    V,229,PC-StereoGroup:type:or,2
+    -- Relative configuration is known (absolute configuration is unknown)
+    V,230,PC-StereoGroup:type:and,3
+    -- Mixture of stereoisomers
+    V,231,PC-StereoGroup:type:unknown,255
+    -- Unknown configuration type
+  F,233,PC-StereoGroup:aid,SEQUENCE INTEGER
+  -- Atom Identifiers of atoms in this group
+  --   Note: Atom ID's must be greater than "0"
+
+T,239,PC-InfoData,SEQUENCE
+-- Compound Description/Descriptor Data
+  F,240,PC-InfoData:urn,/PC-Urn
+  -- Universal Resource Name  [for Value Qualification]
+  F,241,PC-InfoData:value,CHOICE
+  -- Data Value
+    F,242,PC-InfoData:value:bval,BOOLEAN
+    -- Boolean or Binary
+    F,243,PC-InfoData:value:bvec,SEQUENCE BOOLEAN
+    -- Boolean Vector
+    F,244,PC-InfoData:value:ival,INTEGER
+    -- Integer (signed or unsigned)
+    F,245,PC-InfoData:value:ivec,SEQUENCE INTEGER
+    -- Integer Vector
+    F,246,PC-InfoData:value:fval,REAL
+    -- Float or Double
+    F,247,PC-InfoData:value:fvec,SEQUENCE REAL
+    -- Double Vector
+    F,248,PC-InfoData:value:sval,VisibleString
+    -- String
+    F,249,PC-InfoData:value:slist,SEQUENCE VisibleString
+    -- List of Strings
+    F,250,PC-InfoData:value:date,/Date
+    -- Date
+    F,251,PC-InfoData:value:binary,OCTET STRING
+    -- Binary Data
+    F,252,PC-InfoData:value:bitlist,BIT STRING
+    -- Bit List (specialized version of Boolean vector)
+
+T,259,PC-Urn,SEQUENCE
+-- Universal Resource Name 
+--    Provides explicit source information on derived or calculated data 
+  F,260,PC-Urn:label,VisibleString
+  -- Generic Name or Label for Display  [e.g., "Log P"]
+  F,261,PC-Urn:name,VisibleString,OPTIONAL
+  -- Qualified Name  [e.g., "XlogP"]
+  F,262,PC-Urn:datatype,/PC-UrnDataType,OPTIONAL
+  -- Specific Data Type of Value  [e.g., binary]
+  F,263,PC-Urn:parameters,VisibleString,OPTIONAL
+  -- Implementation Parameter  [e.g., "metal=0"]
+  F,264,PC-Urn:implementation,VisibleString,OPTIONAL
+  -- Implementation Name  [e.g., "E_XlogP"]
+  F,265,PC-Urn:version,VisibleString,OPTIONAL
+  -- Implementation Version  [e.g., "3.317"]
+  F,266,PC-Urn:software,VisibleString,OPTIONAL
+  -- Implementation Software  [e.g., "Cactvs"]
+  F,267,PC-Urn:source,VisibleString,OPTIONAL
+  -- Implementation Organization  [e.g., "xemistry.com"]
+  F,268,PC-Urn:release,VisibleString,OPTIONAL
+  -- NCBI Implementation Release  [e.g., "10.25.2005"]
+
+T,275,PC-UrnDataType,INTEGER
+-- URN Data Type
+--   Provides the ability to use more specific data types than that directly provided by ASN.1.
+--   Provides for more specific validation of specified data.
+  V,277,PC-UrnDataType:string,1
+  -- Basic Data Types
+  -- String                             [maps to a VisibleString]
+  V,278,PC-UrnDataType:stringlist,2
+  -- List of Strings                    [maps to VisibleString list]
+  V,279,PC-UrnDataType:int,3
+  -- 32-Bit Signed Integer              [maps to an INTEGER]
+  V,280,PC-UrnDataType:intvec,4
+  -- Vector of 32-Bit Signed Integer    [maps to INTEGER vector]
+  V,281,PC-UrnDataType:uint,5
+  -- 32-Bit Unsigned Integer            [maps to an INTEGER]
+  V,282,PC-UrnDataType:uintvec,6
+  -- Vector of 32-Bit Unsigned Integer  [maps to INTEGER vector]
+  V,283,PC-UrnDataType:double,7
+  -- 64-Bit Float                       [maps to a REAL]
+  V,284,PC-UrnDataType:doublevec,8
+  -- Vector of Double                   [maps to REAL vector]
+  V,285,PC-UrnDataType:bool,9
+  -- Boolean or Binary value            [maps to a BOOLEAN]
+  V,286,PC-UrnDataType:boolvec,10
+  -- Boolean Vector                     [maps to BOOLEAN vector]
+  V,289,PC-UrnDataType:uint64,11
+  -- Specialized Data Types
+  -- 64-Bit Unsigned Integer (Hex form) [maps to a VisibleString]
+  V,290,PC-UrnDataType:binary,12
+  -- Binary Data Blob                   [maps to an OCTET STRING]
+  V,291,PC-UrnDataType:url,13
+  -- URL                                [maps to a VisibleString]
+  V,292,PC-UrnDataType:unicode,14
+  -- UniCode String                     [maps to a VisibleString]
+  V,293,PC-UrnDataType:date,15
+  -- ISO8601 Date                       [maps to a Date]
+  V,294,PC-UrnDataType:fingerprint,16
+  -- Binary Fingerprint (Gzip'ped bit   [maps to an OCTET STRING]
+  --   list w/ 4-Byte prefix denoting bit list length)
+  V,297,PC-UrnDataType:unknown,255
+  -- Unknown Data Type               [maps to a set of VisibleString]
+
+T,302,PC-Coordinates,SEQUENCE
+-- Coordinates for the Compound of a given type
+  F,303,PC-Coordinates:type,SEQUENCE /PC-CoordinateType
+  -- Coordinate Type Information (vector)
+  F,304,PC-Coordinates:aid,SEQUENCE INTEGER
+  -- Conformer Atom IDs (vector)
+  --   (to be kept synchronized with Conformers)
+  --   Note: Atom ID's must be greater than "0"
+  F,307,PC-Coordinates:conformers,SEQUENCE /PC-Conformer,OPTIONAL
+  -- Conformers for this Coordinate Set
+  F,309,PC-Coordinates:atomlabels,SEQUENCE /PC-AtomString,OPTIONAL
+  -- Atom labels for Conformer Set
+  F,311,PC-Coordinates:data,SEQUENCE /PC-InfoData,OPTIONAL
+  -- Data Associated with these Coordinates
+
+T,317,PC-Conformer,SEQUENCE
+-- Drawing/Conformer Definition (in Parallel Arrays, synchronized to aid integer list)
+--   3D coordinates are specified in a right-handed coordinate system. For 2D plots, Y axis leads upwards.
+  F,319,PC-Conformer:x,SEQUENCE REAL
+  --  [Note: Parallel Arrays must be kept Synchronized]
+  -- X Coordinates (vector)
+  F,320,PC-Conformer:y,SEQUENCE REAL
+  -- Y Coordinates (vector)
+  F,321,PC-Conformer:z,SEQUENCE REAL,OPTIONAL
+  -- Z Coordinates (vector)
+  F,323,PC-Conformer:style,/PC-DrawAnnotations,OPTIONAL
+  -- Structure Annotations
+  F,325,PC-Conformer:data,SEQUENCE /PC-InfoData,OPTIONAL
+  -- Data Associated with this Conformer
+
+T,330,PC-Conformers,SEQUENCE /PC-Conformer
+-- Holder for groups of Conformers
+
+T,334,PC-CoordinateType,INTEGER
+-- Coordinate Set Type Distinctions
+  V,335,PC-CoordinateType:twod,1
+  -- 2D Coordinates
+  V,336,PC-CoordinateType:threed,2
+  -- 3D Coordinates (should also indicate units, below)
+  V,337,PC-CoordinateType:submitted,3
+  -- Depositor Provided Coordinates
+  V,338,PC-CoordinateType:experimental,4
+  -- Experimentally Determined Coordinates
+  V,339,PC-CoordinateType:computed,5
+  -- Computed Coordinates
+  V,340,PC-CoordinateType:standardized,6
+  -- Standardized Coordinates
+  V,341,PC-CoordinateType:augmented,7
+  -- Hybrid Original with Computed Coordinates (e.g., explicit H)
+  V,342,PC-CoordinateType:aligned,8
+  -- Template used to align drawing
+  V,343,PC-CoordinateType:compact,9
+  -- Drawing uses shorthand forms (e.g., COOH, OCH3, Et, etc.)
+  V,344,PC-CoordinateType:units-angstroms,10
+  -- (3D) Coordinate units are Angstroms
+  V,345,PC-CoordinateType:units-nanometers,11
+  -- (3D) Coordinate units are nanometers
+  V,346,PC-CoordinateType:units-pixel,12
+  -- (2D) Coordinate units are pixels
+  V,347,PC-CoordinateType:units-points,13
+  -- (2D) Coordinate units are points
+  V,348,PC-CoordinateType:units-stdbonds,14
+  -- (2D) Coordinate units are standard bond lengths (1.0)
+  V,349,PC-CoordinateType:units-unknown,255
+  -- Coordinate units are unknown or unspecified
+
+T,355,PC-DrawAnnotations,SEQUENCE
+-- Drawing Annotations (in Parallel Arrays)
+--    [Note: A pair of atoms can have multiple annotations]
+  F,357,PC-DrawAnnotations:annotation,SEQUENCE /PC-BondAnnotation
+  --  [Note: Parallel Arrays must be kept Synchronized]
+  -- Bond Annotations (vector)
+  F,358,PC-DrawAnnotations:aid1,SEQUENCE INTEGER
+  -- Atom1 Identifier (vector)
+  --   Note: Atom ID's must be greater than "0"
+  F,360,PC-DrawAnnotations:aid2,SEQUENCE INTEGER
+  -- Atom2 Identifier (vector)
+  --   Note: Atom ID's must be greater than "0"
+
+T,366,PC-BondAnnotation,INTEGER
+-- Atom-Atom Annotation Information
+  V,367,PC-BondAnnotation:crossed,1
+  -- Double Bond that can be both Cis/Trans
+  V,368,PC-BondAnnotation:dashed,2
+  -- Hydrogen-Bond (3D Only?)
+  V,369,PC-BondAnnotation:wavy,3
+  -- Unknown Stereochemistry
+  V,370,PC-BondAnnotation:dotted,4
+  -- Complex/Fractional
+  V,371,PC-BondAnnotation:wedge-up,5
+  -- Above-Plane
+  V,372,PC-BondAnnotation:wedge-down,6
+  -- Below-Plane
+  V,373,PC-BondAnnotation:arrow,7
+  -- Dative
+  V,374,PC-BondAnnotation:aromatic,8
+  -- Aromatic
+  V,375,PC-BondAnnotation:resonance,9
+  -- Resonance
+  V,376,PC-BondAnnotation:bold,10
+  -- Fat Bond (Non-Specific User Interpreted Information)
+  V,377,PC-BondAnnotation:fischer,11
+  -- Interpret Bond Stereo using Fischer Conventions
+  V,378,PC-BondAnnotation:closeContact,12
+  -- Identification of Atom-Atom Close Contacts (3D Only)
+  V,379,PC-BondAnnotation:unknown,255
+  -- Unspecified or Unknown Atom-Atom Annotation
+
+T,384,PC-Atoms,SEQUENCE
+-- Atom Information  (in Parallel Arrays)
+  F,386,PC-Atoms:aid,SEQUENCE INTEGER
+  --  [Note: Parallel Arrays must be kept Synchronized]
+  -- Atom Identifiers (vector)
+  --   Note: Atom ID's must be greater than "0"
+  F,388,PC-Atoms:element,SEQUENCE /PC-Element
+  -- Atomic Numbers (vector)
+  F,391,PC-Atoms:label,SEQUENCE /PC-AtomString,OPTIONAL
+  -- Independent Arrays of ID-Value Pairs  (Technically allows multiple values per Atom)
+  -- Atom labels
+  F,392,PC-Atoms:isotope,SEQUENCE /PC-AtomInt,OPTIONAL
+  -- Isotopic Information
+  F,393,PC-Atoms:charge,SEQUENCE /PC-AtomInt,OPTIONAL
+  -- Formal Charges
+  F,394,PC-Atoms:radical,SEQUENCE /PC-AtomRadical,OPTIONAL
+  -- Radical Information
+  F,395,PC-Atoms:source,SEQUENCE /PC-AtomSource,OPTIONAL
+  -- E.g. identity of MMDB "R" groups
+  F,396,PC-Atoms:comment,SEQUENCE /PC-AtomString,OPTIONAL
+  -- Atom Comments
+
+T,401,PC-AtomSource,SEQUENCE
+-- Specification of an Association between an Atom Identifier and Source
+  F,402,PC-AtomSource:aid,INTEGER
+  -- Atom Identifier for the R-Group Source
+  --   Note: Atom ID's must be greater than "0"
+  F,404,PC-AtomSource:source,/PC-MMDBSource
+  -- Atom Specific MMDB Record
+
+T,409,PC-AtomInt,SEQUENCE
+-- Specification of an Association between an Atom Identifier and an Integer Value
+  F,410,PC-AtomInt:aid,INTEGER
+  -- Atom Identifier for the Value
+  --   Note: Atom ID's must be greater than "0"
+  F,412,PC-AtomInt:value,INTEGER
+  -- Value Associated to the ID
+
+T,417,PC-AtomString,SEQUENCE
+-- Specification of an Association between an Atom Identifier and a String Value
+  F,418,PC-AtomString:aid,INTEGER
+  -- Atom Identifier for the Value
+  --   Note: Atom ID's must be greater than "0"
+  F,420,PC-AtomString:value,VisibleString
+  -- Value Associated to the ID
+
+T,425,PC-AtomRadical,SEQUENCE
+-- Rudimentary Atom Electronic Configuration Designation
+  F,426,PC-AtomRadical:aid,INTEGER
+  -- Atom Identifier for the Value
+  --   Note: Atom ID's must be greater than "0"
+  F,428,PC-AtomRadical:type,INTEGER
+  -- Type of Atom Radical
+    V,429,PC-AtomRadical:type:singlet,1
+    -- Open-Shell Singlet
+    V,430,PC-AtomRadical:type:doublet,2
+    -- Open-Shell Doublet
+    V,431,PC-AtomRadical:type:triplet,3
+    -- Open-Shell Triplet
+    V,432,PC-AtomRadical:type:quartet,4
+    -- Open-Shell Quartet
+    V,433,PC-AtomRadical:type:quintet,5
+    -- Open-Shell Quintet
+    V,434,PC-AtomRadical:type:hextet,6
+    -- Open-Shell Hextet
+    V,435,PC-AtomRadical:type:heptet,7
+    -- Open-Shell Quintet
+    V,436,PC-AtomRadical:type:octet,8
+    -- Open-Shell Octet
+    V,437,PC-AtomRadical:type:none,255
+    -- Closed-Shell Singlet
+
+T,443,PC-Element,INTEGER
+-- Element Information [which may contain "illegal" element values]
+  V,445,PC-Element:a,255
+  -- Illegal Atom Numbers that may be Interpreted to be something else
+  -- Unspecified Atom (Asterick)
+  V,446,PC-Element:d,254
+  -- Dummy Atom
+  V,447,PC-Element:r,253
+  -- Rgroup Label
+  V,448,PC-Element:lp,252
+  -- Lone Pair
+  V,451,PC-Element:h,1
+  -- Elements
+  V,451,PC-Element:he,2
+  V,451,PC-Element:li,3
+  V,451,PC-Element:be,4
+  V,451,PC-Element:b,5
+  V,452,PC-Element:c,6
+  V,452,PC-Element:n,7
+  V,452,PC-Element:o,8
+  V,452,PC-Element:f,9
+  V,452,PC-Element:ne,10
+  V,453,PC-Element:na,11
+  V,453,PC-Element:mg,12
+  V,453,PC-Element:al,13
+  V,453,PC-Element:si,14
+  V,453,PC-Element:p,15
+  V,454,PC-Element:s,16
+  V,454,PC-Element:cl,17
+  V,454,PC-Element:ar,18
+  V,454,PC-Element:k,19
+  V,454,PC-Element:ca,20
+  V,455,PC-Element:sc,21
+  V,455,PC-Element:ti,22
+  V,455,PC-Element:v,23
+  V,455,PC-Element:cr,24
+  V,455,PC-Element:mn,25
+  V,456,PC-Element:fe,26
+  V,456,PC-Element:co,27
+  V,456,PC-Element:ni,28
+  V,456,PC-Element:cu,29
+  V,456,PC-Element:zn,30
+  V,457,PC-Element:ga,31
+  V,457,PC-Element:ge,32
+  V,457,PC-Element:as,33
+  V,457,PC-Element:se,34
+  V,457,PC-Element:br,35
+  V,458,PC-Element:kr,36
+  V,458,PC-Element:rb,37
+  V,458,PC-Element:sr,38
+  V,458,PC-Element:y,39
+  V,458,PC-Element:zr,40
+  V,459,PC-Element:nb,41
+  V,459,PC-Element:mo,42
+  V,459,PC-Element:tc,43
+  V,459,PC-Element:ru,44
+  V,459,PC-Element:rh,45
+  V,460,PC-Element:pd,46
+  V,460,PC-Element:ag,47
+  V,460,PC-Element:cd,48
+  V,460,PC-Element:in,49
+  V,460,PC-Element:sn,50
+  V,461,PC-Element:sb,51
+  V,461,PC-Element:te,52
+  V,461,PC-Element:i,53
+  V,461,PC-Element:xe,54
+  V,461,PC-Element:cs,55
+  V,462,PC-Element:ba,56
+  V,462,PC-Element:la,57
+  V,462,PC-Element:ce,58
+  V,462,PC-Element:pr,59
+  V,462,PC-Element:nd,60
+  V,463,PC-Element:pm,61
+  V,463,PC-Element:sm,62
+  V,463,PC-Element:eu,63
+  V,463,PC-Element:gd,64
+  V,463,PC-Element:tb,65
+  V,464,PC-Element:dy,66
+  V,464,PC-Element:ho,67
+  V,464,PC-Element:er,68
+  V,464,PC-Element:tm,69
+  V,464,PC-Element:yb,70
+  V,465,PC-Element:lu,71
+  V,465,PC-Element:hf,72
+  V,465,PC-Element:ta,73
+  V,465,PC-Element:w,74
+  V,465,PC-Element:re,75
+  V,466,PC-Element:os,76
+  V,466,PC-Element:ir,77
+  V,466,PC-Element:pt,78
+  V,466,PC-Element:au,79
+  V,466,PC-Element:hg,80
+  V,467,PC-Element:tl,81
+  V,467,PC-Element:pb,82
+  V,467,PC-Element:bi,83
+  V,467,PC-Element:po,84
+  V,467,PC-Element:at,85
+  V,468,PC-Element:rn,86
+  V,468,PC-Element:fr,87
+  V,468,PC-Element:ra,88
+  V,468,PC-Element:ac,89
+  V,468,PC-Element:th,90
+  V,469,PC-Element:pa,91
+  V,469,PC-Element:u,92
+  V,469,PC-Element:np,93
+  V,469,PC-Element:pu,94
+  V,469,PC-Element:am,95
+  V,470,PC-Element:cm,96
+  V,470,PC-Element:bk,97
+  V,470,PC-Element:cf,98
+  V,470,PC-Element:es,99
+  V,470,PC-Element:fm,100
+  V,471,PC-Element:md,101
+  V,471,PC-Element:no,102
+  V,471,PC-Element:lr,103
+  V,471,PC-Element:rf,104
+  V,471,PC-Element:db,105
+  V,472,PC-Element:sg,106
+  V,472,PC-Element:bh,107
+  V,472,PC-Element:hs,108
+  V,472,PC-Element:mt,109
+  V,472,PC-Element:ds,110
+  V,473,PC-Element:rg,111
+
+T,478,PC-Bonds,SEQUENCE
+-- Bond Description Information  (in Parallel Arrays)
+  F,480,PC-Bonds:aid1,SEQUENCE INTEGER
+  --  [Note: Parallel Arrays must be kept Synchronized]
+  -- Atom1 Identifier (vector)
+  --   Note: Atom ID's must be greater than "0"
+  F,482,PC-Bonds:aid2,SEQUENCE INTEGER
+  -- Atom2 Identifier (vector)
+  --   Note: Atom ID's must be greater than "0"
+  F,484,PC-Bonds:order,SEQUENCE /PC-BondType
+  -- Bond Type Information (vector)
+
+T,489,PC-BondType,INTEGER
+-- Bond Type Information
+  V,490,PC-BondType:single,1
+  -- Single Bond
+  V,491,PC-BondType:double,2
+  -- Double Bond
+  V,492,PC-BondType:triple,3
+  -- Triple Bond
+  V,493,PC-BondType:quadruple,4
+  -- Quadruple Bond
+  V,494,PC-BondType:dative,5
+  -- Dative Bond
+  V,495,PC-BondType:complex,6
+  -- Complex Bond
+  V,496,PC-BondType:ionic,7
+  -- Ionic Bond
+  V,497,PC-BondType:unknown,255
+  -- Unknown/Unspecified Connectivity
+
+T,503,PC-StereoCenter,CHOICE
+-- Allowed Stereogenic Center Types
+--   [Using IUPAC Stereogenic Center recommendations and terminology]
+  F,504,PC-StereoCenter:tetrahedral,/PC-StereoTetrahedral
+  -- Tetrahedral (SP3) StereoCenter
+  F,505,PC-StereoCenter:planar,/PC-StereoPlanar
+  -- Planar (SP2) StereoCenter
+  F,506,PC-StereoCenter:squareplanar,/PC-StereoSquarePlanar
+  -- Square Planar (SP4) StereoCenter
+  F,507,PC-StereoCenter:octahedral,/PC-StereoOctahedral
+  -- Octahedral (OC-6) / Square Pyramid (SPY-5) StereoCenters
+  F,508,PC-StereoCenter:bipyramid,/PC-StereoTrigonalBiPyramid
+  -- Trigonal BiPyramid (TBPY-4 and TBPY-5) StereoCenters
+  F,509,PC-StereoCenter:tshape,/PC-StereoTShape
+  -- T-Shaped (TS-3) StereoCenters
+  F,510,PC-StereoCenter:pentagonal,/PC-StereoPentagonalBiPyramid
+  -- Pentagonal BiPyramid (PBPY-7) StereoCenters
+
+T,520,PC-StereoTetrahedral,SEQUENCE
+-- SP3 Tetrahedral StereoCenter, Trigonal Pyramid Stereogenic Center,
+--   Cumulenic StereoCenter (Linear systems of an even number of double bonds),
+--   or Hindered biaryl stereocenter (All biaryls have hindered rotation that
+--   to some extent the ortho-hydrogens prevent coplanarity)
+--   [Using IUPAC Stereogenic Center recommendations and terminology]
+--   [Note: "-1" can be used for the Atom Identifier to represent a lone-pair or implicit hydrogen]
+  F,521,PC-StereoTetrahedral:center,INTEGER
+  -- Atom Identifier of Atom Center
+  --   Note: Atom ID's must be greater than "0"
+  F,523,PC-StereoTetrahedral:above,INTEGER
+  -- Atom Identifier of Atom Above the Plane
+  --   Note: Atom ID's must be greater than "0"
+  F,525,PC-StereoTetrahedral:top,INTEGER
+  -- Atom Identifier of Atom In-Plane and at the Top
+  --   Note: Atom ID's must be greater than "0"
+  F,527,PC-StereoTetrahedral:bottom,INTEGER
+  -- Atom Identifier of Atom In-Plane and at the Bottom
+  --   Note: Atom ID's must be greater than "0"
+  F,529,PC-StereoTetrahedral:below,INTEGER
+  -- Atom Identifier of Atom Below the Plane
+  --   Note: Atom ID's must be greater than "0"
+  F,531,PC-StereoTetrahedral:parity,INTEGER,OPTIONAL
+  -- StereoCenter Designation
+    V,532,PC-StereoTetrahedral:parity:clockwise,1
+    V,533,PC-StereoTetrahedral:parity:counterclockwise,2
+    V,534,PC-StereoTetrahedral:parity:any,3
+    V,535,PC-StereoTetrahedral:parity:unknown,255
+  F,537,PC-StereoTetrahedral:type,INTEGER,OPTIONAL
+  -- Type of StereoCenter, Tetrahedral, if not specified
+    V,538,PC-StereoTetrahedral:type:tetrahedral,1
+    -- Tetrahedral StereoCenter
+    V,539,PC-StereoTetrahedral:type:cumulenic,2
+    -- Cumulenic StereoCenter
+    V,540,PC-StereoTetrahedral:type:biaryl,3
+    -- Biaryl StereoCenter
+
+T,549,PC-StereoPlanar,SEQUENCE
+-- SP2 Planar Stereogenic Center, Cumulenic StereoCenter (Linear systems on an odd
+--   number of double bonds present planar stereochemistry)
+--   [Using IUPAC Stereogenic Center recommendations and terminology]
+--   [Note: "-1" can be used for the Atom Identifier to represent a lone-pair or implicit hydrogen]
+  F,550,PC-StereoPlanar:left,INTEGER
+  -- Atom ID of Left Double Bond Atom
+  --   Note: Atom ID's must be greater than "0"
+  F,552,PC-StereoPlanar:ltop,INTEGER
+  -- Atom ID of Top Atom attached to the Left Double Bond Atom
+  --   Note: Atom ID's must be greater than "0"
+  F,554,PC-StereoPlanar:lbottom,INTEGER
+  -- Atom ID of Bottom Atom attached to the Left Double Bond Atom
+  --   Note: Atom ID's must be greater than "0"
+  F,556,PC-StereoPlanar:right,INTEGER
+  -- Atom ID of Right Double Bond Atom
+  --   Note: Atom ID's must be greater than "0"
+  F,558,PC-StereoPlanar:rtop,INTEGER
+  -- Atom ID of Top Atom attached to the Right Double Bond Atom
+  --   Note: Atom ID's must be greater than "0"
+  F,560,PC-StereoPlanar:rbottom,INTEGER
+  -- Atom ID of Bottom Atom attached to the Right Double Bond Atom
+  --   Note: Atom ID's must be greater than "0"
+  F,562,PC-StereoPlanar:parity,INTEGER,OPTIONAL
+  -- StereoCenter Designation
+    V,563,PC-StereoPlanar:parity:same,1
+    V,564,PC-StereoPlanar:parity:opposite,2
+    V,565,PC-StereoPlanar:parity:any,3
+    V,566,PC-StereoPlanar:parity:unknown,255
+  F,568,PC-StereoPlanar:type,INTEGER,OPTIONAL
+  -- Type of StereoCenter, SP2 Planar, if not specified
+    V,569,PC-StereoPlanar:type:planar,1
+    -- SP2 Planar StereoCenter
+    V,570,PC-StereoPlanar:type:cumulenic,2
+    -- Cumulenic StereoCenter
+
+T,578,PC-StereoSquarePlanar,SEQUENCE
+-- Square Planar (SP4) StereoCenters
+--   [Using IUPAC Stereogenic Center recommendations and terminology]
+--   [Note: "-1" can be used for the Atom Identifier to represent a lone-pair or implicit hydrogen]
+  F,579,PC-StereoSquarePlanar:center,INTEGER
+  -- Atom ID of Atom Center
+  --   Note: Atom ID's must be greater than "0"
+  F,581,PC-StereoSquarePlanar:lbelow,INTEGER
+  -- Atom ID of Left Below Plane Atom
+  --   Note: Atom ID's must be greater than "0"
+  F,583,PC-StereoSquarePlanar:rbelow,INTEGER
+  -- Atom ID of Right Below Plane Atom
+  --   Note: Atom ID's must be greater than "0"
+  F,585,PC-StereoSquarePlanar:labove,INTEGER
+  -- Atom ID of Left Above Plane Atom
+  --   Note: Atom ID's must be greater than "0"
+  F,587,PC-StereoSquarePlanar:rabove,INTEGER
+  -- Atom ID of Right Above Plane Atom
+  --   Note: Atom ID's must be greater than "0"
+  F,589,PC-StereoSquarePlanar:parity,INTEGER,OPTIONAL
+  -- StereoCenter Type
+    V,590,PC-StereoSquarePlanar:parity:u-shape,1
+    --   U shaped isomer (labove-lbelow-rbelow-rabove)
+    V,591,PC-StereoSquarePlanar:parity:z-shape,2
+    --   Z shaped isomer (labove-rabove-lbelow-rbelow)
+    V,592,PC-StereoSquarePlanar:parity:x-shape,3
+    --   X shaped isomer (labove-rbelow-rabove-lbelow)
+    V,593,PC-StereoSquarePlanar:parity:any,4
+    --   Nonspecific mixture of isomers
+    V,594,PC-StereoSquarePlanar:parity:unknown,255
+
+T,602,PC-StereoOctahedral,SEQUENCE
+-- Octahedral (OC-6) and Square Pyramid (SPY-5) StereoCenters
+--   [Using IUPAC Stereogenic Center recommendations and terminology]
+--   [Note: "-1" can be used for the Atom Identifier to represent a lone-pair or implicit hydrogen]
+  F,603,PC-StereoOctahedral:center,INTEGER
+  -- Atom ID of Atom Center
+  --   Note: Atom ID's must be greater than "0"
+  F,605,PC-StereoOctahedral:top,INTEGER
+  -- Atom ID of Atom In-Plane and at the Top
+  --   Note: Atom ID's must be greater than "0"
+  F,607,PC-StereoOctahedral:bottom,INTEGER
+  -- Atom ID of Atom In-Plane and at the Bottom
+  --   Note: Atom ID's must be greater than "0"
+  F,609,PC-StereoOctahedral:labove,INTEGER
+  -- Atom ID of Atom Above the Plane on the Left
+  --   Note: Atom ID's must be greater than "0"
+  F,611,PC-StereoOctahedral:lbelow,INTEGER
+  -- Atom ID of Atom Below the Plane on the Left
+  --   Note: Atom ID's must be greater than "0"
+  F,613,PC-StereoOctahedral:rabove,INTEGER
+  -- Atom ID of Atom Above the Plane on the Right
+  --   Note: Atom ID's must be greater than "0"
+  F,615,PC-StereoOctahedral:rbelow,INTEGER
+  -- Atom ID of Atom Below the Plane on the Right
+  --   Note: Atom ID's must be greater than "0"
+
+T,623,PC-StereoTrigonalBiPyramid,SEQUENCE
+-- Trigonal BiPyramid (TBPY-4 and TBPY-5) StereoCenters
+--   [Using IUPAC Stereogenic Center recommendations and terminology]
+--   [Note: "-1" can be used for the Atom Identifier to represent a lone-pair or implicit hydrogen]
+  F,624,PC-StereoTrigonalBiPyramid:center,INTEGER
+  -- Atom ID of Atom Center
+  --   Note: Atom ID's must be greater than "0"
+  F,626,PC-StereoTrigonalBiPyramid:above,INTEGER
+  -- Atom ID of Atom Above the Plane
+  --   Note: Atom ID's must be greater than "0"
+  F,628,PC-StereoTrigonalBiPyramid:below,INTEGER
+  -- Atom ID of Atom Below the Plane
+  --   Note: Atom ID's must be greater than "0"
+  F,630,PC-StereoTrigonalBiPyramid:top,INTEGER
+  -- Atom ID of Atom In-Plane and at the Top
+  --   Note: Atom ID's must be greater than "0"
+  F,632,PC-StereoTrigonalBiPyramid:bottom,INTEGER
+  -- Atom ID of Atom In-Plane and at the Bottom
+  --   Note: Atom ID's must be greater than "0"
+  F,634,PC-StereoTrigonalBiPyramid:right,INTEGER
+  -- Atom ID of Atom In-Plane and to the Right
+  --   Note: Atom ID's must be greater than "0"
+
+T,642,PC-StereoTShape,SEQUENCE
+-- T-Shaped (TS-3) StereoCenters
+--   [Using IUPAC Stereogenic Center recommendations and terminology]
+--   [Note: "-1" can be used for the Atom Identifier to represent a lone-pair or implicit hydrogen]
+  F,643,PC-StereoTShape:center,INTEGER
+  -- Atom ID of Atom Center
+  --   Note: Atom ID's must be greater than "0"
+  F,645,PC-StereoTShape:top,INTEGER
+  -- Atom ID of Atom In-Plane and at the Top
+  --   Note: Atom ID's must be greater than "0"
+  F,647,PC-StereoTShape:bottom,INTEGER
+  -- Atom ID of Atom In-Plane and at the Bottom
+  --   Note: Atom ID's must be greater than "0"
+  F,649,PC-StereoTShape:above,INTEGER
+  -- Atom ID of Atom Above the Plane
+  --   Note: Atom ID's must be greater than "0"
+
+T,657,PC-StereoPentagonalBiPyramid,SEQUENCE
+-- Pentagonal BiPyramid (PBPY-7) StereoCenters
+--   [Using IUPAC Stereogenic Center recommendations and terminology]
+--   [Note: "-1" can be used for the Atom Identifier to represent a lone-pair or implicit hydrogen]
+  F,658,PC-StereoPentagonalBiPyramid:center,INTEGER
+  -- Atom ID of Atom Center
+  --   Note: Atom ID's must be greater than "0"
+  F,660,PC-StereoPentagonalBiPyramid:top,INTEGER
+  -- Atom ID of Atom In-Plane and at the Top
+  --   Note: Atom ID's must be greater than "0"
+  F,662,PC-StereoPentagonalBiPyramid:bottom,INTEGER
+  -- Atom ID of Atom In-Plane and at the Bottom
+  --   Note: Atom ID's must be greater than "0"
+  F,664,PC-StereoPentagonalBiPyramid:left,INTEGER
+  -- Atom ID of Atom In-Plane and at the Left
+  --   Note: Atom ID's must be greater than "0"
+  F,666,PC-StereoPentagonalBiPyramid:labove,INTEGER
+  -- Atom ID of Atom Above the Plane on the Left
+  --   Note: Atom ID's must be greater than "0"
+  F,668,PC-StereoPentagonalBiPyramid:lbelow,INTEGER
+  -- Atom ID of Atom Below the Plane on the Left
+  --   Note: Atom ID's must be greater than "0"
+  F,670,PC-StereoPentagonalBiPyramid:rabove,INTEGER
+  -- Atom ID of Atom Above the Plane on the Right
+  --   Note: Atom ID's must be greater than "0"
+  F,672,PC-StereoPentagonalBiPyramid:rbelow,INTEGER
+  -- Atom ID of Atom Below the Plane on the Right
+  --   Note: Atom ID's must be greater than "0"

@@ -1,0 +1,16 @@
+.cvsignore
+BlastOutput_.hpp
+Hit_.hpp
+Hsp_.hpp
+Iteration_.hpp
+Parameters_.hpp
+Statistics_.hpp
+BlastOutput.hpp
+Hit.hpp
+Hsp.hpp
+Iteration.hpp
+Parameters.hpp
+Statistics.hpp
+NCBI_BlastOutput_module.hpp
+blastxml__.hpp
+blastxml.dump

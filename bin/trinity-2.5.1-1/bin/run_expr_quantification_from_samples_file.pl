@@ -1,0 +1,1 @@
+../opt/trinity-2.5.1/util/run_expr_quantification_from_samples_file.pl

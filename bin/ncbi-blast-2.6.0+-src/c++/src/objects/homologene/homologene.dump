@@ -1,0 +1,124 @@
+M,1,homologene.asn:HomoloGene
+  T,12,HomoloGene:HG-EntrySet
+  T,17,HomoloGene:HG-Entry
+  T,33,HomoloGene:HG-Gene
+  T,54,HomoloGene:HG-Stats
+  T,68,HomoloGene:HG-Commentary
+  T,79,HomoloGene:HG-CommentarySet
+  T,85,HomoloGene:HG-CommentaryContainer
+  T,87,HomoloGene:HG-Link
+  T,92,HomoloGene:HG-Domain
+  T,100,HomoloGene:HG-Node
+  T,114,HomoloGene:HG-Node-id
+  T,123,HomoloGene:HG-Alignment
+  T,128,HomoloGene:HG-AlignmentSet
+
+T,12,HG-EntrySet,SEQUENCE
+-- HomoloGeneEntry taxid is the tax id of the group node, which can
+-- be the same as the Gene tax id in case of singletons
+  F,13,HG-EntrySet:entries,SET /HG-Entry
+  -- homologene entry
+
+T,17,HG-Entry,SEQUENCE
+  F,18,HG-Entry:hg-id,INTEGER
+  F,19,HG-Entry:version,INTEGER,OPTIONAL
+  F,20,HG-Entry:title,VisibleString,OPTIONAL
+  F,21,HG-Entry:caption,VisibleString,OPTIONAL
+  F,22,HG-Entry:taxid,INTEGER,OPTIONAL
+  F,23,HG-Entry:genes,SET /HG-Gene,OPTIONAL
+  F,24,HG-Entry:cr-date,/Date,OPTIONAL
+  F,25,HG-Entry:up-date,/Date,OPTIONAL
+  F,26,HG-Entry:distances,SET /HG-Stats,OPTIONAL
+  F,27,HG-Entry:commentaries,SET /HG-CommentarySet,OPTIONAL
+  F,28,HG-Entry:warnings,SET VisibleString,OPTIONAL
+  F,29,HG-Entry:node,/HG-Node,OPTIONAL
+
+T,33,HG-Gene,SEQUENCE
+  F,34,HG-Gene:geneid,INTEGER
+  F,35,HG-Gene:otherid,INTEGER,OPTIONAL
+  -- internal use only!!!!!
+  F,36,HG-Gene:symbol,VisibleString,OPTIONAL
+  F,37,HG-Gene:aliases,SET VisibleString,OPTIONAL
+  F,38,HG-Gene:title,VisibleString
+  F,39,HG-Gene:taxid,INTEGER
+  --taxid of gene node
+  F,40,HG-Gene:prot-gi,INTEGER,OPTIONAL
+  F,41,HG-Gene:prot-acc,VisibleString,OPTIONAL
+  F,42,HG-Gene:prot-len,INTEGER,OPTIONAL
+  F,43,HG-Gene:nuc-gi,INTEGER,OPTIONAL
+  F,44,HG-Gene:nuc-acc,VisibleString,OPTIONAL
+  F,45,HG-Gene:gene-links,SET /HG-Link,OPTIONAL
+  F,46,HG-Gene:prot-links,SET /HG-Link,OPTIONAL
+  F,47,HG-Gene:domains,SET /HG-Domain,OPTIONAL
+  F,48,HG-Gene:chr,VisibleString,OPTIONAL
+  F,49,HG-Gene:location,/Seq-loc,OPTIONAL
+  -- location on the genome
+  F,50,HG-Gene:locus-tag,VisibleString,OPTIONAL
+
+T,54,HG-Stats,SEQUENCE
+  F,55,HG-Stats:gi1,INTEGER
+  F,56,HG-Stats:gi2,INTEGER
+  F,57,HG-Stats:nuc-change,REAL
+  F,58,HG-Stats:nuc-change-jc,REAL
+  F,59,HG-Stats:prot-change,REAL
+  F,60,HG-Stats:ka,REAL
+  F,61,HG-Stats:ks,REAL
+  F,62,HG-Stats:knr,REAL
+  F,63,HG-Stats:knc,REAL
+  F,64,HG-Stats:recip-best,BOOLEAN,OPTIONAL
+
+T,68,HG-Commentary,SEQUENCE
+  F,69,HG-Commentary:link,/HG-Link
+  F,70,HG-Commentary:description,VisibleString,OPTIONAL
+  -- main description
+  F,71,HG-Commentary:caption,VisibleString,OPTIONAL
+  -- extra text
+  F,72,HG-Commentary:provider,VisibleString,OPTIONAL
+  F,73,HG-Commentary:other-links,SET /HG-Link,OPTIONAL
+  F,74,HG-Commentary:other-commentaries,SET /HG-Commentary,OPTIONAL
+  F,75,HG-Commentary:taxid,INTEGER,OPTIONAL
+  F,76,HG-Commentary:geneid,INTEGER,OPTIONAL
+
+T,79,HG-CommentarySet,SEQUENCE
+  F,80,HG-CommentarySet:hg-id,INTEGER,OPTIONAL
+  F,81,HG-CommentarySet:title,VisibleString
+  F,82,HG-CommentarySet:commentaries,SET /HG-Commentary
+
+T,85,HG-CommentaryContainer,SET /HG-CommentarySet
+
+T,87,HG-Link,SEQUENCE
+  F,88,HG-Link:hypertext,VisibleString
+  F,89,HG-Link:url,VisibleString,OPTIONAL
+
+T,92,HG-Domain,SEQUENCE
+  F,93,HG-Domain:begin,INTEGER
+  F,94,HG-Domain:end,INTEGER
+  F,95,HG-Domain:pssm-id,INTEGER,OPTIONAL
+  -- entrez uid
+  F,96,HG-Domain:cdd-id,VisibleString,OPTIONAL
+  F,97,HG-Domain:cdd-name,VisibleString,OPTIONAL
+
+T,100,HG-Node,SEQUENCE
+  F,101,HG-Node:type,ENUMERATED
+    V,102,HG-Node:type:family,0
+    V,103,HG-Node:type:ortholog,1
+    V,104,HG-Node:type:paralog,2
+    V,105,HG-Node:type:leaf,3
+  F,107,HG-Node:id,/HG-Node-id
+  F,108,HG-Node:caption,VisibleString,OPTIONAL
+  F,109,HG-Node:current-node,BOOLEAN,DEFAULT,FALSE
+  F,110,HG-Node:children,SET /HG-Node,OPTIONAL
+  F,111,HG-Node:branch-len,INTEGER,OPTIONAL
+
+T,114,HG-Node-id,SEQUENCE
+  F,115,HG-Node-id:id,INTEGER,OPTIONAL
+  F,116,HG-Node-id:id-type,ENUMERATED
+    V,117,HG-Node-id:id-type:none,0
+    V,118,HG-Node-id:id-type:geneid,1
+    V,119,HG-Node-id:id-type:hid,2
+
+T,123,HG-Alignment,SEQUENCE
+  F,124,HG-Alignment:hg-id,INTEGER
+  F,125,HG-Alignment:alignment,/Seq-align
+
+T,128,HG-AlignmentSet,SET /HG-Alignment

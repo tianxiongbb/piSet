@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [ $# -lt 1 ];then
+	echo0 5 "$0 in.mat.lendis"
+	exit 1
+fi
+
+awk 'BEGIN{FS=OFS="\t"} {if(NR==1){k=NF;for(i=1;i<=NF;i++){n[i]=$i}}else{for(i=2;i<=NF;i++){sl[i-1]+=($1*$i);sn[i-1]+=$i}}} END{for(i=1;i<=k;i++){if(sn[i]==0){print n[i],0}else{print n[i],sl[i]/sn[i]}}}' $1

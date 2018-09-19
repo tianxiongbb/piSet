@@ -1,0 +1,51 @@
+M,9,featdef.asn:NCBI-FeatDef
+--$Revision: 96973 $
+--**********************************************************************
+--
+--  NCBI Sequence Feature Definition Module
+--  by James Ostell, 1994
+--
+--**********************************************************************
+  T,15,NCBI-FeatDef:FeatDef
+  T,25,NCBI-FeatDef:FeatMolType
+  T,30,NCBI-FeatDef:FeatDefSet
+  T,32,NCBI-FeatDef:FeatDispGroup
+  T,36,NCBI-FeatDef:FeatDispGroupSet
+  T,38,NCBI-FeatDef:FeatDefGroupSet
+
+T,15,FeatDef,SEQUENCE
+  F,16,FeatDef:typelabel,VisibleString
+  -- short label for type eg "CDS"
+  F,17,FeatDef:menulabel,VisibleString
+  -- label for a menu eg "Coding Region"
+  F,18,FeatDef:featdef-key,INTEGER
+  -- unique for this feature definition
+  F,19,FeatDef:seqfeat-key,INTEGER
+  -- SeqFeat.data.choice from objfeat.h
+  F,20,FeatDef:entrygroup,INTEGER
+  -- Group for data entry
+  F,21,FeatDef:displaygroup,INTEGER
+  -- Group for data display
+  F,22,FeatDef:molgroup,/FeatMolType
+  -- Type of Molecule used for
+
+T,25,FeatMolType,ENUMERATED
+  V,26,FeatMolType:aa,1
+  -- proteins
+  V,27,FeatMolType:na,2
+  -- nucleic acids
+  V,28,FeatMolType:both,3
+  -- both
+
+T,30,FeatDefSet,SEQUENCE /FeatDef
+-- collections of defintions
+
+T,32,FeatDispGroup,SEQUENCE
+  F,33,FeatDispGroup:groupkey,INTEGER
+  F,34,FeatDispGroup:groupname,VisibleString
+
+T,36,FeatDispGroupSet,SEQUENCE /FeatDispGroup
+
+T,38,FeatDefGroupSet,SEQUENCE
+  F,39,FeatDefGroupSet:groups,/FeatDispGroupSet
+  F,40,FeatDefGroupSet:defs,/FeatDefSet

@@ -1,0 +1,601 @@
+M,19,cdd.asn:NCBI-Cdd
+--$Revision: 436496 $
+--**********************************************************************
+--
+--  Definitions for CDD's 
+--
+--  NCBI Structure Group
+--
+--  National Center for Biotechnology Information
+--  National Institutes of Health
+--  Bethesda, MD 20894 USA
+--
+--  October 1999
+--
+--  asntool -m cdd.asn -w 100 -o cdd.h
+--  asntool -B objcdd -m cdd.asn -G -w 100 -I objseq.h objsset.h -K cdd.h \
+--          -M asn.all
+--**********************************************************************
+-- NCBI Conserved Domain Definition
+  T,45,NCBI-Cdd:Cdd-org-ref
+  T,51,NCBI-Cdd:Cdd-org-ref-set
+  T,53,NCBI-Cdd:Cdd-pref-node-descr
+  T,58,NCBI-Cdd:Cdd-pref-node-descr-set
+  T,60,NCBI-Cdd:Cdd-pref-nodes
+  T,72,NCBI-Cdd:Global-id
+  T,83,NCBI-Cdd:Cdd-id
+  T,89,NCBI-Cdd:Cdd-id-set
+  T,91,NCBI-Cdd:Cdd-repeat
+  T,99,NCBI-Cdd:Cdd-book-ref
+  T,126,NCBI-Cdd:Cdd-descr
+  T,178,NCBI-Cdd:Cdd-descr-set
+  T,185,NCBI-Cdd:Cdd-tree
+  T,196,NCBI-Cdd:Cdd-tree-set
+  T,203,NCBI-Cdd:Matrix
+  T,216,NCBI-Cdd:Triangle
+  T,227,NCBI-Cdd:Update-comment
+  T,246,NCBI-Cdd:Update-align
+  T,257,NCBI-Cdd:Reject-id
+  T,262,NCBI-Cdd:Feature-evidence
+  T,273,NCBI-Cdd:Align-annot
+  T,299,NCBI-Cdd:Align-annot-set
+  T,317,NCBI-Cdd:Domain-parent
+  T,333,NCBI-Cdd:Sequence-tree
+  T,340,NCBI-Cdd:SeqTree-node
+  T,354,NCBI-Cdd:Algorithm-type
+  T,392,NCBI-Cdd:Node-annotation
+  T,408,NCBI-Cdd:Cdd
+  T,443,NCBI-Cdd:Cdd-set
+  T,451,NCBI-Cdd:Cdd-Viewer-Rect
+  T,458,NCBI-Cdd:Cdd-Viewer
+  T,477,NCBI-Cdd:Cdd-Script
+  T,491,NCBI-Cdd:Cdd-Project
+
+T,45,Cdd-org-ref,SEQUENCE
+-- dealing with lists of preferred tax-nodes 
+  F,46,Cdd-org-ref:reference,/Org-ref
+  F,47,Cdd-org-ref:active,BOOLEAN,DEFAULT,TRUE
+  F,48,Cdd-org-ref:parent-tax-id,INTEGER,OPTIONAL
+  F,49,Cdd-org-ref:rank,VisibleString,OPTIONAL
+
+T,51,Cdd-org-ref-set,SET /Cdd-org-ref
+
+T,53,Cdd-pref-node-descr,CHOICE
+  F,54,Cdd-pref-node-descr:create-date,/Date
+  F,55,Cdd-pref-node-descr:description,VisibleString
+
+T,58,Cdd-pref-node-descr-set,SET /Cdd-pref-node-descr
+
+T,60,Cdd-pref-nodes,SEQUENCE
+  F,61,Cdd-pref-nodes:preferred-nodes,/Cdd-org-ref-set
+  F,62,Cdd-pref-nodes:model-organisms,/Cdd-org-ref-set,OPTIONAL
+  F,63,Cdd-pref-nodes:optional-nodes,/Cdd-org-ref-set,OPTIONAL
+  F,64,Cdd-pref-nodes:description,/Cdd-pref-node-descr-set,OPTIONAL
+
+T,72,Global-id,SEQUENCE
+-- Cdd's should not exist without a unique accession, but alternative id's may
+-- be present as well. It is conceivable that a CD which is created as a merged
+-- product of two highly redundant CDs will retain the source ids in addition 
+-- to its new unique id
+-- database the object resides in
+-- currently not in use
+  F,73,Global-id:accession,VisibleString
+  -- SMART, Pfam, LOAD or CD accession
+  F,74,Global-id:release,VisibleString,OPTIONAL
+  -- to hold CD-Database release number
+  -- if desired, currently not used
+  F,76,Global-id:version,INTEGER,OPTIONAL
+  -- version 0 is the seed, version
+  -- numbers increase with update/curate
+  -- cycles
+  F,79,Global-id:database,VisibleString,OPTIONAL
+  -- this is NOT the source!, rather the
+
+T,83,Cdd-id,CHOICE
+  F,84,Cdd-id:uid,INTEGER
+  -- for synchronization with Entrez
+  -- holds PSSM-Ids
+  F,86,Cdd-id:gid,/Global-id
+  -- holds accession/version pairs
+
+T,89,Cdd-id-set,SEQUENCE /Cdd-id
+
+T,91,Cdd-repeat,SEQUENCE
+-- record whether the CD contains
+-- repeated sequence/structure motifs
+  F,93,Cdd-repeat:count,INTEGER
+  -- number of tandem repeats in the CD
+  F,94,Cdd-repeat:location,/Seq-loc,OPTIONAL
+  -- location on the representative
+  F,95,Cdd-repeat:avglen,INTEGER,OPTIONAL
+  -- average repeat length
+
+T,99,Cdd-book-ref,SEQUENCE
+-- record a link to Entrez Books
+  F,100,Cdd-book-ref:bookname,VisibleString
+  -- abbreviated book title
+  F,101,Cdd-book-ref:textelement,ENUMERATED
+    V,101,Cdd-book-ref:textelement:unassigned,0
+    -- type of element 
+    V,102,Cdd-book-ref:textelement:section,1
+    -- a section or paragraph
+    V,103,Cdd-book-ref:textelement:figgrp,2
+    -- a figure or set of figures
+    V,104,Cdd-book-ref:textelement:table,3
+    -- a table
+    V,105,Cdd-book-ref:textelement:chapter,4
+    -- a whole chapter
+    V,106,Cdd-book-ref:textelement:biblist,5
+    -- a lisf of references
+    V,107,Cdd-book-ref:textelement:box,6
+    -- an inserted box
+    V,108,Cdd-book-ref:textelement:glossary,7
+    -- glossary
+    V,109,Cdd-book-ref:textelement:appendix,8
+    -- appendix
+    V,110,Cdd-book-ref:textelement:other,255
+  F,111,Cdd-book-ref:elementid,INTEGER,OPTIONAL
+  -- numerical address of the text-element
+  F,112,Cdd-book-ref:subelementid,INTEGER,OPTIONAL
+  -- exact address, used with section
+  F,113,Cdd-book-ref:celementid,VisibleString,OPTIONAL
+  -- address of the text element, if character string
+  F,114,Cdd-book-ref:csubelementid,VisibleString,OPTIONAL
+  -- exact address, if character string
+
+T,126,Cdd-descr,CHOICE
+-- The description of CDD's refers to the specific set of aligned sequences,
+-- the region that is being aligned and the information contained in the
+-- alignment. It may contain a lengthy comment
+-- describing the function of the domain as well as its origin and all
+-- other anecdotal information that can't be pressed into a rigid scheme.
+-- Crosslinks to reference papers available in PubMed are possible as well.
+-- There can be as many of these as you want in the CDD.
+  F,127,Cdd-descr:othername,VisibleString
+  -- alternative names for the CDD
+  -- if domain has several common names
+  F,129,Cdd-descr:category,VisibleString
+  -- intracellular, extracellular, etc.
+  -- to record spatial and/or temporal
+  -- expression in free-text format
+  F,132,Cdd-descr:comment,VisibleString
+  -- this is where descriptions go
+  F,133,Cdd-descr:reference,/Pub
+  -- a citation describing the domain
+  F,134,Cdd-descr:create-date,/Date
+  -- Date of first creation/dump
+  F,135,Cdd-descr:tax-source,/Org-ref
+  -- holds the highest common tax node
+  F,136,Cdd-descr:source,VisibleString
+  -- the database the seeds were created
+  -- from, e.g. SMART, PFAM, etc..
+  F,138,Cdd-descr:status,INTEGER
+    V,138,Cdd-descr:status:unassigned,0
+    V,139,Cdd-descr:status:finished-ok,1
+    -- a public curated CD
+    V,140,Cdd-descr:status:pending-release,2
+    -- needs work done, not yet released
+    V,141,Cdd-descr:status:other-asis,3
+    -- imported as-is, immediate release
+    V,142,Cdd-descr:status:matrix-only,4
+    -- CD holds a Psi-Blast PSSM only,
+    -- does not contain alignment data
+    V,144,Cdd-descr:status:update-running,5
+    -- has been flagged for
+    -- update (in queue)
+    V,146,Cdd-descr:status:auto-updated,6
+    -- update finished, no
+    -- work necessary
+    V,148,Cdd-descr:status:claimed,7
+    -- is earmarked for curation
+    V,149,Cdd-descr:status:curated-complete,8
+    -- public curated member of a
+    -- completed family
+    V,151,Cdd-descr:status:other,255
+    -- for CD production?
+  F,152,Cdd-descr:update-date,/Date
+  -- Date of last version change
+  F,153,Cdd-descr:scrapbook,SEQUENCE VisibleString
+  -- for storing curation notes
+  -- those won't make it into public
+  -- distributions
+  F,156,Cdd-descr:source-id,/Cdd-id-set
+  -- for linking back to source db
+  F,157,Cdd-descr:repeats,/Cdd-repeat
+  -- to record repeat counts
+  F,158,Cdd-descr:old-root,/Cdd-id-set
+  -- to record short-term history
+  F,159,Cdd-descr:curation-status,INTEGER
+    V,159,Cdd-descr:curation-status:unassigned,0
+    -- to record curation status
+    V,160,Cdd-descr:curation-status:prein,1
+    -- when CD is checked out from
+    V,161,Cdd-descr:curation-status:ofc,2
+    -- the tracking database, for 
+    V,162,Cdd-descr:curation-status:iac,3
+    -- use within curation software
+    V,163,Cdd-descr:curation-status:ofv1,4
+    V,164,Cdd-descr:curation-status:iav1,5
+    V,165,Cdd-descr:curation-status:ofv2,6
+    V,166,Cdd-descr:curation-status:iav2,7
+    V,167,Cdd-descr:curation-status:postin,8
+    V,168,Cdd-descr:curation-status:other,255
+  F,169,Cdd-descr:readonly-status,INTEGER
+    V,169,Cdd-descr:readonly-status:unassigned,0
+    -- to record read-only status
+    V,170,Cdd-descr:readonly-status:readonly,1
+    -- when CD is checked out from
+    V,171,Cdd-descr:readonly-status:readwrite,2
+    -- the tracking database, for
+    V,172,Cdd-descr:readonly-status:other,255
+    -- use within curation software
+  F,173,Cdd-descr:book-ref,/Cdd-book-ref
+  -- links to Entrez/books
+  F,174,Cdd-descr:attribution,/Pub
+  -- add citations and/or author names
+  F,175,Cdd-descr:title,VisibleString
+  -- hold short descriptive text
+
+T,178,Cdd-descr-set,SET /Cdd-descr
+
+T,185,Cdd-tree,SEQUENCE
+-- the Cdd-tree stores the hierarchy of CDDs. These objects are stored separate
+-- from the CDs to allow for fast retrieval and use as an 'index' into CDs
+-- all the components in a CD-tree match components in the full-sized CD
+-- and should be synchronized
+  F,186,Cdd-tree:name,VisibleString
+  -- short name  copied from CD
+  F,187,Cdd-tree:id,/Cdd-id-set
+  -- IDs         copied from CD
+  F,188,Cdd-tree:description,/Cdd-descr-set,OPTIONAL
+  -- description copied from CD
+  F,189,Cdd-tree:parent,/Cdd-id,OPTIONAL
+  -- CD is the result of a split/merge
+  F,190,Cdd-tree:children,/Cdd-id-set,OPTIONAL
+  -- this CD has been split
+  F,191,Cdd-tree:siblings,/Cdd-id-set,OPTIONAL
+  -- related CDs (have common hits)
+  F,192,Cdd-tree:neighbors,/Cdd-id-set,OPTIONAL
+  -- co-occurring CDs (non-overlapping 
+  -- hits to same sequences)
+
+T,196,Cdd-tree-set,SEQUENCE /Cdd-tree
+
+T,203,Matrix,SEQUENCE
+-- Matrix definitions, these are supposed to store PSSMs and corresponding 
+-- matrices of relative residue frequencies.
+-- the number of columns and rows is listed explicitly, values in columns
+-- are stored column by column, i.e. in groups of nrows values for each column
+  F,204,Matrix:ncolumns,INTEGER
+  F,205,Matrix:nrows,INTEGER
+  F,206,Matrix:row-labels,SEQUENCE VisibleString,OPTIONAL
+  F,207,Matrix:scale-factor,INTEGER
+  F,208,Matrix:columns,SEQUENCE INTEGER
+
+T,216,Triangle,SEQUENCE
+-- definition for matrix of pairwise "distances", stored as the upper 
+-- triangle of a squared n x n matrix (excluding the diagonal), this is
+-- supposed to store pairwise percentages of identical residues, pairwise
+-- alignment scores or E-values from pairwise BLAST sequence comparisons
+  F,217,Triangle:nelements,INTEGER
+  F,218,Triangle:scores,/Score-set,OPTIONAL
+  F,219,Triangle:div-ranks,SEQUENCE INTEGER,OPTIONAL
+
+T,227,Update-comment,CHOICE
+-- Update-align is supposed to contain alignments that still need some work
+-- done to fit into the CD-proper alignment. These originate from the
+-- CD update process (generated by Blast, for example) or may be created in
+-- an editing session to save its state
+  F,228,Update-comment:comment,VisibleString
+  -- free text to describe nature of
+  -- Update-align
+  F,230,Update-comment:addthis,/Seq-loc
+  -- suggestion for inclusion in the CD
+  -- without corresponding alignment
+  F,232,Update-comment:replaces,/Seq-loc
+  -- if one or several alignment rows are
+  -- to be replaced by the Update-align
+  F,234,Update-comment:reject-loc,/Seq-loc
+  -- if used with Reject-id, specify a
+  -- location on a sequence which should
+  -- not be used
+  F,237,Update-comment:reference,/Pub
+  -- if update alignment imported from
+  -- citation and for whenever it seems
+  -- necessary to cite
+
+T,246,Update-align,SEQUENCE
+-- Both fields are optional, as the Update-align may be a Seq-annot without
+-- description, or a suggestion to add a sequence without the corresponding
+-- alignment
+  F,247,Update-align:description,SEQUENCE /Update-comment,OPTIONAL
+  F,248,Update-align:seqannot,/Seq-annot,OPTIONAL
+  -- contains the SeqAlign
+  F,249,Update-align:type,INTEGER
+    V,249,Update-align:type:unassigned,0
+    V,250,Update-align:type:update,1
+    V,251,Update-align:type:update-3d,2
+    V,252,Update-align:type:demoted,51
+    V,253,Update-align:type:demoted-3d,52
+    V,254,Update-align:type:other,255
+
+T,257,Reject-id,SEQUENCE
+  F,258,Reject-id:description,SEQUENCE /Update-comment,OPTIONAL
+  F,259,Reject-id:ids,SET /Seq-id
+
+T,262,Feature-evidence,CHOICE
+  F,263,Feature-evidence:comment,VisibleString
+  -- so we can spell out what doesn't
+  -- fit in any other category
+  F,265,Feature-evidence:reference,/Pub
+  -- evidence via a literature reference
+  F,266,Feature-evidence:bsannot,/Biostruc-annot-set
+  -- evidence via Biostruc-features, such
+  -- as structure superpositions 
+  F,268,Feature-evidence:seqfeat,/Seq-feat
+  -- evidence is a Sequence feature found
+  -- elsewhere
+  F,270,Feature-evidence:book-ref,/Cdd-book-ref
+  -- evidence is a book chapter or figure
+
+T,273,Align-annot,SEQUENCE
+  F,274,Align-annot:location,/Seq-loc
+  -- points to a location in one of the
+  -- aligned sequences, usually the
+  -- master/representative
+  F,277,Align-annot:description,VisibleString,OPTIONAL
+  -- to hold descriptions/names like
+  -- "Heme binding site" or "catalytic
+  -- triad" etc., something that should
+  -- be used for labels in visualization
+  F,281,Align-annot:evidence,SEQUENCE /Feature-evidence,OPTIONAL
+  -- evidence we can
+  -- compute with
+  F,283,Align-annot:type,INTEGER,OPTIONAL
+  -- for typing annotated features
+  -- 0 .. no type assigned
+  -- 1 .. active site
+  -- 2 .. polypeptide binding site
+  -- 3 .. nucleic acid binding site
+  -- 4 .. ion binding site
+  -- 5 .. chemical binding site
+  -- 6 .. posttranslational modification site
+  -- 7 .. structural motif
+  F,292,Align-annot:aliases,SEQUENCE VisibleString,OPTIONAL
+  -- adding more names for indexing
+  F,293,Align-annot:motif,VisibleString,OPTIONAL
+  -- to validate mapping of sites
+  F,294,Align-annot:motifuse,INTEGER,OPTIONAL
+  -- 0 for validation,
+  -- 1 for motif somewhere in seqloc
+  -- 2 for multiple motifs in seqloc
+
+T,299,Align-annot-set,SEQUENCE /Align-annot
+
+T,317,Domain-parent,SEQUENCE
+-- the Domain-parent records an evolutionary relationship which may not be
+-- as simple as a classical parent-child relationship in a typical hierarchy,
+-- i.e. where a CD is merely a specific subgroup ("child") of a more general
+-- diverse alignment model ("parent"). A CD alignment model may be the result
+-- of an ancient fusion event, combining two or more domains into a bigger unit
+-- which has subsequently undergone a divergent evolutionary process similar to
+-- what may have happened to a single "domain". A CD alignment model may 
+-- also reflect the result of a deletion event, where a specific subgroup
+-- lacks part of a (set of) domain(s), but where the part present is found to
+-- be highly similar to a putative "parent", with some added evidence for
+-- an actual deletion, like from the distribution of truncated copies in phylogenetic
+-- lineages. Deletion events which affect different parts of a set of
+-- duplicated domain architectures may be indistinguishable from actual
+-- fission events, which means that we may want to represent the latter as
+-- deletions after duplication and do not need a special case for fissions.
+  F,319,Domain-parent:parent-type,INTEGER
+    V,319,Domain-parent:parent-type:classical,0
+    -- the classification of parent child relations
+    V,320,Domain-parent:parent-type:fusion,1
+    V,321,Domain-parent:parent-type:deletion,2
+    V,322,Domain-parent:parent-type:permutation,3
+    V,323,Domain-parent:parent-type:other,255
+  F,324,Domain-parent:parentid,/Cdd-id
+  -- identify the section parent by accession
+  F,325,Domain-parent:seqannot,/Seq-annot,OPTIONAL
+  -- contains the sequence alignment linking
+  -- CD alignment models, should align the 
+  -- masters/representatives of each CD
+
+T,333,Sequence-tree,SEQUENCE
+-- record sequence trees generated by a suitable algorithm.
+  F,334,Sequence-tree:cdAccession,VisibleString,OPTIONAL
+  F,335,Sequence-tree:algorithm,/Algorithm-type
+  F,336,Sequence-tree:isAnnotated,BOOLEAN,DEFAULT,FALSE
+  F,337,Sequence-tree:root,/SeqTree-node
+
+T,340,SeqTree-node,SEQUENCE
+  F,341,SeqTree-node:isAnnotated,BOOLEAN,DEFAULT,FALSE
+  F,342,SeqTree-node:name,VisibleString,OPTIONAL
+  F,343,SeqTree-node:distance,REAL,OPTIONAL
+  F,344,SeqTree-node:children,CHOICE
+    F,345,SeqTree-node:children:children,SEQUENCE /SeqTree-node
+    F,346,SeqTree-node:children:footprint,SEQUENCE
+      F,347,SeqTree-node:children:footprint:seqRange,/Seq-interval
+      F,348,SeqTree-node:children:footprint:rowId,INTEGER,OPTIONAL
+  F,351,SeqTree-node:annotation,/Node-annotation,OPTIONAL
+
+T,354,Algorithm-type,SEQUENCE
+  F,355,Algorithm-type:scoring-Scheme,INTEGER
+    V,355,Algorithm-type:scoring-Scheme:unassigned,0
+    V,356,Algorithm-type:scoring-Scheme:percent-id,1
+    V,357,Algorithm-type:scoring-Scheme:kimura-corrected,2
+    V,358,Algorithm-type:scoring-Scheme:aligned-score,3
+    V,359,Algorithm-type:scoring-Scheme:aligned-score-ext,4
+    V,360,Algorithm-type:scoring-Scheme:aligned-score-filled,5
+    V,361,Algorithm-type:scoring-Scheme:blast-footprint,6
+    V,362,Algorithm-type:scoring-Scheme:blast-full,7
+    V,363,Algorithm-type:scoring-Scheme:hybrid-aligned-score,8
+    V,364,Algorithm-type:scoring-Scheme:other,255
+  F,365,Algorithm-type:clustering-Method,INTEGER
+    V,365,Algorithm-type:clustering-Method:unassigned,0
+    V,366,Algorithm-type:clustering-Method:single-linkage,1
+    V,367,Algorithm-type:clustering-Method:neighbor-joining,2
+    V,368,Algorithm-type:clustering-Method:fast-minimum-evolution,3
+    V,369,Algorithm-type:clustering-Method:other,255
+  F,370,Algorithm-type:score-Matrix,INTEGER,OPTIONAL
+    V,370,Algorithm-type:score-Matrix:unassigned,0
+    V,371,Algorithm-type:score-Matrix:blosum45,1
+    V,372,Algorithm-type:score-Matrix:blosum62,2
+    V,373,Algorithm-type:score-Matrix:blosum80,3
+    V,374,Algorithm-type:score-Matrix:pam30,4
+    V,375,Algorithm-type:score-Matrix:pam70,5
+    V,376,Algorithm-type:score-Matrix:pam250,6
+    V,377,Algorithm-type:score-Matrix:other,255
+  F,378,Algorithm-type:gapOpen,INTEGER,OPTIONAL
+  F,379,Algorithm-type:gapExtend,INTEGER,OPTIONAL
+  F,380,Algorithm-type:gapScaleFactor,INTEGER,OPTIONAL
+  F,381,Algorithm-type:nTerminalExt,INTEGER,OPTIONAL
+  F,382,Algorithm-type:cTerminalExt,INTEGER,OPTIONAL
+  F,383,Algorithm-type:tree-scope,INTEGER,OPTIONAL
+    V,383,Algorithm-type:tree-scope:allDescendants,0
+    V,384,Algorithm-type:tree-scope:immediateChildrenOnly,1
+    V,385,Algorithm-type:tree-scope:selfOnly,2
+    V,386,Algorithm-type:tree-scope:other,255
+  F,387,Algorithm-type:coloring-scope,INTEGER,OPTIONAL
+    V,387,Algorithm-type:coloring-scope:allDescendants,0
+    V,388,Algorithm-type:coloring-scope:immediateChildrenOnly,1
+    V,389,Algorithm-type:coloring-scope:other,255
+
+T,392,Node-annotation,SEQUENCE
+  F,393,Node-annotation:presentInChildCD,VisibleString,OPTIONAL
+  F,394,Node-annotation:note,VisibleString,OPTIONAL
+
+T,408,Cdd,SEQUENCE
+-- the Cdd is the basic ASN.1 object storing an annotated and curated set of
+-- alignments (formulated as a set of pairwise master-slave alignments). 
+-- The alignment data are contained in Seq-annots, and a special type of
+-- object, the Update-align, contains additional alignment data from unfinished
+-- editing sessions and update processes. The Biostruc-annot-set holds 
+-- structure superposition information for multiple structure-derived rows in
+-- the alignment.
+-- Version numbers in Global-ids are meant to be updated every time the Cdd is
+-- changed in a way that does not require Global-ids to be changed (sequences
+-- added in update cycle, annotation changed, alignment errors fixed)
+  F,409,Cdd:name,VisibleString
+  -- a short name (can be the accession..)
+  F,410,Cdd:id,/Cdd-id-set
+  -- this CD's Ids
+  F,411,Cdd:description,/Cdd-descr-set,OPTIONAL
+  -- status, references, etc.
+  F,412,Cdd:seqannot,SEQUENCE /Seq-annot,OPTIONAL
+  -- contains the CD alignment
+  F,413,Cdd:features,/Biostruc-annot-set,OPTIONAL
+  -- contains structure
+  -- alignment data
+  -- or "core" definitions
+  F,416,Cdd:sequences,/Seq-entry,OPTIONAL
+  -- store as bioseq-set inside seq-entry
+  F,417,Cdd:profile-range,/Seq-interval,OPTIONAL
+  -- profile for this region only
+  -- also stores the Seq-id of the master
+  F,419,Cdd:trunc-master,/Bioseq,OPTIONAL
+  -- holds the truncated master, which
+  -- may be something like a consensus,
+  -- uses the same sequence coordinate
+  -- frame as the profile-range
+  F,423,Cdd:posfreq,/Matrix,OPTIONAL
+  -- relative residue frequencies
+  F,424,Cdd:scoremat,/Matrix,OPTIONAL
+  -- Position dependent score matrix
+  F,425,Cdd:distance,/Triangle,OPTIONAL
+  -- pairwise distances for all seqs.
+  F,426,Cdd:parent,/Cdd-id,OPTIONAL
+  -- this CD is the result of a split
+  F,427,Cdd:children,/Cdd-id-set,OPTIONAL
+  -- this CD has been split, not used
+  F,428,Cdd:siblings,/Cdd-id-set,OPTIONAL
+  -- related CDs (common hits), clusters
+  F,429,Cdd:neighbors,/Cdd-id-set,OPTIONAL
+  -- co-occurring CDs, not used
+  F,430,Cdd:pending,SEQUENCE /Update-align,OPTIONAL
+  -- contains alignments from
+  -- update or "lower panel"
+  F,432,Cdd:rejects,SEQUENCE /Reject-id,OPTIONAL
+  -- SeqIds of rejected CD-
+  -- members, ignore in update
+  F,434,Cdd:master3d,SET /Seq-id,OPTIONAL
+  -- record if CD has a 3D representative
+  F,435,Cdd:alignannot,/Align-annot-set,OPTIONAL
+  -- alignment annotation
+  F,436,Cdd:style-dictionary,/Cn3d-style-dictionary,OPTIONAL
+  -- record rendering styles
+  F,437,Cdd:user-annotations,/Cn3d-user-annotations,OPTIONAL
+  -- user annotations in Cn3D
+  F,438,Cdd:ancestors,SEQUENCE /Domain-parent,OPTIONAL
+  -- list of parents
+  F,439,Cdd:scoreparams,/PssmWithParameters,OPTIONAL
+  F,440,Cdd:seqtree,/Sequence-tree,OPTIONAL
+
+T,443,Cdd-set,SET /Cdd
+
+T,451,Cdd-Viewer-Rect,SEQUENCE
+-- Cdd projects store a set of CDs, typically related to each other
+-- relationships would be specified using the ancestors fields in the
+-- individual CD objects. For use with CD-Tree, a program to visualize
+-- curated CD hierarchies and evidence for hierarchical family structures.
+  F,452,Cdd-Viewer-Rect:top,INTEGER
+  -- top coordinate
+  F,453,Cdd-Viewer-Rect:left,INTEGER
+  -- left  coordinate
+  F,454,Cdd-Viewer-Rect:width,INTEGER
+  -- width 
+  F,455,Cdd-Viewer-Rect:height,INTEGER
+  -- height
+
+T,458,Cdd-Viewer,SEQUENCE
+  F,459,Cdd-Viewer:ctrl,INTEGER
+  -- viewer type
+    V,460,Cdd-Viewer:ctrl:unassigned,0
+    V,461,Cdd-Viewer:ctrl:cd-info,1
+    V,462,Cdd-Viewer:ctrl:align-annot,2
+    V,463,Cdd-Viewer:ctrl:seq-list,3
+    V,464,Cdd-Viewer:ctrl:seq-tree,4
+    V,465,Cdd-Viewer:ctrl:merge-preview,5
+    V,466,Cdd-Viewer:ctrl:cross-hits,6
+    V,467,Cdd-Viewer:ctrl:notes,7
+    V,468,Cdd-Viewer:ctrl:tax-tree,8
+    V,469,Cdd-Viewer:ctrl:dart,9
+    V,470,Cdd-Viewer:ctrl:dart-selected-rows,10
+    V,471,Cdd-Viewer:ctrl:other,255
+  F,473,Cdd-Viewer:rect,/Cdd-Viewer-Rect,OPTIONAL
+  -- viewer rectangle
+  F,474,Cdd-Viewer:accessions,SEQUENCE VisibleString
+  -- list of accessions associated with a viewer
+
+T,477,Cdd-Script,SEQUENCE
+  F,478,Cdd-Script:type,INTEGER,OPTIONAL
+    V,479,Cdd-Script:type:unassigned,0
+    V,480,Cdd-Script:type:user-recorded,1
+    V,481,Cdd-Script:type:server-generated,2
+    V,482,Cdd-Script:type:other,255
+  F,484,Cdd-Script:name,VisibleString,OPTIONAL
+  -- user assigned name/description
+  F,485,Cdd-Script:commands,VisibleString
+  -- actual script commands
+
+T,491,Cdd-Project,SEQUENCE
+-- cd colors are as:  0000FF for red, 00FF00 for green, FF0000 for blue
+  F,492,Cdd-Project:cds,SEQUENCE /Cdd
+  -- cds
+  F,493,Cdd-Project:cdcolor,SEQUENCE INTEGER
+  -- colors  
+  F,494,Cdd-Project:viewers,SEQUENCE /Cdd-Viewer
+  -- Sequence viewers
+  F,495,Cdd-Project:log,VisibleString
+  -- log
+  F,496,Cdd-Project:scripts,SEQUENCE /Cdd-Script,OPTIONAL
+  -- command scripts
+  F,497,Cdd-Project:id,/Cdd-id-set,OPTIONAL
+  -- to assign unique project id
+  F,498,Cdd-Project:rids,SEQUENCE VisibleString,OPTIONAL
+  -- to store request IDs for batch CD-Searches
+  F,499,Cdd-Project:create-date,/Date,OPTIONAL
+  F,500,Cdd-Project:update-date,/Date,OPTIONAL
+  F,501,Cdd-Project:project-id,INTEGER,OPTIONAL
+  -- for temporary tracking in the database

@@ -1,0 +1,7 @@
+.cvsignore
+Pub_.hpp
+Pub_equiv_.hpp
+Pub_set_.hpp
+NCBI_Pub_module.hpp
+pub__.hpp
+pub.dump

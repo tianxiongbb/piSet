@@ -1,0 +1,112 @@
+M,16,id1.asn:NCBI-ID1Access
+--$Revision: 96973 $
+--********************************************************************
+--
+--  Network Id server network access
+--  Yaschenko 1996
+--
+--
+--*********************************************************************
+--
+--  ID1.asn
+--
+--     messages for id server network access
+--
+--*********************************************************************
+  T,27,NCBI-ID1Access:ID1server-request
+  T,42,NCBI-ID1Access:ID1server-maxcomplex
+  T,49,NCBI-ID1Access:Entry-complexities
+  T,57,NCBI-ID1Access:ID1Seq-hist
+  T,62,NCBI-ID1Access:ID1server-back
+  T,78,NCBI-ID1Access:ID1server-debug
+  T,81,NCBI-ID1Access:ID1blob-info
+  T,97,NCBI-ID1Access:ID1SeqEntry-info
+
+T,27,ID1server-request,CHOICE
+--**********************************
+-- requests
+--
+  F,28,ID1server-request:init,NULL
+  -- DlInit
+  F,29,ID1server-request:getgi,/Seq-id
+  -- get a gi given a Seq-id
+  F,30,ID1server-request:getsefromgi,/ID1server-maxcomplex
+  -- given a gi, get the Seq-entry
+  F,31,ID1server-request:fini,NULL
+  -- DlFini
+  F,32,ID1server-request:getseqidsfromgi,INTEGER
+  --get all Seq-ids of given gi
+  F,33,ID1server-request:getgihist,INTEGER
+  --get an historical list of gis 
+  F,34,ID1server-request:getgirev,INTEGER
+  --get a revision history of gi
+  F,35,ID1server-request:getgistate,INTEGER
+  --get a state of gi
+  F,36,ID1server-request:getsewithinfo,/ID1server-maxcomplex
+  F,37,ID1server-request:getblobinfo,/ID1server-maxcomplex
+
+T,42,ID1server-maxcomplex,SEQUENCE
+--  Complexity stuff will be for ID1
+  F,43,ID1server-maxcomplex:maxplex,/Entry-complexities
+  F,44,ID1server-maxcomplex:gi,INTEGER
+  F,45,ID1server-maxcomplex:ent,INTEGER,OPTIONAL
+  -- needed when you want to retrieve a given ent
+  F,46,ID1server-maxcomplex:sat,VisibleString,OPTIONAL
+  -- satellite 0-id,1-dbEST
+
+T,49,Entry-complexities,INTEGER
+  V,50,Entry-complexities:entry,0
+  -- the "natural" entry for this (nuc-prot) 
+  V,51,Entry-complexities:bioseq,1
+  -- only the bioseq identified
+  V,52,Entry-complexities:bioseq-set,2
+  -- any seg-set it may be part of
+  V,53,Entry-complexities:nuc-prot,3
+  -- any nuc-prot it may be part of
+  V,54,Entry-complexities:pub-set,4
+
+T,57,ID1Seq-hist,SEQUENCE
+  F,58,ID1Seq-hist:hist,/Seq-hist
+
+T,62,ID1server-back,CHOICE
+  F,63,ID1server-back:init,NULL
+  -- DlInit
+  F,64,ID1server-back:error,INTEGER
+  F,65,ID1server-back:gotgi,INTEGER
+  F,66,ID1server-back:gotseqentry,/Seq-entry
+  -- live
+  F,67,ID1server-back:gotdeadseqentry,/Seq-entry
+  -- dead
+  F,68,ID1server-back:fini,NULL
+  -- DlFini
+  F,69,ID1server-back:gistate,INTEGER
+  F,70,ID1server-back:ids,SET /Seq-id
+  F,71,ID1server-back:gihist,SET /ID1Seq-hist
+  -- because hand crafted Seq-hist does not follow 
+  -- same conventions 
+  F,73,ID1server-back:girevhist,SET /ID1Seq-hist
+  F,74,ID1server-back:gotsewithinfo,/ID1SeqEntry-info
+  F,75,ID1server-back:gotblobinfo,/ID1blob-info
+
+T,78,ID1server-debug,SET /ID1server-back
+
+T,81,ID1blob-info,SEQUENCE
+  F,82,ID1blob-info:gi,INTEGER
+  F,83,ID1blob-info:sat,INTEGER
+  F,84,ID1blob-info:sat-key,INTEGER
+  F,85,ID1blob-info:satname,VisibleString
+  F,86,ID1blob-info:suppress,INTEGER
+  F,87,ID1blob-info:withdrawn,INTEGER
+  F,88,ID1blob-info:confidential,INTEGER
+  F,92,ID1blob-info:blob-state,INTEGER
+  -- blob-state now contains blob version info.
+  -- it's actually minutes from 01/01/1970
+  -- and it's negative if blob is dead.
+  F,93,ID1blob-info:comment,VisibleString,OPTIONAL
+  -- public comment for withdrawn record 
+  F,94,ID1blob-info:extfeatmask,INTEGER,OPTIONAL
+  -- mask for external features (SNP,...)
+
+T,97,ID1SeqEntry-info,SEQUENCE
+  F,98,ID1SeqEntry-info:blob-info,/ID1blob-info
+  F,99,ID1SeqEntry-info:blob,/Seq-entry,OPTIONAL

@@ -1,0 +1,242 @@
+-- $Id: gencoll_client.asn 500701 2016-05-06 17:36:05Z zherikov $
+-- **********************************************************************
+--
+--  NCBI Genome Collections Statistics
+--  by Michael DiCuccio, Vinay Kumar
+--
+-- **********************************************************************
+
+
+
+
+NCBI-GencollClient DEFINITIONS ::=
+BEGIN
+
+IMPORTS GC-Assembly FROM NCBI-GenomeCollection;
+
+
+GCClientRequest ::= CHOICE {
+    get-assembly GCClient-GetAssemblyRequest,
+    get-chrtype-valid  GCClient-ValidateChrTypeLocRequest,
+    get-best-assembly GCClient-FindBestAssemblyRequest,
+    get-equivalent-assemblies GCClient-GetEquivalentAssembliesRequest,
+    get-assembly-blob GCClient-GetAssemblyBlobRequest,
+    get-assembly-by-sequence GCClient-GetAssemblyBySequenceRequest
+}
+
+
+GCClientResponse ::= CHOICE {
+    get-assembly GC-Assembly,
+    get-chrtype-valid  VisibleString,
+    get-best-assembly GCClient-AssembliesForSequences,
+    get-equivalent-assemblies GCClient-EquivalentAssemblies,
+    
+    --  errors encountered at the server side.
+    srvr-error GCClient-Error,
+    get-assembly-blob OCTET STRING,
+    get-assembly-by-sequence GCClient-AssembliesForSequences
+}
+
+GCClient-Error ::= SEQUENCE {
+    error-id INTEGER {
+        assembly-not-found(0),
+        other(255)
+    },
+    description VisibleString OPTIONAL
+}
+
+-- This is a bitfield.  All values are powers of two.
+GCClient-AttributeFlags ::= INTEGER {
+    none(0),
+    biosource(1),
+    -- obsolete; do not use
+    molinfo(2),
+    all (3),
+    -- obsolete; do not use
+    publications(4),
+
+-- assembly level flag. Only statistics will be retrieved. For use by editing GUI.
+    only-stats (32), -- 1<<5
+
+-- No stats info will be retrieved.
+    exclude-stats (512), -- 1<<9
+
+-- scaffold-flags:
+-- by default, pseudo-scaffolds are reported as submitted.
+-- include_unordered_scaffolds: show pseudo-scaffolds as unordered/unplaced
+-- include_UCSC_pseudo_scaffolds: all unordered/unplaced aer shown as placed
+--  (using UCSC coordinates of chr*_random or chrUn)
+    include-unordered-scaffolds (1024), --  1<<10
+    include-UCSC-pseudo-scaffolds (2048), -- 1<<11
+
+-- chromosome-flags:
+-- by default, alt-loci/patches position on chromosome reported using AlignDb
+-- database alignments.
+-- exclude_aligndb: report alt-loci/patches position on chromosome
+-- using placement and not using AlignDb alignments
+    exclude-aligndb (8192), -- 1<<13
+
+-- Only data needed by the Assemblies GUI will be retrieved.
+--  subsumes obsolete flags exclude_primary_assembly_scaffolds and only_gui_stats
+--  and excludes alignment retrieval like flag exclude_aligndb.
+    only-gui-data (16384), -- 1<<14
+
+-- If no scaffolds retrieve all wgs contigs.
+    get-wgs-contigs (32768) -- 1<<15
+
+
+}
+
+
+GCClient-GetAssemblyRequest ::= SEQUENCE {
+
+    -- One of accession or release id MUST BE SUPPLIED
+    
+    -- Assembly accession or accession.version
+    -- (versionless accession is answered with most recent version)
+    accession VisibleString OPTIONAL,
+
+    -- release ID
+    release-id INTEGER OPTIONAL,
+
+    level INTEGER {
+        assembly(0),
+        replicon(1),
+        scaffold(2),
+        component(3)
+    } DEFAULT scaffold,
+
+    -- assm-flags, chrom-flags, scaf-flags, component-flags
+    assm-flags GCClient-AttributeFlags DEFAULT none,
+
+    chrom-flags GCClient-AttributeFlags DEFAULT biosource,
+    
+    scaf-flags GCClient-AttributeFlags DEFAULT none,
+    
+    component-flags GCClient-AttributeFlags DEFAULT none
+}
+
+GCClient-GetAssemblyBlobRequest ::= SEQUENCE {
+
+    -- One of accession or release id MUST BE SUPPLIED
+
+    -- Assembly accession or accession.version
+    -- (versionless accession is answered with most recent version)
+    accession VisibleString OPTIONAL,
+
+    -- release ID
+    release-id INTEGER OPTIONAL,
+
+    mode VisibleString
+}
+
+GCClient-ValidateChrTypeLocRequest ::= SEQUENCE {
+    
+    -- Validate the Type Location in the request
+    
+    type  VisibleString,
+    
+    location VisibleString
+}
+
+GCClient-ValidateChrTypeLocResponse ::= SEQUENCE {
+    
+    -- Result of the Type Location validate request
+    
+    result  VisibleString
+}
+
+
+GCClient-FindBestAssemblyFilter ::= INTEGER {
+    any(0),
+    latest-major-annotated(0),
+    latest(1),
+    major(2),
+    annotated(3),
+    all(4)
+}
+
+GCClient-FindBestAssemblySort ::= INTEGER {
+    default(0),
+    latest(1),
+    major(2),
+    annotated(3)
+}
+
+GCClient-FindBestAssemblyRequest ::= SEQUENCE {
+    seq-id-acc SET OF VisibleString,
+
+    filter GCClient-FindBestAssemblyFilter DEFAULT latest-major-annotated,
+
+    sort GCClient-FindBestAssemblySort DEFAULT default,
+
+    assembly-return-limit INTEGER OPTIONAL
+}
+
+-- This is a bitfield.  All values are powers of two.
+GCClient-GetAssemblyBySequenceFilter ::= INTEGER {
+    all(0),
+    latest(1),
+    major(2),
+    genbank(4),
+    refseq(8)
+}
+
+GCClient-GetAssemblyBySequenceRequest ::= SEQUENCE {
+    sequence-acc SET OF VisibleString,
+
+    filter GCClient-GetAssemblyBySequenceFilter DEFAULT all,
+
+    sort INTEGER {
+        default(0),
+        latest(1),
+        major(2)
+    } DEFAULT default,
+
+    top-assembly-only INTEGER DEFAULT 0
+}
+
+
+GCClient-AssemblyInfo ::= SEQUENCE {
+    accession VisibleString,
+    latest    BOOLEAN,
+    major     BOOLEAN,
+    annotated BOOLEAN OPTIONAL,
+    type INTEGER {
+        genbank(1),
+        refseq(2)
+    } OPTIONAL
+}
+
+GCClient-AssemblySequenceInfo ::= SEQUENCE {
+    assembly   GCClient-AssemblyInfo,
+    sequences-in-assembly SET OF VisibleString,
+    sequences-not-in-assembly SET OF VisibleString OPTIONAL
+}
+
+GCClient-AssembliesForSequences ::= SEQUENCE {
+    assemblies SET OF GCClient-AssemblySequenceInfo OPTIONAL,
+    not-found-sequences SET OF VisibleString OPTIONAL
+}
+
+
+
+GCClient-GetEquivalentAssembliesRequest ::= SEQUENCE {
+    accession VisibleString,
+    equivalency INTEGER {
+        paired-strict             (1), -- Paired assembly, if identical
+        paired                    (2), -- Paired assembly, if exists, even if not identical
+        same-coordinates          (3), -- All assemblies with same major release and same type (Gb/Rs)
+        all-types-same-coordinates(4), -- All assemblies with same major release, both Gb and Rs.
+        major-release             (5)  -- Major release of assembly, same type
+    }
+}
+
+GCClient-EquivalentAssemblies ::= SEQUENCE {
+    assemblies SET OF SEQUENCE {
+        accession VisibleString
+    }
+}
+
+
+END

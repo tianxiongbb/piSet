@@ -1,0 +1,14 @@
+#include <objects/mim/Mim_allelic_variant.hpp>
+#include <objects/mim/Mim_author.hpp>
+#include <objects/mim/Mim_cit.hpp>
+#include <objects/mim/Mim_date.hpp>
+#include <objects/mim/Mim_edit_item.hpp>
+#include <objects/mim/Mim_entries.hpp>
+#include <objects/mim/Mim_entry.hpp>
+#include <objects/mim/Mim_index_term.hpp>
+#include <objects/mim/Mim_link.hpp>
+#include <objects/mim/Mim_page.hpp>
+#include <objects/mim/Mim_reference.hpp>
+#include <objects/mim/Mim_set.hpp>
+#include <objects/mim/Mim_text.hpp>
+#include <objects/mim/NCBI_Mim_module.hpp>

@@ -1,0 +1,12 @@
+#include <ncbi_pch.hpp>
+#include "PrintForm_.cpp"
+#include "PrintFormBlock_.cpp"
+#include "PrintFormBoolean_.cpp"
+#include "PrintFormEnum_.cpp"
+#include "PrintFormText_.cpp"
+#include "PrintFormat_.cpp"
+#include "PrintTemplate_.cpp"
+#include "PrintTemplateSet_.cpp"
+#include "TemplateName_.cpp"
+#include "UserFormat_.cpp"
+#include "NCBI_ObjPrt_module.cpp"

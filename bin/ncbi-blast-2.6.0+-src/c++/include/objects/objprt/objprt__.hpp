@@ -1,0 +1,11 @@
+#include <objects/objprt/PrintForm.hpp>
+#include <objects/objprt/PrintFormBlock.hpp>
+#include <objects/objprt/PrintFormBoolean.hpp>
+#include <objects/objprt/PrintFormEnum.hpp>
+#include <objects/objprt/PrintFormText.hpp>
+#include <objects/objprt/PrintFormat.hpp>
+#include <objects/objprt/PrintTemplate.hpp>
+#include <objects/objprt/PrintTemplateSet.hpp>
+#include <objects/objprt/TemplateName.hpp>
+#include <objects/objprt/UserFormat.hpp>
+#include <objects/objprt/NCBI_ObjPrt_module.hpp>

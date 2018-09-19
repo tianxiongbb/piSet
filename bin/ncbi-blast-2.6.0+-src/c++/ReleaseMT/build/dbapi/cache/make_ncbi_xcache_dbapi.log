@@ -1,0 +1,16 @@
+make[4]: Entering directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/build/dbapi/cache'
+Updating dependency information for /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/dbapi/cache/dbapi_blob_cache_cf.cpp.
+Updating dependency information for /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/dbapi/cache/dbapi_blob_cache.cpp.
+/usr/bin/ccache /usr/bin/g++  -std=gnu++11 -c -Wall -Wno-format-y2k  -pthread -fopenmp -O2 -fPIC    -DNDEBUG -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE   -D_MT -D_REENTRANT -D_THREAD_SAFE -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/inc -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/include     -fdiagnostics-color=always /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/dbapi/cache/dbapi_blob_cache.cpp -o dbapi_blob_cache.o 
+/usr/bin/ccache /usr/bin/g++  -std=gnu++11 -c -Wall -Wno-format-y2k  -pthread -fopenmp -O2 -fPIC    -DNDEBUG -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE   -D_MT -D_REENTRANT -D_THREAD_SAFE -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/inc -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/include     -fdiagnostics-color=always /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/dbapi/cache/dbapi_blob_cache_cf.cpp -o dbapi_blob_cache_cf.o 
+/bin/rm -f libncbi_xcache_dbapi.a .libncbi_xcache_dbapi.a.stamp
+ar cr libncbi_xcache_dbapi.a dbapi_blob_cache.o dbapi_blob_cache_cf.o  
+/bin/bash /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/scripts/common/impl/if_diff.sh /bin/ln -f libncbi_xcache_dbapi.a /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib
+/bin/ln -f libncbi_xcache_dbapi.a /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib/libncbi_xcache_dbapi.a
+/bin/ln -f .ncbi_xcache_dbapi.dep /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/status/.ncbi_xcache_dbapi.dep
+/bin/rm -f libncbi_xcache_dbapi-dll.so .libncbi_xcache_dbapi-dll.so.stamp
+/usr/bin/g++  -std=gnu++11  -shared -o libncbi_xcache_dbapi-dll.so -Wl,--enable-new-dtags -Wl,-export-dynamic  -pthread -fopenmp   -O -fdiagnostics-color=always -fPIC  dbapi_blob_cache.o dbapi_blob_cache_cf.o  -Wl,-rpath,/home/yutianx/bin/lib -Wl,-rpath-link,/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib -L/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib -ldbapi -ldbapi_driver-dll -lxncbi -ldl -lm  -lpthread 
+/bin/bash /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/scripts/common/impl/if_diff.sh /bin/ln -f libncbi_xcache_dbapi-dll.so /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib
+/bin/ln -f libncbi_xcache_dbapi-dll.so /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib/libncbi_xcache_dbapi-dll.so
+/bin/ln -f .ncbi_xcache_dbapi-dll.dep /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/status/.ncbi_xcache_dbapi-dll.dep
+make[4]: Leaving directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/build/dbapi/cache'

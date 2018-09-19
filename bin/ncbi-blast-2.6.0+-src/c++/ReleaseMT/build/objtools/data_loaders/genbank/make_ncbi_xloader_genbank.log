@@ -1,0 +1,16 @@
+make[5]: Entering directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/build/objtools/data_loaders/genbank'
+Updating dependency information for /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objtools/data_loaders/genbank/gbload_util.cpp.
+Updating dependency information for /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objtools/data_loaders/genbank/gbloader.cpp.
+/usr/bin/ccache /usr/bin/g++  -std=gnu++11 -c -Wall -Wno-format-y2k  -pthread -fopenmp -O2 -fPIC    -DNDEBUG -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE   -D_MT -D_REENTRANT -D_THREAD_SAFE -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/inc -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/include  -fdiagnostics-color=always /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objtools/data_loaders/genbank/gbloader.cpp -o gbloader.o 
+/usr/bin/ccache /usr/bin/g++  -std=gnu++11 -c -Wall -Wno-format-y2k  -pthread -fopenmp -O2 -fPIC    -DNDEBUG -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE   -D_MT -D_REENTRANT -D_THREAD_SAFE -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/inc -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/include  -fdiagnostics-color=always /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objtools/data_loaders/genbank/gbload_util.cpp -o gbload_util.o 
+/bin/rm -f libncbi_xloader_genbank.a .libncbi_xloader_genbank.a.stamp
+ar cr libncbi_xloader_genbank.a gbloader.o gbload_util.o  
+/bin/bash /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/scripts/common/impl/if_diff.sh /bin/ln -f libncbi_xloader_genbank.a /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib
+/bin/ln -f libncbi_xloader_genbank.a /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib/libncbi_xloader_genbank.a
+/bin/ln -f .ncbi_xloader_genbank.dep /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/status/.ncbi_xloader_genbank.dep
+/bin/rm -f libncbi_xloader_genbank-dll.so .libncbi_xloader_genbank-dll.so.stamp
+/usr/bin/g++  -std=gnu++11  -shared -o libncbi_xloader_genbank-dll.so -Wl,--enable-new-dtags -Wl,-export-dynamic  -pthread -fopenmp   -O -fdiagnostics-color=always -fPIC  gbloader.o gbload_util.o  -Wl,-rpath,/home/yutianx/bin/lib -Wl,-rpath-link,/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib -L/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib -lncbi_xreader-dll -ldl -lm  -lpthread 
+/bin/bash /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/scripts/common/impl/if_diff.sh /bin/ln -f libncbi_xloader_genbank-dll.so /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib
+/bin/ln -f libncbi_xloader_genbank-dll.so /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib/libncbi_xloader_genbank-dll.so
+/bin/ln -f .ncbi_xloader_genbank-dll.dep /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/status/.ncbi_xloader_genbank-dll.dep
+make[5]: Leaving directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/build/objtools/data_loaders/genbank'

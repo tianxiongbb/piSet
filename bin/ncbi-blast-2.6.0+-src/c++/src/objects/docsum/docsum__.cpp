@@ -1,0 +1,13 @@
+#include <ncbi_pch.hpp>
+#include "Assay.cpp"
+#include "Assembly.cpp"
+#include "BaseURL.cpp"
+#include "Component.cpp"
+#include "ExchangeSet.cpp"
+#include "FxnSet.cpp"
+#include "MapLoc.cpp"
+#include "PrimarySequence.cpp"
+#include "Rs.cpp"
+#include "RsLinkout.cpp"
+#include "RsStruct.cpp"
+#include "Ss.cpp"

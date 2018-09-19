@@ -1,0 +1,12 @@
+# $Id: Makefile.blastdb.lib 468761 2015-05-27 20:14:39Z ucko $
+
+LIB = blastdb
+SRC = blastdb__ blastdb___
+
+DLL_LIB = xser
+
+WATCHERS = camacho
+
+
+USES_LIBRARIES =  \
+    $(SEQ_LIBS) pub

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+if [ $# -lt 1 ];then
+	echo0 1 "$0 in.insert [s|show_in_terminal]"
+	echo0 4 "by default, this program will print length distribution summary from 15-35nt"
+	echo0 4 "if s|show_in_terminal set, the program will print the length distribution figure directly in the screen, please ensure there is enough width of the screen"
+	exit 1
+fi
+
+if [ $# -eq 1 ];then
+	awk 'BEGIN{FS=OFS="\t"} {a[length($1)]+=$2} END{for(i=15;i<=35;i++){print i,a[i]/1}}' $1
+else
+	awk 'BEGIN{FS=OFS="\t"} {a[length($1)]+=$2} END{m=0;for(i=15;i<=35;i++){if(a[i]>m){m=a[i]}};for(i=15;i<=35;i++){h=int(a[i]/m*50);printf "\033[33;1m"i" \033[35;1m";for(j=1;j<=h;j++){printf "="};print ""};print "\033[0m"}' $1
+fi
+
+

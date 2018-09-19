@@ -1,0 +1,32 @@
+M,14,tinyseq.asn:NCBI-TSeq
+--$Revision: 96973 $
+--**********************************************************************
+--
+--  ASN.1 for a tiny Bioseq in XML
+--    basically a structured FASTA file with a few extras
+--    in this case we drop all modularity of components
+--      All ids are Optional - simpler structure, less checking
+--      Components of organism are hard coded - can't easily add or change
+--      sequence is just string whether DNA or protein
+--  by James Ostell, 2000
+--
+--**********************************************************************
+  T,17,NCBI-TSeq:TSeq
+  T,31,NCBI-TSeq:TSeqSet
+
+T,17,TSeq,SEQUENCE
+  F,18,TSeq:seqtype,ENUMERATED
+    V,19,TSeq:seqtype:nucleotide,1
+    V,20,TSeq:seqtype:protein,2
+  F,21,TSeq:gi,INTEGER,OPTIONAL
+  F,22,TSeq:accver,VisibleString,OPTIONAL
+  F,23,TSeq:sid,VisibleString,OPTIONAL
+  F,24,TSeq:local,VisibleString,OPTIONAL
+  F,25,TSeq:taxid,INTEGER,OPTIONAL
+  F,26,TSeq:orgname,VisibleString,OPTIONAL
+  F,27,TSeq:defline,VisibleString
+  F,28,TSeq:length,INTEGER
+  F,29,TSeq:sequence,VisibleString
+
+T,31,TSeqSet,SEQUENCE /TSeq
+-- a bunch of them

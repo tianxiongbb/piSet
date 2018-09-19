@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if [ $# -lt 1 ];then
+	echo0 5 "$0 in.bed12"
+	echo0 4 "the fifth column of bed12 file should be mapTime"
+	exit 1
+fi
+
+awk '$11~","' $1 | awk 'BEGIN{FS=OFS="\t"} {split($11,a,",");split($12,b,",");\
+	if($5==1){for(i=1;i<=length(a)-1;i++){if(a[i]<8 || a[i+1]<8){continue};sj1[$1"\t"($2+a[i]+b[i])"\t"($2+b[i+1])]++;sj3[$1"\t"($2+a[i]+b[i])"\t"($2+b[i+1])]=$1}}\
+	else{for(i=1;i<=length(a)-1;i++){if(a[i]<8 || a[i+1]<8){continue};sj2[$1"\t"($2+a[i]+b[i])"\t"($2+b[i+1])]++;sj3[$1"\t"($2+a[i]+b[i])"\t"($2+b[i+1])]=$1}}} END{for(i in sj3){print i,sj1[i]/1,sj2[i]/1}}' | sort -k1,1 -k2,2n

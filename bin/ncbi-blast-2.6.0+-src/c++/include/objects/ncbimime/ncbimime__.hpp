@@ -1,0 +1,10 @@
+#include <objects/ncbimime/Biostruc_align.hpp>
+#include <objects/ncbimime/Biostruc_align_seq.hpp>
+#include <objects/ncbimime/Biostruc_seq.hpp>
+#include <objects/ncbimime/Biostruc_seqs.hpp>
+#include <objects/ncbimime/Biostruc_seqs_aligns_cdd.hpp>
+#include <objects/ncbimime/Bundle_seqs_aligns.hpp>
+#include <objects/ncbimime/Entrez_general.hpp>
+#include <objects/ncbimime/Entrez_style.hpp>
+#include <objects/ncbimime/Ncbi_mime_asn1.hpp>
+#include <objects/ncbimime/NCBI_Mime_module.hpp>

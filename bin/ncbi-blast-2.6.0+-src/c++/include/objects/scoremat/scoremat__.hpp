@@ -1,0 +1,13 @@
+#include <objects/scoremat/BlockProperty.hpp>
+#include <objects/scoremat/CoreBlock.hpp>
+#include <objects/scoremat/CoreDef.hpp>
+#include <objects/scoremat/FormatRpsDbParameters.hpp>
+#include <objects/scoremat/LoopConstraint.hpp>
+#include <objects/scoremat/Pssm.hpp>
+#include <objects/scoremat/PssmFinalData.hpp>
+#include <objects/scoremat/PssmIntermediateData.hpp>
+#include <objects/scoremat/PssmParameters.hpp>
+#include <objects/scoremat/PssmWithParameters.hpp>
+#include <objects/scoremat/Site_annot.hpp>
+#include <objects/scoremat/Site_annot_set.hpp>
+#include <objects/scoremat/NCBI_ScoreMat_module.hpp>

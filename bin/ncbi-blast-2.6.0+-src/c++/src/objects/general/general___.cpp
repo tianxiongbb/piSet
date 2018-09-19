@@ -1,0 +1,11 @@
+#include <ncbi_pch.hpp>
+#include "Date_.cpp"
+#include "Date_std_.cpp"
+#include "Dbtag_.cpp"
+#include "Int_fuzz_.cpp"
+#include "Name_std_.cpp"
+#include "Object_id_.cpp"
+#include "Person_id_.cpp"
+#include "User_field_.cpp"
+#include "User_object_.cpp"
+#include "NCBI_General_module.cpp"

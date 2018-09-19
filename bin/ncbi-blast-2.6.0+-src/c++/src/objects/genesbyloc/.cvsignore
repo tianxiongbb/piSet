@@ -1,0 +1,12 @@
+.cvsignore
+GBL_Data_.cpp
+GBL_Gene_.cpp
+GBL_Reply_.cpp
+GBL_Data.cpp
+GBL_Gene.cpp
+GBL_Reply.cpp
+NCBI_GenesByLoc_module.cpp
+genesbyloc___.cpp
+genesbyloc__.cpp
+genesbyloc.files
+genesbyloc.dump

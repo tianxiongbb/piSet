@@ -1,0 +1,4 @@
+make[5]: Entering directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/build/app/blast'
+/bin/bash /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/scripts/common/impl/if_diff.sh /bin/ln -f /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/app/blast/update_blastdb.pl /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/bin
+/bin/ln -f /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/app/blast/update_blastdb.pl /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/bin/update_blastdb.pl
+make[5]: Leaving directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/build/app/blast'

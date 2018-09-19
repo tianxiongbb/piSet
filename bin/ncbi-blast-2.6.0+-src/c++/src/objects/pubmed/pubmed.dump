@@ -1,0 +1,28 @@
+M,8,pubmed.asn:NCBI-PubMed
+--$Revision: 96973 $
+--**********************************************************************
+--
+--  PUBMED data definitions
+--
+--**********************************************************************
+  T,16,NCBI-PubMed:Pubmed-entry
+  T,33,NCBI-PubMed:Pubmed-url
+
+T,16,Pubmed-entry,SEQUENCE
+-- a PubMed entry
+-- PUBMED records must include the PubMedId
+  F,18,Pubmed-entry:pmid,/PubMedId
+  F,21,Pubmed-entry:medent,/Medline-entry,OPTIONAL
+  -- Medline entry information
+  F,24,Pubmed-entry:publisher,VisibleString,OPTIONAL
+  -- Publisher name
+  F,27,Pubmed-entry:urls,SET /Pubmed-url,OPTIONAL
+  -- List of URL to publisher cite
+  F,30,Pubmed-entry:pubid,VisibleString,OPTIONAL
+  -- Publisher's article identifier
+
+T,33,Pubmed-url,SEQUENCE
+  F,34,Pubmed-url:location,VisibleString,OPTIONAL
+  -- Location code
+  F,35,Pubmed-url:url,VisibleString
+  -- Selected URL for location

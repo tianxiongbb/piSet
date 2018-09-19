@@ -1,0 +1,9 @@
+#!/bin/bash
+
+if [ $# -lt 2 ];then
+	echo0 5 "$0 in.SJ uniq_reads_cutoff_for_canonical_SJ"
+	echo0 4 "Caution: if the SJ is non-canonical, the cutoff will be canonical cutoff \* 2"
+	exit 1
+fi
+
+awk -v ct=$2 'BEGIN{FS=OFS="\t"} {if($4==1){strand="+"}else if($4==2){strand="-"}else{strand="."};if($5==0){ct=ct*2};if($7>=ct){print $1,$2,$3,$1":"$2"-"$3":"strand,$7,strand}}' $1

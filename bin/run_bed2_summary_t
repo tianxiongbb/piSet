@@ -1,0 +1,183 @@
+#!/bin/bash
+
+# functions
+function checkTools(){
+	if [ `which $1` ];then
+		echo0 3 "$1: `which $1`"
+	else
+		echo0 0 "$1 not found, please install it or add it into your PATH!"
+		exit 1
+	fi
+}
+
+# help file
+help_info(){
+echo -e "\033[33;1m"
+cat << EOF
+Author: Tianxiong (Bear) Yu
+usage:
+run_bed2_summary -c control.prefix -o out.dir -g genome [-n miRNA|allSM|...] [-M genome|direct] [-s] [-t treat.prefix] [-p CPU]
+
+Parameters:
+    -c <file>	dir_name/sample_name by srna_map or other mapping pipeline, eg: ./piSet_output/dm3_wt(dir_name)/dm3_wt(sample_name)
+    -p <int>		CPU number to be used. default: 1
+    -o <dicrectory>	output directory name, default: ./bed2_summary
+    -g <genome>	genome used. default: dm3
+    -f factor used for normalization. default: use -n to normalize results
+    -n <miRNA|uniq|all|uniqS|allS|uniqSM|allSM>	normalization method. default: miRNA
+        			miRNA: normalized to reads per million mapped miRNA reads
+				uniq: normalized to reads per million unique mapped reads exclude miRNA, rRNA and sncRNA(other small non-coding RNA) reads
+        			all: normalized to reads per million mapped reads exclude miRNA and rRNA reads
+        			uniqS: normalized to reads per million unique mapped reads exclude rRNA and miRNA reads
+        			allS: normalized to reads per million mapped reads exclude rRNA and miRNA reads
+        			uniqSM: normalized to reads per million unique mapped reads exclude rRNA reads
+        			allSM: normalized to reads per million mapped reads exclude rRNA reads
+    -s			set if derive buckets for sncRNA. default: not analysis
+    -T			set if you want to preserve temp files used in scripts
+    -M <mixed|genome|direct>	mode for picluster and transposon analysis. default: mixed
+				mixed: use genome mapping with picluster overllapped reads and transposon directly mapped reads
+				genome: use genome mapping and picluster/transposon overlapped reads
+				direct: use picluster/transposon directly mapped reads
+    -h 			help information
+
+If anybugs, please contact yutianxiong@gmail.com
+EOF
+echo -e "\033[0m"
+}
+if [ $# -lt 1 ];then
+	help_info && exit 1
+fi
+
+#parameters
+PATH_PROG=`dirname $0` && PATH_PROG=${PATH_PROG%/bin*}
+CPU=1
+METHOD=miRNA
+GENOME=dm3
+OUTDIR=./bed2_summary
+MODE=mixed
+while getopts "hc:p:o:g:n:sTM:f:" OPTION; do
+	case $OPTION in
+		h)	help_info && exit 1 ;;
+		c)	IN1=`readlink -f ${OPTARG}` ;;
+		p)	CPU=${OPTARG} ;;
+		o)	OUTDIR=`readlink -f ${OPTARG}` ;;
+		f)	FACTOR=${OPTARG};;
+		n)	METHOD=${OPTARG} ;;
+		g)	GENOME=${OPTARG} ;;
+		s)	IF_SNCRNA=1 ;;
+		T)	IF_TEMP=1 ;;
+		M)	MODE=${OPTARG} ;;
+		*)	help_info && exit 1 ;;
+	esac
+done
+
+###############
+### prepare ###
+###############
+
+# check tools
+echo0 1 "check tools......"
+checkTools bedtools
+checkTools bed2_bucket
+checkTools get_bed2_summary
+checkTools merged_bed2_summary.R 
+checkTools echo0
+checkTools bed2_lendis
+checkTools bed2_pingpong
+checkTools plot_bed2_summary_autoScale.R 
+checkTools plot_bed2_summary_for_gene_autoScale.R 
+echo0 1 "OK"
+
+# check parameters
+echo0 1 "check parameters......"
+[ -z ${IN1} ] && echo0 0 "please provide dir/sample via -c" && exit 1
+[ ! -d ${OUTDIR} ] && mkdir -p ${OUTDIR} && echo0 4 "no directory ${OUTDIR} and making one"
+#[ ! -d ${OUTDIR}/lendis ] && mkdir ${OUTDIR}/lendis 
+#[ ! -d ${OUTDIR}/pingpong ] && mkdir ${OUTDIR}/pingpong 
+#[ ! -d ${OUTDIR}/summary ] && mkdir ${OUTDIR}/summary 
+#[ ! -d ${OUTDIR}/figure ] && mkdir ${OUTDIR}/figure 
+#[ ! -d ${OUTDIR}/coverage ] && mkdir ${OUTDIR}/coverage 
+#[ ! -d ${OUTDIR}/temp ] && mkdir ${OUTDIR}/temp 
+echo0 1 "OK"
+
+###############
+### process ###
+###############
+
+# get factor for normalization
+if [ -z ${FACTOR} ];then
+	#calculate normlization factor
+	echo0 2 "calculate normalization factor for control sample......"
+	if [ "$METHOD" == "miRNA" ];then
+		BED2_FACTOR=`readlink -f ${IN1}*.hairpin.bed2`
+		[ ! -f ${BED2_FACTOR} ] && echo0 4 "no hairpin mapping file in ${BED2_FACTOR}, using -N all instread of -N miRNA" && BED2_FACTOR=`readlink -f ${IN1}*.genome.bed2`
+		FACTOR=(`awk '{sum+=$4/$5} END{print sum/1000000}' ${BED2_FACTOR}`)
+	elif [ "$METHOD" == "uniq" ];then
+		BED2_FACTOR=`readlink -f ${IN1}*.genome.bed2`
+		FACTOR=(`awk '{if($5==1){sum+=$4}} END{print sum/1000000}' ${BED2_FACTOR}`)
+	elif [ "$METHOD" == "all" ];then
+		BED2_FACTOR=`readlink -f ${IN1}*.genome.bed2`
+		FACTOR=(`awk '{sum+=$4/$5} END{print sum/1000000}' ${BED2_FACTOR}`)
+	elif [ "$METHOD" == "uniqS" ];then
+		BED2_FACTOR=`readlink -f ${IN1}*.genome.bed2`" "${BED2_SNCRNA}
+		FACTOR=(`awk '{if(ARGIND==1){if($5==1){sum+=$4}}else{sum+=$4/$5}} END{print sum/1000000}' ${BED2_FACTOR}`)
+	elif [ "$METHOD" == "allS" ];then
+		BED2_FACTOR=`readlink -f ${IN1}*.genome.bed2`" "${BED2_SNCRNA}
+		FACTOR=(`awk '{sum+=$4/$5} END{print sum/1000000}' ${BED2_FACTOR}`)
+	elif [ "$METHOD" == "uniqSM" ];then
+		BED2_FACTOR=`readlink -f ${IN1}*.genome.bed2`" "${BED2_SNCRNA}" "${BED2_HAIRPIN}
+		FACTOR=(`awk '{if(ARGIND==1){if($5==1){sum+=$4}}else{sum+=$4/$5}} END{print sum/1000000}' ${BED2_FACTOR}`)
+	else
+		BED2_FACTOR=`readlink -f ${IN1}*.genome.bed2`" "${BED2_SNCRNA}" "${BED2_HAIRPIN}
+		FACTOR=(`awk '{sum+=$4/$5} END{print sum/1000000}' ${BED2_FACTOR}`)
+	fi
+fi
+echo0 3 "....normalization factor: "${FACTOR}
+for size in 20-23 24-32 0-100 #seperate siRNA piRNA and smRNA
+do
+	echo0 4 "\n------ analyze "$size"nt smallRNAs ------\n"
+	###run for the first sample
+	# extract siRNA|piRNA|smRNA in bed2
+	IN_DIR=`dirname ${IN1}`
+	IN_SAMPLE=`basename ${IN1}`
+	PREFIX1=${OUTDIR}/${IN_SAMPLE}.${size}nt
+	BED2_GENOME=`ls ${IN1}.*.genome.bed2 2>/dev/null`
+	BED2_SNCRNA=`ls ${IN1}*.sncRNA.bed2 2>/dev/null`
+	BED2_HAIRPIN=`ls ${IN1}*.hairpin.bed2 2>/dev/null`
+	if [ "$MODE" == "direct" ];then # for mode direct
+		BED2_PICLUSTER=`readlink -f ${IN1}*.picluster.bed2`
+		BED2_RMSK=`readlink -f ${IN1}*.transposon.bed2`
+		[ ! -f ${BED2_PICLUSTER} ] && echo0 0 "no file in ${IN1}*.picluster.bed2, please specify the right dir/sample via -c" && exit 1
+		[ ! -f ${BED2_RMSK} ] && echo0 0 "no file in ${IN1}*.transposon.bed2, please specify the right dir/sample via -c" && exit 1
+		awk -v sz=$size 'BEGIN{FS=OFS="\t";split(sz,szsp,"-");l=szsp[1];r=szsp[2]} {if(($3-$2)>=l && ($3-$2)<=r){print $0}}' ${BED2_PICLUSTER} > ${PREFIX1}.temp.picluster.bed2 && BED2_PICLUSTER=${PREFIX1}.temp.picluster.bed2 
+		awk -v sz=$size 'BEGIN{FS=OFS="\t";split(sz,szsp,"-");l=szsp[1];r=szsp[2]} {if(($3-$2)>=l && ($3-$2)<=r){print $0}}' ${BED2_RMSK} > ${PREFIX1}.temp.transposon.bed2 && BED2_RMSK=${PREFIX1}.temp.transposon.bed2 
+	elif [ "$MODE" == "mixed" ];then # for mixed mode: direct map to transposon and use genome coordinates for picluster
+		BED2_RMSK=`readlink -f ${IN1}*.transposon.bed2`
+		[ ! -f ${BED2_RMSK} ] && echo0 0 "no file in ${IN1}*.transposon.bed2, please specify the right dir/sample via -c" && exit 1
+		awk -v sz=$size 'BEGIN{FS=OFS="\t";split(sz,szsp,"-");l=szsp[1];r=szsp[2]} {if(($3-$2)>=l && ($3-$2)<=r){print $0}}' ${BED2_RMSK} > ${PREFIX1}.temp.transposon.bed2 && BED2_RMSK=${PREFIX1}.temp.transposon.bed2 
+	else # for mode genome
+		echo0 2 "....intersect with picluster"
+		bedtools intersect -nonamecheck -a ${BED2_GENOME} -b ${PATH_PROG}/annotation/${GENOME}/${GENOME}.picluster.bed -wo -f 1 | awk 'BEGIN{FS=OFS="\t"} {gn=$11;if($13=="."){if($6=="+"){strand="+"}else{strand="-"}}else{if($6==$13){strand="+"}else{strand="-"}};if($13=="+"){s=$2-$9;e=$3-$9}else{s=$10-$3;e=$10-$2};print gn,s,e,$4,$5,strand,$7}' > ${PREFIX1}.temp.picluster.bed2 && BED2_PICLUSTER=${PREFIX1}.temp.picluster.bed2 # get bed2 for picluster
+		echo0 2 "....intersect with rmsk"
+		bedtools intersect -nonamecheck -a ${BED2_GENOME} -b ${PATH_PROG}/annotation/${GENOME}/${GENOME}.rmsk.bed9 -wo -f 1 | awk 'BEGIN{FS=OFS="\t"} {gn=$11;if($6==$13){strand="+"}else{strand="-"};if($13=="+"){s=$2-$9+$16-1;e=$3-$9+$16-1}else{s=$10-$3+$16-1;e=$10-$2+$16-1};print gn,s,e,$4,$5,strand,$7}' > ${PREFIX1}.temp.rmsk.bed2 && BED2_RMSK=${PREFIX1}.temp.rmsk.bed2 # get bed2 for rmsk 
+		bedtools intersect -nonamecheck -a ${BED2_GENOME} -b ${PATH_PROG}/annotation/${GENOME}/${GENOME}.rmsk.bed9 -wo -f 1 | awk 'BEGIN{FS=OFS="\t"} {gn=$11;print $1,$2,$3,$4,$5,$6,gn}' > ${PREFIX1}.temp.${size}.rmsk1.bed2 && BED2_RMSK1=${PREFIX1}.temp.${size}.rmsk1.bed2 # get bed2 for rmsk 
+	fi
+	#calculate normalized read/species counts for chopped piclusters first
+	#get summary for transposon reads
+	echo0 2 "begin summarize transposon for control sample......"
+	echo0 2 "....run get_bed2_summary"
+	if [ "${MODE}" == "genome" ];then
+		get_bed2_summary_rmsk ${BED2_RMSK} ${PATH_PROG}/annotation/${GENOME}/${GENOME}.transposon.size ${PREFIX1} ${FACTOR} ${CPU} transposon ${BED2_RMSK1}
+	else
+		get_bed2_summary ${BED2_RMSK} ${PATH_PROG}/annotation/${GENOME}/${GENOME}.transposon.size ${PREFIX1} ${FACTOR} ${CPU} transposon
+	fi
+	echo0 2 "....calculate signal for each position"
+	bed2_bucket ${BED2_RMSK} ${PATH_PROG}/annotation/${GENOME}/${GENOME}.transposon.size ${PREFIX1}.transposon.cov ${FACTOR}
+	echo0 2 "....merge summary files"
+	merged_bed2_summary.R ${PREFIX1}.transposon
+	#get summary for sncRNA reads
+	[ -z ${IF_TEMP} ] && rm ${PREFIX1}.temp*
+	[ -z ${IF_TEMP} ] && [ ! -z ${IN2}] && rm ${PREFIX2}.temp*
+done
+echo0 4 "------ Finished🍺🍺🍺 ------"
+echo0 3 "Time used: $(($SECONDS / 3600))h $((($SECONDS / 60) % 60))m"

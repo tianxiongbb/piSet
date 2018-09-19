@@ -1,0 +1,171 @@
+M,11,seqloc.asn:NCBI-Seqloc
+--$Revision: 454827 $
+--**********************************************************************
+--
+--  NCBI Sequence location and identifier elements
+--  by James Ostell, 1990
+--
+--  Version 3.0 - 1994
+--
+--**********************************************************************
+  T,24,NCBI-Seqloc:Seq-id
+  T,47,NCBI-Seqloc:Seq-id-set
+  T,50,NCBI-Seqloc:Patent-seq-id
+  T,54,NCBI-Seqloc:Textseq-id
+  T,60,NCBI-Seqloc:Giimport-id
+  T,65,NCBI-Seqloc:PDB-seq-id
+  T,72,NCBI-Seqloc:PDB-mol-id
+  T,77,NCBI-Seqloc:Seq-loc
+  T,91,NCBI-Seqloc:Seq-interval
+  T,99,NCBI-Seqloc:Packed-seqint
+  T,101,NCBI-Seqloc:Seq-point
+  T,107,NCBI-Seqloc:Packed-seqpnt
+  T,113,NCBI-Seqloc:Na-strand
+  T,121,NCBI-Seqloc:Seq-bond
+  T,125,NCBI-Seqloc:Seq-loc-mix
+  T,127,NCBI-Seqloc:Seq-loc-equiv
+
+T,24,Seq-id,CHOICE
+--*** Sequence identifiers ********************************
+--*
+  F,25,Seq-id:local,/Object-id
+  -- local use
+  F,26,Seq-id:gibbsq,INTEGER
+  -- Geninfo backbone seqid
+  F,27,Seq-id:gibbmt,INTEGER
+  -- Geninfo backbone moltype
+  F,28,Seq-id:giim,/Giimport-id
+  -- Geninfo import id
+  F,29,Seq-id:genbank,/Textseq-id
+  F,30,Seq-id:embl,/Textseq-id
+  F,31,Seq-id:pir,/Textseq-id
+  F,32,Seq-id:swissprot,/Textseq-id
+  F,33,Seq-id:patent,/Patent-seq-id
+  F,34,Seq-id:other,/Textseq-id
+  -- for historical reasons, 'other' = 'refseq'
+  F,35,Seq-id:general,/Dbtag
+  -- for other databases
+  F,36,Seq-id:gi,INTEGER
+  -- GenInfo Integrated Database
+  F,37,Seq-id:ddbj,/Textseq-id
+  -- DDBJ
+  F,38,Seq-id:prf,/Textseq-id
+  -- PRF SEQDB
+  F,39,Seq-id:pdb,/PDB-seq-id
+  -- PDB sequence
+  F,40,Seq-id:tpg,/Textseq-id
+  -- Third Party Annot/Seq Genbank
+  F,41,Seq-id:tpe,/Textseq-id
+  -- Third Party Annot/Seq EMBL
+  F,42,Seq-id:tpd,/Textseq-id
+  -- Third Party Annot/Seq DDBJ
+  F,43,Seq-id:gpipe,/Textseq-id
+  -- Internal NCBI genome pipeline processing ID
+  F,44,Seq-id:named-annot-track,/Textseq-id
+  -- Internal named annotation tracking ID
+
+T,47,Seq-id-set,SET /Seq-id
+
+T,50,Patent-seq-id,SEQUENCE
+  F,51,Patent-seq-id:seqid,INTEGER
+  -- number of sequence in patent
+  F,52,Patent-seq-id:cit,/Id-pat
+  -- patent citation
+
+T,54,Textseq-id,SEQUENCE
+  F,55,Textseq-id:name,VisibleString,OPTIONAL
+  F,56,Textseq-id:accession,VisibleString,OPTIONAL
+  F,57,Textseq-id:release,VisibleString,OPTIONAL
+  F,58,Textseq-id:version,INTEGER,OPTIONAL
+
+T,60,Giimport-id,SEQUENCE
+  F,61,Giimport-id:id,INTEGER
+  -- the id to use here
+  F,62,Giimport-id:db,VisibleString,OPTIONAL
+  -- dbase used in
+  F,63,Giimport-id:release,VisibleString,OPTIONAL
+  -- the release
+
+T,65,PDB-seq-id,SEQUENCE
+-- must set either chain or chain_id, but not both
+  F,66,PDB-seq-id:mol,/PDB-mol-id
+  -- the molecule name
+  F,67,PDB-seq-id:chain,INTEGER,DEFAULT,32
+  -- Deprecated : For single ASCII character
+  -- chain identifiers of pre-2015 PDB structures
+  F,69,PDB-seq-id:rel,/Date,OPTIONAL
+  -- release date, month and year
+  F,70,PDB-seq-id:chain-id,VisibleString,OPTIONAL
+  -- chain identifier
+
+T,72,PDB-mol-id,VisibleString
+-- name of mol, 4 chars
+
+T,77,Seq-loc,CHOICE
+--*** Sequence locations **********************************
+--*
+  F,78,Seq-loc:null,NULL
+  -- not placed
+  F,79,Seq-loc:empty,/Seq-id
+  -- to NULL one Seq-id in a collection
+  F,80,Seq-loc:whole,/Seq-id
+  -- whole sequence
+  F,81,Seq-loc:int,/Seq-interval
+  -- from to
+  F,82,Seq-loc:packed-int,/Packed-seqint
+  F,83,Seq-loc:pnt,/Seq-point
+  F,84,Seq-loc:packed-pnt,/Packed-seqpnt
+  F,85,Seq-loc:mix,/Seq-loc-mix
+  F,86,Seq-loc:equiv,/Seq-loc-equiv
+  -- equivalent sets of locations
+  F,87,Seq-loc:bond,/Seq-bond
+  F,88,Seq-loc:feat,/Feat-id
+  -- indirect, through a Seq-feat
+
+T,91,Seq-interval,SEQUENCE
+  F,92,Seq-interval:from,INTEGER
+  F,93,Seq-interval:to,INTEGER
+  F,94,Seq-interval:strand,/Na-strand,OPTIONAL
+  F,95,Seq-interval:id,/Seq-id
+  -- WARNING: this used to be optional
+  F,96,Seq-interval:fuzz-from,/Int-fuzz,OPTIONAL
+  F,97,Seq-interval:fuzz-to,/Int-fuzz,OPTIONAL
+
+T,99,Packed-seqint,SEQUENCE /Seq-interval
+
+T,101,Seq-point,SEQUENCE
+  F,102,Seq-point:point,INTEGER
+  F,103,Seq-point:strand,/Na-strand,OPTIONAL
+  F,104,Seq-point:id,/Seq-id
+  -- WARNING: this used to be optional
+  F,105,Seq-point:fuzz,/Int-fuzz,OPTIONAL
+
+T,107,Packed-seqpnt,SEQUENCE
+  F,108,Packed-seqpnt:strand,/Na-strand,OPTIONAL
+  F,109,Packed-seqpnt:id,/Seq-id
+  F,110,Packed-seqpnt:fuzz,/Int-fuzz,OPTIONAL
+  F,111,Packed-seqpnt:points,SEQUENCE INTEGER
+
+T,113,Na-strand,ENUMERATED
+-- strand of nucleic acid
+  V,114,Na-strand:unknown,0
+  V,115,Na-strand:plus,1
+  V,116,Na-strand:minus,2
+  V,117,Na-strand:both,3
+  -- in forward orientation
+  V,118,Na-strand:both-rev,4
+  -- in reverse orientation
+  V,119,Na-strand:other,255
+
+T,121,Seq-bond,SEQUENCE
+-- bond between residues
+  F,122,Seq-bond:a,/Seq-point
+  -- connection to a least one residue
+  F,123,Seq-bond:b,/Seq-point,OPTIONAL
+  -- other end may not be available
+
+T,125,Seq-loc-mix,SEQUENCE /Seq-loc
+-- this will hold anything
+
+T,127,Seq-loc-equiv,SET /Seq-loc
+-- for a set of equivalent locations

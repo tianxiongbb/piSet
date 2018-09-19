@@ -1,0 +1,10 @@
+#!/bin/bash
+
+if [ $# -lt 2 ];then
+	echo0 1 $0" in.chrom.size window_size shift_size"
+	exit 1
+fi
+
+awk -v ws=$2 -v ss=$3 \
+	'BEGIN{FS=OFS="\t"} \
+	{for(i=0;i<(($2-ws)/ss);i++){st=i*ss;ed=i*ss+ws;print $1,st,ed,$1":"st":"ed":+",0,"+";print $1,st,ed,$1":"st":"ed":-",0,"-"};st=i*ss;ed=i*ss+ws;print $1,st,ed,$1":"st":"ed":+",0,"+";print $1,st,ed,$1":"st":"ed":-",0,"-";k++}' $1 | awk 'BEGIN{FS=OFS="\t"} {if(NR==FNR){a[$1]=$2}else{if($3>a[$1]){$3=a[$1]};print $0}}' $1 -

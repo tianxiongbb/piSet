@@ -1,0 +1,26 @@
+#!/bin/bash
+
+if [ $# -lt 3 ];then
+	echo0 5 "$0 \"in1.sorted.bam in2.sorted.bam...\" genome.chrom.size genome.fa out.snps cpu"
+	echo0 4 "this script will separate each bam file to different chromosoems and run mpileup parallelly."
+	exit 1
+fi
+
+ParaFile=paraFile.${RANDOM}.${RANDOM}.${RANDOM}.${RANDOM}
+# get all chromosomes
+CHR=`awk 'BEGIN{FS=OFS="\t"} {printf $1" "}' $2`
+
+# run samtools mpileup and bcftools for all chromosomes
+echo0 2 "call snps, it will take a long time......"
+for chrom in ${CHR}
+do
+	echo -e "samtools mpileup -f $3 -v -t DP,AD -A ${1} -r ${chrom} | bcftools call -mv | bcftools view -v snps,indels > ${4}.temp.${chrom}.snps" >> ${ParaFile}
+done
+ParaFly -c ${ParaFile} -CPU $5 && rm ${ParaFile}*
+cat ${4}.temp.*.snps > $4
+TIME_SNP=${SECONDS}
+rm ${4}.temp.*.snps 
+
+# finished
+echo0 3 "Time used for calling snps: $(( $TIME_SNP / 3600 ))h, $(( $TIME_SNP / 60 ))m"
+echo0 3 "congras🍺🍺🍺!!!"

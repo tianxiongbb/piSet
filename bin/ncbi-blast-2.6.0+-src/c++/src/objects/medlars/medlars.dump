@@ -1,0 +1,27 @@
+M,9,medlars.asn:NCBI-Medlars
+--$Revision: 96973 $
+--**********************************************************************
+--
+--  MEDLARS data definitions
+--  Grigoriy Starchenko, 1997
+--
+--**********************************************************************
+  T,16,NCBI-Medlars:Medlars-entry
+  T,22,NCBI-Medlars:Medlars-record
+
+T,16,Medlars-entry,SEQUENCE
+-- a MEDLARS entry
+  F,17,Medlars-entry:pmid,/PubMedId
+  -- All entries in PubMed must have it
+  F,18,Medlars-entry:muid,INTEGER,OPTIONAL
+  -- Medline(OCCS) id
+  F,19,Medlars-entry:recs,SET /Medlars-record
+  -- List of Medlars records
+
+T,22,Medlars-record,SEQUENCE
+  F,23,Medlars-record:code,INTEGER
+  -- Unit record field type integer form
+  F,24,Medlars-record:abbr,VisibleString,OPTIONAL
+  -- Unit record field type abbreviation form
+  F,25,Medlars-record:data,VisibleString
+  -- Unit record data

@@ -1,0 +1,37 @@
+# $Id: Makefile.seqdb.lib 468761 2015-05-27 20:14:39Z ucko $
+
+ASN_DEP = blastdb
+
+SRC = seqdb \
+seqdbbitset \
+seqdbfilter \
+seqdbatlas \
+seqdbalias \
+seqdbcommon \
+seqdbfile \
+seqdbimpl \
+seqdbvol \
+seqdbvolset \
+seqdboidlist \
+seqdbisam \
+seqdbtax \
+seqdbgilistset \
+seqdbexpert \
+seqdbblob \
+seqdbcol \
+seqdbgimask \
+seqdbobj
+
+LIB = seqdb
+DLL_LIB = blastdb $(SOBJMGR_LIBS)
+
+CFLAGS   = $(FAST_CFLAGS)
+CPPFLAGS = -DNCBI_MODULE=BLASTDB $(ORIG_CPPFLAGS)
+CXXFLAGS = $(FAST_CXXFLAGS)
+LDFLAGS  = $(FAST_LDFLAGS)
+
+WATCHERS = camacho fongah2
+
+
+USES_LIBRARIES =  \
+    $(DL_LIBS) $(SOBJMGR_LIBS) blastdb

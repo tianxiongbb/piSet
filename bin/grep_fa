@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if [ $# -lt 2 ];then
+	echo0 1 $0" pattern in.fa"
+	echo0 1 "grep_fa is used to look for fasta records with pattern in head"
+	exit 1
+fi
+
+tmp=$2_${RANDOM}${RANDOM}${RANDOM}${RANDOM}
+echo -e "awk '{if(\$0~/^>/){if(\$0~/$1/){k=1}else{k=0}};if(k==1){print \$0}}' $2" > ${tmp}
+bash ${tmp} && rm ${tmp}

@@ -1,0 +1,220 @@
+M,10,gbseq.asn:NCBI-GBSeq
+--$Revision: 422262 $
+--*********************************************************
+--
+-- ASN.1 and XML for the components of a GenBank format sequence
+-- J.Ostell 2002
+-- Updated 25 May 2010
+--
+--*********************************************************
+  T,87,NCBI-GBSeq:GBSet
+  T,89,NCBI-GBSeq:GBSeq
+  T,127,NCBI-GBSeq:GBSeqid
+  T,129,NCBI-GBSeq:GBSecondary-accn
+  T,131,NCBI-GBSeq:GBKeyword
+  T,133,NCBI-GBSeq:GBReference
+  T,145,NCBI-GBSeq:GBAuthor
+  T,147,NCBI-GBSeq:GBXref
+  T,152,NCBI-GBSeq:GBComment
+  T,157,NCBI-GBSeq:GBCommentParagraph
+  T,159,NCBI-GBSeq:GBStrucComment
+  T,164,NCBI-GBSeq:GBStrucCommentItem
+  T,170,NCBI-GBSeq:GBFeatureSet
+  T,175,NCBI-GBSeq:GBFeature
+  T,186,NCBI-GBSeq:GBInterval
+  T,195,NCBI-GBSeq:GBQualifier
+  T,200,NCBI-GBSeq:GBAltSeqData
+  T,205,NCBI-GBSeq:GBAltSeqItem
+
+T,87,GBSet,SEQUENCE /GBSeq
+--********
+--  GBSeq represents the elements in a GenBank style report
+--    of a sequence with some small additions to structure and support
+--    for protein (GenPept) versions of GenBank format as seen in
+--    Entrez. While this represents the simplification, reduction of
+--    detail, and flattening to a single sequence perspective of GenBank
+--    format (compared with the full ASN.1 or XML from which GenBank and
+--    this format is derived at NCBI), it is presented in ASN.1 or XML for
+--    automated parsing and processing. It is hoped that this compromise
+--    will be useful for those bulk processing at the GenBank format level
+--    of detail today. Since it is a compromise, a number of pragmatic
+--    decisions have been made.
+--
+--  In pursuit of simplicity and familiarity a number of
+--    fields do not have full substructure defined here where there is
+--    already a standard GenBank format string. For example:
+--
+--   Date  DD-Mon-YYYY
+--   Authors   LastName, Intials (with periods)
+--   Journal   JounalName Volume (issue), page-range (year)
+--   FeatureLocations as per GenBank feature table, but FeatureIntervals
+--    may also be provided as a convenience
+--   FeatureQualifiers  as per GenBank feature table
+--   Primary has a string that represents a table to construct
+--    a third party (TPA) sequence.
+--   other-seqids can have strings with the "vertical bar format" sequence
+--    identifiers used in BLAST for example, when they are non-genbank types.
+--    Currently in GenBank format you only see GI, but there are others, like
+--    patents, submitter clone names, etc which will appear here, as they
+--    always have in the ASN.1 format, and full XML format.
+--   source-db is a formatted text block for peptides in GenPept format that
+--    carries information from the source protein database.
+--
+--  There are also a number of elements that could have been
+--   more exactly specified, but in the interest of simplicity
+--   have been simply left as options. For example..
+--
+--  accession and accession.version will always appear in a GenBank record
+--   they are optional because this format can also be used for non-GenBank
+--   sequences, and in that case will have only "other-seqids".
+--
+--  sequences will normally all have "sequence" filled in. But contig records
+--    will have a "join" statement in the "contig" slot, and no "sequence".
+--    We also may consider a retrieval option with no sequence of any kind
+--     and no feature table to quickly check minimal values.
+--
+--  a reference may have an author list, or be from a consortium, or both.
+--
+--  some fields, such as taxonomy, do appear as separate elements in GenBank
+--    format but without a specific linetype (in GenBank format this comes
+--    under ORGANISM). Another example is the separation of primary accession
+--    from the list of secondary accessions. In GenBank format primary
+--    accession is just the first one on the list that includes all secondaries
+--    after it.
+--
+--  create-date deserves special comment. The date you see on the right hand
+--    side of the LOCUS line in GenBank format is actually the last date the
+--    the record was modified (or the update-date). The date the record was
+--    first submitted to GenBank appears in the first submission citation in
+--    the reference section. Internally in the databases and ASN.1 NCBI keeps
+--    the first date the record was released into the sequence database at
+--    NCBI as create-date. For records from EMBL, which supports create-date,
+--    it is the date provided by EMBL. For DDBJ records, which do not supply
+--    a create-date (same as GenBank format) the create-date is the first date
+--    NCBI saw the record from DDBJ. For older GenBank records, before NCBI
+--    took responsibility for GenBank, it is just the first date NCBI saw the
+--    record. Create-date can be very useful, so we expose it here, but users
+--    must understand it is only an approximation and comes from many sources,
+--    and with many exceptions and caveats. It does NOT tell you the first
+--    date the public might have seen this record and thus is NOT an accurate
+--    measure for legal issues of precedence.
+--
+--********
+
+T,89,GBSeq,SEQUENCE
+  F,90,GBSeq:locus,VisibleString,OPTIONAL
+  F,91,GBSeq:length,INTEGER
+  F,92,GBSeq:strandedness,VisibleString,OPTIONAL
+  F,93,GBSeq:moltype,VisibleString
+  F,94,GBSeq:topology,VisibleString,OPTIONAL
+  F,95,GBSeq:division,VisibleString,OPTIONAL
+  F,96,GBSeq:update-date,VisibleString,OPTIONAL
+  F,97,GBSeq:create-date,VisibleString,OPTIONAL
+  F,98,GBSeq:update-release,VisibleString,OPTIONAL
+  F,99,GBSeq:create-release,VisibleString,OPTIONAL
+  F,100,GBSeq:definition,VisibleString,OPTIONAL
+  F,101,GBSeq:primary-accession,VisibleString,OPTIONAL
+  F,102,GBSeq:entry-version,VisibleString,OPTIONAL
+  F,103,GBSeq:accession-version,VisibleString,OPTIONAL
+  F,104,GBSeq:other-seqids,SEQUENCE /GBSeqid,OPTIONAL
+  F,105,GBSeq:secondary-accessions,SEQUENCE /GBSecondary-accn,OPTIONAL
+  F,106,GBSeq:project,VisibleString,OPTIONAL
+  F,107,GBSeq:keywords,SEQUENCE /GBKeyword,OPTIONAL
+  F,108,GBSeq:segment,VisibleString,OPTIONAL
+  F,109,GBSeq:source,VisibleString,OPTIONAL
+  F,110,GBSeq:organism,VisibleString,OPTIONAL
+  F,111,GBSeq:taxonomy,VisibleString,OPTIONAL
+  F,112,GBSeq:references,SEQUENCE /GBReference,OPTIONAL
+  F,113,GBSeq:comment,VisibleString,OPTIONAL
+  F,114,GBSeq:comment-set,SEQUENCE /GBComment,OPTIONAL
+  F,115,GBSeq:struc-comments,SEQUENCE /GBStrucComment,OPTIONAL
+  F,116,GBSeq:primary,VisibleString,OPTIONAL
+  F,117,GBSeq:source-db,VisibleString,OPTIONAL
+  F,118,GBSeq:database-reference,VisibleString,OPTIONAL
+  F,119,GBSeq:feature-table,SEQUENCE /GBFeature,OPTIONAL
+  F,120,GBSeq:feature-set,SEQUENCE /GBFeatureSet,OPTIONAL
+  F,121,GBSeq:sequence,VisibleString,OPTIONAL
+  -- Optional for contig, wgs, etc.
+  F,122,GBSeq:contig,VisibleString,OPTIONAL
+  F,123,GBSeq:alt-seq,SEQUENCE /GBAltSeqData,OPTIONAL
+  F,124,GBSeq:xrefs,SEQUENCE /GBXref,OPTIONAL
+
+T,127,GBSeqid,VisibleString
+
+T,129,GBSecondary-accn,VisibleString
+
+T,131,GBKeyword,VisibleString
+
+T,133,GBReference,SEQUENCE
+  F,134,GBReference:reference,VisibleString
+  F,135,GBReference:position,VisibleString,OPTIONAL
+  F,136,GBReference:authors,SEQUENCE /GBAuthor,OPTIONAL
+  F,137,GBReference:consortium,VisibleString,OPTIONAL
+  F,138,GBReference:title,VisibleString,OPTIONAL
+  F,139,GBReference:journal,VisibleString
+  F,140,GBReference:xref,SEQUENCE /GBXref,OPTIONAL
+  F,141,GBReference:pubmed,INTEGER,OPTIONAL
+  F,142,GBReference:remark,VisibleString,OPTIONAL
+
+T,145,GBAuthor,VisibleString
+
+T,147,GBXref,SEQUENCE
+  F,148,GBXref:dbname,VisibleString
+  F,149,GBXref:id,VisibleString
+
+T,152,GBComment,SEQUENCE
+  F,153,GBComment:type,VisibleString,OPTIONAL
+  F,154,GBComment:paragraphs,SEQUENCE /GBCommentParagraph
+
+T,157,GBCommentParagraph,VisibleString
+
+T,159,GBStrucComment,SEQUENCE
+  F,160,GBStrucComment:name,VisibleString,OPTIONAL
+  F,161,GBStrucComment:items,SEQUENCE /GBStrucCommentItem
+
+T,164,GBStrucCommentItem,SEQUENCE
+  F,165,GBStrucCommentItem:tag,VisibleString,OPTIONAL
+  F,166,GBStrucCommentItem:value,VisibleString,OPTIONAL
+  F,167,GBStrucCommentItem:url,VisibleString,OPTIONAL
+
+T,170,GBFeatureSet,SEQUENCE
+  F,171,GBFeatureSet:annot-source,VisibleString,OPTIONAL
+  F,172,GBFeatureSet:features,SEQUENCE /GBFeature
+
+T,175,GBFeature,SEQUENCE
+  F,176,GBFeature:key,VisibleString
+  F,177,GBFeature:location,VisibleString
+  F,178,GBFeature:intervals,SEQUENCE /GBInterval,OPTIONAL
+  F,179,GBFeature:operator,VisibleString,OPTIONAL
+  F,180,GBFeature:partial5,BOOLEAN,OPTIONAL
+  F,181,GBFeature:partial3,BOOLEAN,OPTIONAL
+  F,182,GBFeature:quals,SEQUENCE /GBQualifier,OPTIONAL
+  F,183,GBFeature:xrefs,SEQUENCE /GBXref,OPTIONAL
+
+T,186,GBInterval,SEQUENCE
+  F,187,GBInterval:from,INTEGER,OPTIONAL
+  F,188,GBInterval:to,INTEGER,OPTIONAL
+  F,189,GBInterval:point,INTEGER,OPTIONAL
+  F,190,GBInterval:iscomp,BOOLEAN,OPTIONAL
+  F,191,GBInterval:interbp,BOOLEAN,OPTIONAL
+  F,192,GBInterval:accession,VisibleString
+
+T,195,GBQualifier,SEQUENCE
+  F,196,GBQualifier:name,VisibleString
+  F,197,GBQualifier:value,VisibleString,OPTIONAL
+
+T,200,GBAltSeqData,SEQUENCE
+  F,201,GBAltSeqData:name,VisibleString
+  -- e.g., contig, wgs, scaffold, cage, genome
+  F,202,GBAltSeqData:items,SEQUENCE /GBAltSeqItem,OPTIONAL
+
+T,205,GBAltSeqItem,SEQUENCE
+  F,206,GBAltSeqItem:interval,/GBInterval,OPTIONAL
+  F,207,GBAltSeqItem:isgap,BOOLEAN,OPTIONAL
+  F,208,GBAltSeqItem:gap-length,INTEGER,OPTIONAL
+  F,209,GBAltSeqItem:gap-type,VisibleString,OPTIONAL
+  F,210,GBAltSeqItem:gap-linkage,VisibleString,OPTIONAL
+  F,211,GBAltSeqItem:gap-comment,VisibleString,OPTIONAL
+  F,212,GBAltSeqItem:first-accn,VisibleString,OPTIONAL
+  F,213,GBAltSeqItem:last-accn,VisibleString,OPTIONAL
+  F,214,GBAltSeqItem:value,VisibleString,OPTIONAL

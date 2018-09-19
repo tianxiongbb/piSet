@@ -1,0 +1,5 @@
+# $Id: Makefile.xxconnect.lib.unix 486618 2015-12-08 03:51:15Z ucko $
+ifeq "$(COMPILER)-$(DEBUG_SFX)$(DLL)" "icc-Release"
+  ncbi_conn_stream.o: CXXFLAGS += -fno-builtin-strspn
+  ncbi_conn_test.o:   CXXFLAGS += -fno-builtin-strcpy
+endif

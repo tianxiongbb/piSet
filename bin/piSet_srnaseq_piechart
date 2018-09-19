@@ -1,0 +1,85 @@
+#!/bin/bash
+
+if [ $# -lt 2 ];then
+	echo0 5 "$0 in.prefix(prefix_name for piSet_srnaseq output) genome"
+	exit 1
+fi
+
+# parameters
+PATH_PROG=`dirname $0` && PREFIX_ANNO=${PATH_PROG%/bin}/annotation/$2/$2
+MAPPING_GENOME=`readlink -f $1*.genome.bed2`
+MAPPING_RRNA=`readlink -f $1*.rRNA.bed2`
+MAPPING_MIRNA=`readlink -f $1*.hairpin.bed2`
+MAPPING_SNCRNA=`readlink -f $1*.sncRNA.bed2`
+MAPPING_UNALIGN=`readlink -f $1*.unalign.insert`
+
+# intersect with all elements
+if [ -f ${MAPPING_RRNA} ];then
+	READS_RRNA=`awk '{sum+=$4/$5} END{print sum}' ${MAPPING_RRNA}`
+else
+	READS_RRNA=0
+fi
+
+if [ -f ${MAPPING_MIRNA} ];then
+	READS_MIRNA=`awk '{sum+=$4/$5} END{print sum}' ${MAPPING_MIRNA}`
+else
+	READS_MIRNA=0
+fi
+
+if [ -f ${MAPPING_SNCRNA} ];then
+	READS_SNCRNA=`awk '{sum+=$4/$5} END{print sum}' ${MAPPING_SNCRNA}`
+else
+	READS_SNCRNA=0
+fi
+
+if [ -f ${MAPPING_UNALIGN} ];then
+	READS_UNALIGN=`awk '{sum+=$4/$5} END{print sum}' ${MAPPING_SNCRNA}`
+else
+	echo0 0 "no unaligned insert file found, abort!" && exit 1
+fi
+
+awk '$3-$2>23 && $3-$2<33' ${MAPPING_GENOME} > $1.genome.piRNA.bed2
+awk '$3-$2<=23 && $3-$2>=20' ${MAPPING_GENOME} > $1.genome.siRNA.bed2
+awk '$3-$2<20 || $3-$2>32' ${MAPPING_GENOME} > $1.genome.oRNA.bed2
+for i in piRNA siRNA oRNA
+do
+	if [ -f ${MAPPING_GENOME} ];then
+		# intersect with picluster then
+		awk '$5==1' $1.genome.${i}.bed2 > $1.genome.${i}.uniq.bed2
+		awk '$5!=1' $1.genome.${i}.bed2 > $1.piechart.${i}.multi.bed2
+		READS_PIC=`bedtools intersect -nonamecheck -f 0.5 -b ${PREFIX_ANNO}.picluster.bed -a $1.genome.${i}.uniq.bed2 | awk 'BEGIN{FS=OFS="\t"} {sum+=$4} END{print sum/1}'`
+		bedtools intersect -nonamecheck -v -f 0.5 -b ${PREFIX_ANNO}.picluster.bed -a $1.genome.${i}.uniq.bed2 > $1.piechart.temp.uniq.bed2
+		cp $1.piechart.temp.uniq.bed2 $1.piechart.temp.bed2 
+		# intersect with transposon copies first
+		READS_TRN=(`awk '{sum+=$4/$5} END{print sum/1}' $1.piechart.${i}.multi.bed2`)
+		cp $1.piechart.temp.bed2 $1.piechart.temp1.bed2
+		# intersect with mRNA CDS
+		READS_MRNA_CDS=`bedtools intersect -nonamecheck -f 0.5 -b ${PREFIX_ANNO}.mRNA.CDS.bed -a $1.piechart.temp1.bed2 | awk 'BEGIN{FS=OFS="\t"} {sum+=$4/$5} END{print sum/1}'`
+		bedtools intersect -nonamecheck -v -f 0.5 -b ${PREFIX_ANNO}.mRNA.CDS.bed -a $1.piechart.temp1.bed2 > $1.piechart.temp2.bed2
+		# intersect with mRNA 3UTR
+		READS_MRNA_3UTR=`bedtools intersect -nonamecheck -f 0.5 -b ${PREFIX_ANNO}.mRNA.3UTR.bed -a $1.piechart.temp2.bed2 | awk 'BEGIN{FS=OFS="\t"} {sum+=$4/$5} END{print sum/1}'`
+		bedtools intersect -nonamecheck -v -f 0.5 -b ${PREFIX_ANNO}.mRNA.3UTR.bed -a $1.piechart.temp2.bed2 > $1.piechart.temp3.bed2
+		# intersect with mRNA 5UTR
+		READS_MRNA_5UTR=`bedtools intersect -nonamecheck -f 0.5 -b ${PREFIX_ANNO}.mRNA.5UTR.bed -a $1.piechart.temp3.bed2 | awk 'BEGIN{FS=OFS="\t"} {sum+=$4/$5} END{print sum/1}'`
+		bedtools intersect -nonamecheck -v -f 0.5 -b ${PREFIX_ANNO}.mRNA.5UTR.bed -a $1.piechart.temp3.bed2 > $1.piechart.temp4.bed2
+		# intersect with mRNA intron
+		READS_MRNA_INTRON=`bedtools intersect -nonamecheck -f 0.5 -b ${PREFIX_ANNO}.mRNA.intron.bed -a $1.piechart.temp4.bed2 | awk 'BEGIN{FS=OFS="\t"} {sum+=$4/$5} END{print sum/1}'`
+		bedtools intersect -nonamecheck -v -f 0.5 -b ${PREFIX_ANNO}.mRNA.intron.bed -a $1.piechart.temp4.bed2 > $1.piechart.temp5.bed2
+		# intersect with lncRNA exon
+		READS_ORNA_EXON=`bedtools intersect -nonamecheck -f 0.5 -b ${PREFIX_ANNO}.otherRNA.exon.bed -a $1.piechart.temp5.bed2 | awk 'BEGIN{FS=OFS="\t"} {sum+=$4/$5} END{print sum/1}'`
+		bedtools intersect -nonamecheck -v -f 0.5 -b ${PREFIX_ANNO}.otherRNA.exon.bed -a $1.piechart.temp5.bed2 > $1.piechart.temp6.bed2
+		# intersect with lncRNA intron
+		READS_ORNA_INTRON=`bedtools intersect -nonamecheck -f 0.5 -b ${PREFIX_ANNO}.otherRNA.intron.bed -a $1.piechart.temp6.bed2 | awk 'BEGIN{FS=OFS="\t"} {sum+=$4/$5} END{print sum/1}'`
+		bedtools intersect -nonamecheck -v -f 0.5 -b ${PREFIX_ANNO}.otherRNA.intron.bed -a $1.piechart.temp6.bed2 > $1.piechart.temp7.bed2
+		# the other
+		READS_OTHER=`awk '{sum+=$4/$5} END{print sum/1}' $1.piechart.temp7.bed2`
+	else
+		echo0 0 "no genome mapping file found, abort!" && exit 1
+	fi
+	# write reads out
+	echo -e "\t${i}\nrRNA\t${READS_RRNA}\nmiRNA\t${READS_MIRNA}\nsncRNA\t${READS_SNCRNA}\nrepeats\t${READS_TRN}\npicluster\t${READS_PIC}\nmRNA.CDS\t${READS_MRNA_CDS}\nmRNA.3utr\t${READS_MRNA_3UTR}\nmRNA.5utr\t${READS_MRNA_5UTR}\nmRNA.intron\t${READS_MRNA_INTRON}\nlncRNA.exon\t${READS_ORNA_EXON}\nlncRNA.intron\t${READS_ORNA_INTRON}\nothers\t${READS_OTHER}\nunaligned\t${READS_UNALIGN}" > $1.${i}.element.reads
+done
+paste $1.piRNA.element.reads $1.siRNA.element.reads $1.oRNA.element.reads | cut -f 1,2,4,6 > $1.statistics
+rm $1.piRNA.element.reads $1.siRNA.element.reads $1.oRNA.element.reads 
+rm $1.piechart.temp* $1.piechart.${i}.multi.bed2
+

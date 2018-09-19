@@ -1,0 +1,14 @@
+# $Id: Makefile.xregexp_template_tester.lib 467289 2015-05-12 16:23:41Z ivanov $
+
+SRC = regexp_template_tester
+LIB = xregexp_template_tester
+
+DLL_LIB = $(PCRE_LIB)
+LIBS    = $(PCRE_LIBS)
+
+USES_LIBRARIES =  \
+    xregexp $(PCRE_LIB) $(PCRE_LIBS) xncbi
+
+PROJ_TAG = test
+
+WATCHERS = ivanov

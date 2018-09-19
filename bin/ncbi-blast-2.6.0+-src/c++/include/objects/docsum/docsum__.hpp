@@ -1,0 +1,13 @@
+#include <objects/docsum/Assay.hpp>
+#include <objects/docsum/Assembly.hpp>
+#include <objects/docsum/BaseURL.hpp>
+#include <objects/docsum/Component.hpp>
+#include <objects/docsum/ExchangeSet.hpp>
+#include <objects/docsum/FxnSet.hpp>
+#include <objects/docsum/MapLoc.hpp>
+#include <objects/docsum/PrimarySequence.hpp>
+#include <objects/docsum/Rs.hpp>
+#include <objects/docsum/RsLinkout.hpp>
+#include <objects/docsum/RsStruct.hpp>
+#include <objects/docsum/Ss.hpp>
+#include <objects/docsum/Docsum_3_4_module.hpp>

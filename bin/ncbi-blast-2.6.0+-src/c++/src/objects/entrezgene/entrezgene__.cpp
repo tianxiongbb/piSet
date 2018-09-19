@@ -1,0 +1,9 @@
+#include <ncbi_pch.hpp>
+#include "Entrezgene.cpp"
+#include "Entrezgene_Set.cpp"
+#include "Gene_commentary.cpp"
+#include "Gene_source.cpp"
+#include "Gene_track.cpp"
+#include "Maps.cpp"
+#include "Other_source.cpp"
+#include "Xtra_Terms.cpp"

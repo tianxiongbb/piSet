@@ -1,0 +1,132 @@
+M,12,medline.asn:NCBI-Medline
+--$Revision: 96973 $
+--**********************************************************************
+--
+--  MEDLINE data definitions
+--  James Ostell, 1990
+--
+--  enhanced in 1996 to support PubMed records as well by simply adding
+--    the PubMedId and making MedlineId optional
+--
+--**********************************************************************
+  T,21,NCBI-Medline:Medline-entry
+  T,39,NCBI-Medline:Medline-mesh
+  T,44,NCBI-Medline:Medline-qual
+  T,48,NCBI-Medline:Medline-rn
+  T,56,NCBI-Medline:Medline-si
+  T,74,NCBI-Medline:Medline-field
+  T,82,NCBI-Medline:DocRef
+
+T,21,Medline-entry,SEQUENCE
+-- a MEDLINE or PubMed entry
+-- regular medline record
+  F,22,Medline-entry:uid,INTEGER,OPTIONAL
+  -- MEDLINE UID, sometimes not yet available if from PubMed
+  F,23,Medline-entry:em,/Date
+  -- Entry Month
+  F,24,Medline-entry:cit,/Cit-art
+  -- article citation
+  F,25,Medline-entry:abstract,VisibleString,OPTIONAL
+  F,26,Medline-entry:mesh,SET /Medline-mesh,OPTIONAL
+  F,27,Medline-entry:substance,SET /Medline-rn,OPTIONAL
+  F,28,Medline-entry:xref,SET /Medline-si,OPTIONAL
+  F,29,Medline-entry:idnum,SET VisibleString,OPTIONAL
+  -- ID Number (grants, contracts)
+  F,30,Medline-entry:gene,SET VisibleString,OPTIONAL
+  F,31,Medline-entry:pmid,/PubMedId,OPTIONAL
+  -- MEDLINE records may include the PubMedId
+  F,32,Medline-entry:pub-type,SET VisibleString,OPTIONAL
+  -- may show publication types (review, etc)
+  F,33,Medline-entry:mlfield,SET /Medline-field,OPTIONAL
+  -- additional Medline field types
+  F,34,Medline-entry:status,INTEGER,DEFAULT,medline
+    V,35,Medline-entry:status:publisher,1
+    -- record as supplied by publisher
+    V,36,Medline-entry:status:premedline,2
+    -- premedline record
+    V,37,Medline-entry:status:medline,3
+
+T,39,Medline-mesh,SEQUENCE
+  F,40,Medline-mesh:mp,BOOLEAN,DEFAULT,FALSE
+  -- TRUE if main point (*)
+  F,41,Medline-mesh:term,VisibleString
+  -- the MeSH term
+  F,42,Medline-mesh:qual,SET /Medline-qual,OPTIONAL
+  -- qualifiers
+
+T,44,Medline-qual,SEQUENCE
+  F,45,Medline-qual:mp,BOOLEAN,DEFAULT,FALSE
+  -- TRUE if main point
+  F,46,Medline-qual:subh,VisibleString
+  -- the subheading
+
+T,48,Medline-rn,SEQUENCE
+-- medline substance records
+  F,49,Medline-rn:type,ENUMERATED
+  -- type of record
+    V,50,Medline-rn:type:nameonly,0
+    V,51,Medline-rn:type:cas,1
+    -- CAS number
+    V,52,Medline-rn:type:ec,2
+    -- EC number
+  F,53,Medline-rn:cit,VisibleString,OPTIONAL
+  -- CAS or EC number if present
+  F,54,Medline-rn:name,VisibleString
+  -- name (always present)
+
+T,56,Medline-si,SEQUENCE
+-- medline cross reference records
+  F,57,Medline-si:type,ENUMERATED
+  -- type of xref
+    V,58,Medline-si:type:ddbj,1
+    -- DNA Data Bank of Japan
+    V,59,Medline-si:type:carbbank,2
+    -- Carbohydrate Structure Database
+    V,60,Medline-si:type:embl,3
+    -- EMBL Data Library
+    V,61,Medline-si:type:hdb,4
+    -- Hybridoma Data Bank
+    V,62,Medline-si:type:genbank,5
+    -- GenBank
+    V,63,Medline-si:type:hgml,6
+    -- Human Gene Map Library
+    V,64,Medline-si:type:mim,7
+    -- Mendelian Inheritance in Man
+    V,65,Medline-si:type:msd,8
+    -- Microbial Strains Database
+    V,66,Medline-si:type:pdb,9
+    -- Protein Data Bank (Brookhaven)
+    V,67,Medline-si:type:pir,10
+    -- Protein Identification Resource
+    V,68,Medline-si:type:prfseqdb,11
+    -- Protein Research Foundation (Japan)
+    V,69,Medline-si:type:psd,12
+    -- Protein Sequence Database (Japan)
+    V,70,Medline-si:type:swissprot,13
+    -- SwissProt
+    V,71,Medline-si:type:gdb,14
+    -- Genome Data Base
+  F,72,Medline-si:cit,VisibleString,OPTIONAL
+  -- the citation/accession number
+
+T,74,Medline-field,SEQUENCE
+  F,75,Medline-field:type,INTEGER
+  -- Keyed type
+    V,76,Medline-field:type:other,0
+    -- look in line code
+    V,77,Medline-field:type:comment,1
+    -- comment line
+    V,78,Medline-field:type:erratum,2
+    -- retracted, corrected, etc
+  F,79,Medline-field:str,VisibleString
+  -- the text
+  F,80,Medline-field:ids,SEQUENCE /DocRef,OPTIONAL
+  -- pointers relevant to this text
+
+T,82,DocRef,SEQUENCE
+-- reference to a document
+  F,83,DocRef:type,INTEGER
+    V,84,DocRef:type:medline,1
+    V,85,DocRef:type:pubmed,2
+    V,86,DocRef:type:ncbigi,3
+  F,87,DocRef:uid,INTEGER

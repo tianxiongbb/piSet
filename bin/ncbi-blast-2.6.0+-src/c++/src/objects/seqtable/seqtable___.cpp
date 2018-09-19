@@ -1,0 +1,13 @@
+#include <ncbi_pch.hpp>
+#include "BVector_data_.cpp"
+#include "CommonBytes_table_.cpp"
+#include "CommonString_table_.cpp"
+#include "Scaled_int_multi_data_.cpp"
+#include "Scaled_real_multi_data_.cpp"
+#include "SeqTable_column_.cpp"
+#include "SeqTable_column_info_.cpp"
+#include "SeqTable_multi_data_.cpp"
+#include "SeqTable_single_data_.cpp"
+#include "SeqTable_sparse_index_.cpp"
+#include "Seq_table_.cpp"
+#include "NCBI_SeqTable_module.cpp"

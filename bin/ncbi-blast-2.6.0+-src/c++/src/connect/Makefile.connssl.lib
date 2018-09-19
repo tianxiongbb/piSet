@@ -1,0 +1,8 @@
+# $Id: Makefile.connssl.lib 503166 2016-06-01 19:40:51Z lavr $
+
+CPPFLAGS = $(GNUTLS_INCLUDE) $(ORIG_CPPFLAGS)
+
+SRC      = ncbi_gnutls
+LIB      = connssl
+
+WATCHERS = lavr

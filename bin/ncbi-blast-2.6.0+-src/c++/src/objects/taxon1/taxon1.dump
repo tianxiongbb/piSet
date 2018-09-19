@@ -1,0 +1,139 @@
+M,12,taxon1.asn:NCBI-Taxon1
+--$Revision: 96973 $
+--**********************************************************************
+--
+--  NCBI Taxonomy Server
+--  by James Ostell, 1995
+--  Version 1.0 - July 1995
+--
+--**********************************************************************
+  T,18,NCBI-Taxon1:Taxon1-req
+  T,44,NCBI-Taxon1:Taxon1-resp
+  T,72,NCBI-Taxon1:Taxon1-info
+  T,77,NCBI-Taxon1:Taxon1-name
+  T,83,NCBI-Taxon1:Taxon1-error
+  T,92,NCBI-Taxon1:Taxon1-data
+  T,98,NCBI-Taxon1:Taxon2-data
+
+T,18,Taxon1-req,CHOICE
+-- Requests to the Taxon server
+  F,19,Taxon1-req:init,NULL
+  -- initialize the server
+  F,20,Taxon1-req:findname,VisibleString
+  -- find orgnames match string
+  F,21,Taxon1-req:getdesignator,VisibleString
+  -- find designator
+  F,22,Taxon1-req:getunique,VisibleString
+  -- get taxid for unique name
+  F,23,Taxon1-req:getidbyorg,/Org-ref
+  -- get taxid matches orgref
+  F,24,Taxon1-req:getorgnames,INTEGER
+  -- get all organism names
+  F,25,Taxon1-req:getcde,NULL
+  -- get name classes
+  F,26,Taxon1-req:getranks,NULL
+  -- get ranks
+  F,27,Taxon1-req:getdivs,NULL
+  -- get divisions
+  F,28,Taxon1-req:getgcs,NULL
+  -- get gencodes
+  F,29,Taxon1-req:getlineage,INTEGER
+  -- get lineage for org
+  F,30,Taxon1-req:getchildren,INTEGER
+  -- get children
+  F,31,Taxon1-req:getbyid,INTEGER
+  -- get Org-ref by TaxonID
+  F,32,Taxon1-req:lookup,/Org-ref
+  -- lookup by data
+  F,33,Taxon1-req:getorgmod,/Taxon1-info
+  -- lookup for OrgMod
+  F,34,Taxon1-req:fini,NULL
+  -- close the server
+  F,35,Taxon1-req:id4gi,INTEGER
+  -- get taxid by gi
+  F,36,Taxon1-req:taxachildren,INTEGER
+  -- get children
+  F,37,Taxon1-req:taxalineage,INTEGER
+  -- get extended lineage for org
+  F,38,Taxon1-req:maxtaxid,NULL
+  -- get max taxid
+  F,39,Taxon1-req:getproptypes,NULL
+  -- get property types
+  F,40,Taxon1-req:getorgprop,/Taxon1-info
+  -- get properties for organism
+  F,41,Taxon1-req:searchname,/Taxon1-info
+  -- fancy search (token set, wild card)
+  F,42,Taxon1-req:dumpnames4class,INTEGER
+  -- all names of certain name class
+
+T,44,Taxon1-resp,CHOICE
+  F,45,Taxon1-resp:error,/Taxon1-error
+  -- sent on any error
+  F,46,Taxon1-resp:init,NULL
+  -- sent by successful initiation
+  F,47,Taxon1-resp:findname,SET /Taxon1-name
+  F,48,Taxon1-resp:getdesignator,INTEGER
+  F,49,Taxon1-resp:getunique,INTEGER
+  F,50,Taxon1-resp:getidbyorg,INTEGER
+  F,51,Taxon1-resp:getorgnames,SET /Taxon1-name
+  F,52,Taxon1-resp:getcde,SET /Taxon1-info
+  F,53,Taxon1-resp:getranks,SET /Taxon1-info
+  F,54,Taxon1-resp:getdivs,SET /Taxon1-info
+  F,55,Taxon1-resp:getgcs,SET /Taxon1-info
+  F,56,Taxon1-resp:getlineage,SET /Taxon1-info
+  F,57,Taxon1-resp:getchildren,SET /Taxon1-info
+  F,58,Taxon1-resp:getbyid,/Taxon1-data
+  F,59,Taxon1-resp:lookup,/Taxon1-data
+  F,60,Taxon1-resp:getorgmod,SET /Taxon1-info
+  F,61,Taxon1-resp:fini,NULL
+  F,62,Taxon1-resp:id4gi,INTEGER
+  F,63,Taxon1-resp:taxabyid,/Taxon2-data
+  F,64,Taxon1-resp:taxachildren,SEQUENCE /Taxon1-name
+  F,65,Taxon1-resp:taxalineage,SEQUENCE /Taxon1-name
+  F,66,Taxon1-resp:maxtaxid,INTEGER
+  F,67,Taxon1-resp:getproptypes,SET /Taxon1-info
+  F,68,Taxon1-resp:getorgprop,SET /Taxon1-info
+  F,69,Taxon1-resp:searchname,SET /Taxon1-name
+  F,70,Taxon1-resp:dumpnames4class,SET /Taxon1-name
+
+T,72,Taxon1-info,SEQUENCE
+  F,73,Taxon1-info:ival1,INTEGER
+  F,74,Taxon1-info:ival2,INTEGER
+  F,75,Taxon1-info:sval,VisibleString,OPTIONAL
+
+T,77,Taxon1-name,SEQUENCE
+  F,78,Taxon1-name:taxid,INTEGER
+  F,79,Taxon1-name:cde,INTEGER
+  F,80,Taxon1-name:oname,VisibleString,OPTIONAL
+  F,81,Taxon1-name:uname,VisibleString,OPTIONAL
+
+T,83,Taxon1-error,SEQUENCE
+  F,84,Taxon1-error:level,ENUMERATED
+    V,85,Taxon1-error:level:none,0
+    -- not an error, just a message
+    V,86,Taxon1-error:level:info,1
+    -- informational error
+    V,87,Taxon1-error:level:warn,2
+    V,88,Taxon1-error:level:error,3
+    V,89,Taxon1-error:level:fatal,4
+  F,90,Taxon1-error:msg,VisibleString,OPTIONAL
+
+T,92,Taxon1-data,SEQUENCE
+  F,93,Taxon1-data:org,/Org-ref,OPTIONAL
+  -- Org-ref with Org-name and db filled in
+  F,94,Taxon1-data:div,VisibleString
+  -- GenBank division
+  F,95,Taxon1-data:embl-code,VisibleString,OPTIONAL
+  -- 2 letter EMBL code
+  F,96,Taxon1-data:is-species-level,BOOLEAN
+  -- species level or below
+
+T,98,Taxon2-data,SEQUENCE
+  F,99,Taxon2-data:org,/Org-ref,OPTIONAL
+  -- Org-ref with Org-name and db filled in
+  F,100,Taxon2-data:blast-name,SEQUENCE VisibleString,OPTIONAL
+  -- inherited blast name
+  F,101,Taxon2-data:is-uncultured,BOOLEAN
+  -- belongs to environmental bin
+  F,102,Taxon2-data:is-species-level,BOOLEAN
+  -- species level or below

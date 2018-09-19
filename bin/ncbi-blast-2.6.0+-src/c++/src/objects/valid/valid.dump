@@ -1,0 +1,55 @@
+M,10,valid.asn:NCBI-Structured-comment-validation
+--$Revision: 407583 $
+--**********************************************************************
+--
+--  NCBI ASN.1 structured comment validation rule specifications
+--
+--  by Colleen Bollin, 2009
+--
+--**********************************************************************
+  T,15,NCBI-Structured-comment-validation:Severity-level
+  T,24,NCBI-Structured-comment-validation:Field-rule
+  T,31,NCBI-Structured-comment-validation:Field-set
+  T,33,NCBI-Structured-comment-validation:Dependent-field-rule
+  T,41,NCBI-Structured-comment-validation:Dependent-field-set
+  T,43,NCBI-Structured-comment-validation:Phrase-list
+  T,45,NCBI-Structured-comment-validation:Comment-rule
+  T,55,NCBI-Structured-comment-validation:Comment-set
+
+T,15,Severity-level,ENUMERATED
+  V,16,Severity-level:none,0
+  V,17,Severity-level:info,1
+  V,18,Severity-level:warning,2
+  V,19,Severity-level:error,3
+  V,20,Severity-level:reject,4
+  V,21,Severity-level:fatal,5
+
+T,24,Field-rule,SEQUENCE
+  F,25,Field-rule:field-name,VisibleString
+  F,26,Field-rule:match-expression,VisibleString,OPTIONAL
+  F,27,Field-rule:required,BOOLEAN,DEFAULT,FALSE
+  F,28,Field-rule:severity,/Severity-level,DEFAULT,warning
+
+T,31,Field-set,SET /Field-rule
+
+T,33,Dependent-field-rule,SEQUENCE
+  F,34,Dependent-field-rule:match-name,VisibleString
+  F,35,Dependent-field-rule:value-constraint,VisibleString,OPTIONAL
+  F,36,Dependent-field-rule:invert-match,BOOLEAN,DEFAULT,FALSE
+  F,37,Dependent-field-rule:other-fields,/Field-set,OPTIONAL
+  F,38,Dependent-field-rule:disallowed-fields,/Field-set,OPTIONAL
+
+T,41,Dependent-field-set,SET /Dependent-field-rule
+
+T,43,Phrase-list,SET VisibleString
+
+T,45,Comment-rule,SEQUENCE
+  F,46,Comment-rule:prefix,VisibleString
+  F,47,Comment-rule:updated,BOOLEAN,DEFAULT,FALSE
+  F,48,Comment-rule:fields,/Field-set
+  F,49,Comment-rule:require-order,BOOLEAN,DEFAULT,TRUE
+  F,50,Comment-rule:allow-unlisted,BOOLEAN,DEFAULT,FALSE
+  F,51,Comment-rule:dependent-rules,/Dependent-field-set,OPTIONAL
+  F,52,Comment-rule:forbidden-phrases,/Phrase-list,OPTIONAL
+
+T,55,Comment-set,SET /Comment-rule

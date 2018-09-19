@@ -1,0 +1,143 @@
+M,9,mim.asn:NCBI-Mim
+--********************************************************************
+--
+--  MIM data definitions
+--  Brandon Brylawski, 1996.
+--  version 2.1
+--
+--********************************************************************
+  T,12,NCBI-Mim:Mim-entries
+  T,14,NCBI-Mim:Mim-set
+  T,18,NCBI-Mim:Mim-entry
+  T,59,NCBI-Mim:Mim-text
+  T,64,NCBI-Mim:Mim-allelic-variant
+  T,72,NCBI-Mim:Mim-link
+  T,77,NCBI-Mim:Mim-author
+  T,81,NCBI-Mim:Mim-cit
+  T,87,NCBI-Mim:Mim-reference
+  T,117,NCBI-Mim:Mim-index-term
+  T,121,NCBI-Mim:Mim-edit-item
+  T,125,NCBI-Mim:Mim-date
+  T,130,NCBI-Mim:Mim-page
+
+T,12,Mim-entries,SEQUENCE /Mim-entry
+
+T,14,Mim-set,SEQUENCE
+  F,15,Mim-set:releaseDate,/Mim-date
+  F,16,Mim-set:mimEntries,SEQUENCE /Mim-entry
+
+T,18,Mim-entry,SEQUENCE
+  F,19,Mim-entry:mimNumber,VisibleString
+  F,20,Mim-entry:mimType,INTEGER
+    V,21,Mim-entry:mimType:none,0
+    V,22,Mim-entry:mimType:star,1
+    V,23,Mim-entry:mimType:caret,2
+    V,24,Mim-entry:mimType:pound,3
+    V,25,Mim-entry:mimType:plus,4
+    V,26,Mim-entry:mimType:perc,5
+  F,27,Mim-entry:title,VisibleString
+  F,28,Mim-entry:copyright,VisibleString,OPTIONAL
+  F,29,Mim-entry:symbol,VisibleString,OPTIONAL
+  F,30,Mim-entry:locus,VisibleString,OPTIONAL
+  F,31,Mim-entry:synonyms,SEQUENCE VisibleString,OPTIONAL
+  F,32,Mim-entry:aliases,SEQUENCE VisibleString,OPTIONAL
+  F,33,Mim-entry:included,SEQUENCE VisibleString,OPTIONAL
+  F,34,Mim-entry:seeAlso,SEQUENCE /Mim-cit,OPTIONAL
+  F,35,Mim-entry:text,SEQUENCE /Mim-text,OPTIONAL
+  F,36,Mim-entry:textfields,SEQUENCE /Mim-text,OPTIONAL
+  F,37,Mim-entry:hasSummary,BOOLEAN,OPTIONAL
+  F,38,Mim-entry:summary,SEQUENCE /Mim-text,OPTIONAL
+  F,39,Mim-entry:summaryAttribution,SEQUENCE /Mim-edit-item,OPTIONAL
+  F,40,Mim-entry:summaryEditHistory,SEQUENCE /Mim-edit-item,OPTIONAL
+  F,41,Mim-entry:summaryCreationDate,/Mim-edit-item,OPTIONAL
+  F,42,Mim-entry:allelicVariants,SEQUENCE /Mim-allelic-variant,OPTIONAL
+  F,43,Mim-entry:hasSynopsis,BOOLEAN,OPTIONAL
+  F,44,Mim-entry:clinicalSynopsis,SEQUENCE /Mim-index-term,OPTIONAL
+  F,45,Mim-entry:synopsisAttribution,SEQUENCE /Mim-edit-item,OPTIONAL
+  F,46,Mim-entry:synopsisEditHistory,SEQUENCE /Mim-edit-item,OPTIONAL
+  F,47,Mim-entry:synopsisCreationDate,/Mim-edit-item,OPTIONAL
+  F,48,Mim-entry:editHistory,SEQUENCE /Mim-edit-item,OPTIONAL
+  F,49,Mim-entry:creationDate,/Mim-edit-item,OPTIONAL
+  F,50,Mim-entry:references,SEQUENCE /Mim-reference,OPTIONAL
+  F,51,Mim-entry:attribution,SEQUENCE /Mim-edit-item,OPTIONAL
+  F,52,Mim-entry:numGeneMaps,INTEGER
+  F,53,Mim-entry:medlineLinks,/Mim-link,OPTIONAL
+  F,54,Mim-entry:proteinLinks,/Mim-link,OPTIONAL
+  F,55,Mim-entry:nucleotideLinks,/Mim-link,OPTIONAL
+  F,56,Mim-entry:structureLinks,/Mim-link,OPTIONAL
+  F,57,Mim-entry:genomeLinks,/Mim-link,OPTIONAL
+
+T,59,Mim-text,SEQUENCE
+  F,60,Mim-text:label,VisibleString
+  F,61,Mim-text:text,VisibleString
+  F,62,Mim-text:neighbors,/Mim-link,OPTIONAL
+
+T,64,Mim-allelic-variant,SEQUENCE
+  F,65,Mim-allelic-variant:number,VisibleString
+  F,66,Mim-allelic-variant:name,VisibleString
+  F,67,Mim-allelic-variant:aliases,SEQUENCE VisibleString,OPTIONAL
+  F,68,Mim-allelic-variant:mutation,SEQUENCE /Mim-text,OPTIONAL
+  F,69,Mim-allelic-variant:description,SEQUENCE /Mim-text,OPTIONAL
+  F,70,Mim-allelic-variant:snpLinks,/Mim-link,OPTIONAL
+
+T,72,Mim-link,SEQUENCE
+  F,73,Mim-link:num,INTEGER
+  F,74,Mim-link:uids,VisibleString
+  F,75,Mim-link:numRelevant,INTEGER,OPTIONAL
+
+T,77,Mim-author,SEQUENCE
+  F,78,Mim-author:name,VisibleString
+  F,79,Mim-author:index,INTEGER
+
+T,81,Mim-cit,SEQUENCE
+  F,82,Mim-cit:number,INTEGER
+  F,83,Mim-cit:author,VisibleString
+  F,84,Mim-cit:others,VisibleString
+  F,85,Mim-cit:year,INTEGER
+
+T,87,Mim-reference,SEQUENCE
+  F,88,Mim-reference:number,INTEGER
+  F,89,Mim-reference:origNumber,INTEGER,OPTIONAL
+  F,90,Mim-reference:type,ENUMERATED,OPTIONAL
+    V,91,Mim-reference:type:not-set,0
+    V,92,Mim-reference:type:citation,1
+    V,93,Mim-reference:type:book,2
+    V,94,Mim-reference:type:personal-communication,3
+    V,95,Mim-reference:type:book-citation,4
+  F,96,Mim-reference:authors,SEQUENCE /Mim-author
+  F,97,Mim-reference:primaryAuthor,VisibleString
+  F,98,Mim-reference:otherAuthors,VisibleString
+  F,99,Mim-reference:citationTitle,VisibleString
+  F,100,Mim-reference:citationType,INTEGER,OPTIONAL
+  F,101,Mim-reference:bookTitle,VisibleString,OPTIONAL
+  F,102,Mim-reference:editors,SEQUENCE /Mim-author,OPTIONAL
+  F,103,Mim-reference:volume,VisibleString,OPTIONAL
+  F,104,Mim-reference:edition,VisibleString,OPTIONAL
+  F,105,Mim-reference:journal,VisibleString,OPTIONAL
+  F,106,Mim-reference:series,VisibleString,OPTIONAL
+  F,107,Mim-reference:publisher,VisibleString,OPTIONAL
+  F,108,Mim-reference:place,VisibleString,OPTIONAL
+  F,109,Mim-reference:commNote,VisibleString,OPTIONAL
+  F,110,Mim-reference:pubDate,/Mim-date
+  F,111,Mim-reference:pages,SEQUENCE /Mim-page,OPTIONAL
+  F,112,Mim-reference:miscInfo,VisibleString,OPTIONAL
+  F,113,Mim-reference:pubmedUID,INTEGER,OPTIONAL
+  F,114,Mim-reference:ambiguous,BOOLEAN
+  F,115,Mim-reference:noLink,BOOLEAN,OPTIONAL
+
+T,117,Mim-index-term,SEQUENCE
+  F,118,Mim-index-term:key,VisibleString
+  F,119,Mim-index-term:terms,SEQUENCE VisibleString
+
+T,121,Mim-edit-item,SEQUENCE
+  F,122,Mim-edit-item:author,VisibleString
+  F,123,Mim-edit-item:modDate,/Mim-date
+
+T,125,Mim-date,SEQUENCE
+  F,126,Mim-date:year,INTEGER
+  F,127,Mim-date:month,INTEGER,OPTIONAL
+  F,128,Mim-date:day,INTEGER,OPTIONAL
+
+T,130,Mim-page,SEQUENCE
+  F,131,Mim-page:from,VisibleString
+  F,132,Mim-page:to,VisibleString,OPTIONAL

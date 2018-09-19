@@ -1,0 +1,12 @@
+.cvsignore
+SeqTestResults_.cpp
+Seq_test_result_.cpp
+Seq_test_result_set_.cpp
+SeqTestResults.cpp
+Seq_test_result.cpp
+Seq_test_result_set.cpp
+NCBI_SeqTest_module.cpp
+seqtest___.cpp
+seqtest__.cpp
+seqtest.files
+seqtest.dump

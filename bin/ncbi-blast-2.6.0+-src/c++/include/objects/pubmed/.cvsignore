@@ -1,0 +1,8 @@
+.cvsignore
+Pubmed_entry_.hpp
+Pubmed_url_.hpp
+Pubmed_entry.hpp
+Pubmed_url.hpp
+NCBI_PubMed_module.hpp
+pubmed__.hpp
+pubmed.dump

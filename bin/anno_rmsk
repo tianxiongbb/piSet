@@ -1,0 +1,119 @@
+#!/bin/bash
+
+# function
+function checkTools(){
+	if [ `which $1` ];then
+		echo0 3 "$1: `which $1`"
+	else
+		echo0 0 "$1 not found, please install it or add it into your PATH!"
+		exit 1
+	fi
+}
+
+# help infomation
+help_info(){
+	echo0 5 `readlink -f $0`
+	echo0 5 "\t-i <file>\treference.fa file used for run denovo transposon consensus sequence annotation and repeat elements finding"
+	echo0 4 "output:"
+	echo0 4 "\t-o <directory>\toutput directory for results. the output file will be genome.trn.fa and genome.fa.out. default: ./"
+	echo0 1 "other optional:"
+	echo0 1 "\t-e <string>\tengine used for RepeatModeler and RepeatMasker, can be wublast|abblast|ncbi. default: ncbi"
+	echo0 1 "\t-S <string>\tsearch speed for RepeatMasker, can be s|slow|n|normal|q|quick|r|rush, fast speed will lead to low sensitive. default: slow"
+	echo0 1 "\t-l \tset this parameter to enable low_complexity mask. default: not enable"
+	echo0 1 "\t-r \tset this parameter to enable small RNA (pseudo) genes mask. default: not enable"
+	echo0 1 "\t-c <int>\tcutoff score for masking repeats. default: 255"
+	echo0 1 "\t-a \t\tset -a to combine repbase lib also for RepeatMasker. default: don't combine repbase lib"
+	echo0 1 "\t-s <string>\tspecies name used with -a."
+	echo0 1 "\t-C <int>\tCPU number used for RepeatMasker and RepeatModeler. default: 4"
+}
+
+if [ $# -lt 2 ];then
+	help_info
+	exit 1
+fi
+
+# parameters
+PATH_BIN=`dirname $0`
+ANNOTATION=${PATH_BIN%/bin}/annotation/common
+ENGINE=ncbi
+PARA_LOW="-nolow"
+PARA_RNA="-norna"
+SCORE=255
+CPU=4
+
+while getopts "hi:o:e:s:lrc:C:aS:" OPTION; do
+	case $OPTION in
+		h)	help_info && exit 1;;
+		i)	REF=`readlink -f ${OPTARG}`;;
+		s)	SPECIES=${OPTARG};;
+		o)	OUTDIR=${OPTARG};;
+		e)	ENGINE=${OPTARG};;
+		S)	SPEED=${OPTARG};;
+		a)	IF_REPBASE=1;;
+		l)	PARA_LOW="";;
+		r)	PARA_RNA="";;
+		c)	SCORE=${OPTARG};;
+		C)	CPU=${OPTARG};;
+		*)	help_info && exit 1;;
+	esac
+done
+
+# check parameters
+[ -z ${REF} ] && echo0 0 "please provide reference.fa via -i" && exit 1
+GENOME=`basename ${REF}` && GENOME=${GENOME%.fa*}
+[ ! -f ${REF} ] && echo0 0 "-i specified but no file in ${REF}" && exit 1
+[ ! -d ${OUTDIR} ] && mkdir -p ${OUTDIR}
+cd ${OUTDIR}
+! [ "${ENGINE}" == "wublast" -o "${ENGINE}" == "abblast" -o "${ENGINE}" == "ncbi" ] && echo0 0 "-e must be wublast, abblast or ncbi" && exit 1
+if [ -z ${SPEED} ];then
+	PARA_SPEED="-s"
+else
+	case ${SPEED} in
+		s|slow)	PARA_SPEED="-s";;
+		n|normal)	PARA_SPEED="";;
+		q|quick)	PARA_SPEED="-q";;
+		r|rush)	PARA_SPEED="-qq";;
+		*)	echo0 0 "-s must in s|slow|n|normal|q|quick|r|rush" && exit 1
+	esac
+fi
+! [ ${SCORE} -gt 0 ] 2>/dev/null && echo0 0 "-c must be interger" && exit 1
+! [ ${CPU} -gt 0 ] 2>/dev/null && echo0 0 "-C must be interger" && exit 1
+echo0 1 "OK"
+
+# check tools
+echo0 1 "check dependencies"
+echo0 1 "OK"
+
+######################
+### program here ###
+######################
+
+# build database for reference
+echo0 2 "build database for reference......"
+mkdir Database # make directory first to fix no .translation bug in BuildDatabase
+${PATH_BIN}/RepeatModeler-open-1.0.11/BuildDatabase -name Database/${GENOME} -engine ${ENGINE} ${REF} > log.BuildDatabase 2>&1
+
+# run RepeatModeler
+echo0 2 "run RepeatModeler......"
+${PATH_BIN}/RepeatModeler-open-1.0.11/RepeatModeler -database Database/${GENOME} -engine ${ENGINE} -pa ${CPU} > log.RepeatModeler 2>&1
+mv RM_* RepeatModeler
+awk '{if($1~/^>/){if($1~/#DNA|#LINE|#SINE#LTR/){k=1}else{k=0}};if(k==1){print $0}}' RepeatModeler/consensi.fa.classified > ${GENOME}.trn.fa
+
+# get repbase annotation
+if [ ! -z ${IF_REPBASE} ];then
+	echo0 2 "get repbase annotation......"
+	queryTaxonomyDatabase.pl -species "${SPECIES}" | awk -v sp="${SPECIES}" 'BEGIN{print sp} {if($1=="cellular"){k=0};if(k){print $1};if($1~/^Lineage/){k=1}}' | awk '{if(NF>1){print $1"_"$2}else{print $1}}' > taxonomy
+	awk 'BEGIN{FS=" "} {if(NR==FNR){tax[$1]=1}else{if(tax[substr($2,2,length($2)-1)]){print $1,$5}}}' taxonomy ${ANNOTATION}/RMRBMeta.fa > repbase_id
+	awk 'BEGIN{FS=" "} {if(NR==FNR){rep[$2]=$1}else{if($1~/^>/){rn=substr($1,2,length($1)-2);if(!rep[rn]){k=0}}};if(k && $1!~/^>/){print $0};if($1~/^>/){rn=substr($1,2,length($1)-2);if(rep[rn]){print rep[rn];k=1}}}' repbase_id ${ANNOTATION}/RMRBSeqs.fa | awk '{if($1~/^>/){if($1~/#DNA|#LINE|#SINE#LTR/){k=1}else{k=0}};if(k==1){print $0}}' > repbase_anno.fa
+	rm repbase_id taxonomy
+	cat repbase_anno.fa ${GENOME}.trn.fa > temp && mv temp ${GENOME}.trn.fa
+	cat RepeatModeler/consensi.fa.classified repbase_anno.fa > temp && mv temp RepeatModeler/consensi.fa.classified 
+fi
+
+# run RepeatMasker
+echo0 2 "run RepeatMasker......"
+mkdir RepeatMasker && cd RepeatMasker
+${PATH_BIN}/RepeatMasker/RepeatMasker -lib ../RepeatModeler/consensi.fa.classified ${PARA_SPEED} ${PARA_LOW} ${PARA_RNA} -pa ${CPU} -e ${ENGINE} -dir . -cutoff ${SCORE} -no_is -frag 20000 ${REF} > ../log.RepeatMasker 2>&1
+mv ${GENOME}.fa.out ../${GENOME}.fa.out
+
+echo0 4 "------finished, congras🍺🍺🍺------"

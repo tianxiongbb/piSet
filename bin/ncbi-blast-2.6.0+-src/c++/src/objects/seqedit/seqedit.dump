@@ -1,0 +1,340 @@
+M,16,seqedit.asn:NCBI-SeqEdit
+--$Revision: 97271 $
+--********************************************************************
+--
+--  Sequence editing commands
+--  Didenko 2005
+--
+--
+--*********************************************************************
+--
+--  seqedit.asn
+--
+--     representation of Sequence editing commands
+--
+--*********************************************************************
+  T,29,NCBI-SeqEdit:SeqEdit-Id
+  T,36,NCBI-SeqEdit:SeqEdit-Cmd-AddId
+  T,42,NCBI-SeqEdit:SeqEdit-Cmd-RemoveId
+  T,48,NCBI-SeqEdit:SeqEdit-Cmd-ResetIds
+  T,54,NCBI-SeqEdit:SeqEdit-Cmd-ChangeSeqAttr
+  T,71,NCBI-SeqEdit:SeqEdit-Cmd-ResetSeqAttr
+  T,89,NCBI-SeqEdit:SeqEdit-Cmd-ChangeSetAttr
+  T,102,NCBI-SeqEdit:SeqEdit-Cmd-ResetSetAttr
+  T,116,NCBI-SeqEdit:SeqEdit-Cmd-AddDescr
+  T,122,NCBI-SeqEdit:SeqEdit-Cmd-SetDescr
+  T,128,NCBI-SeqEdit:SeqEdit-Cmd-ResetDescr
+  T,133,NCBI-SeqEdit:SeqEdit-Cmd-AddDesc
+  T,139,NCBI-SeqEdit:SeqEdit-Cmd-RemoveDesc
+  T,145,NCBI-SeqEdit:SeqEdit-Cmd-AttachSeq
+  T,151,NCBI-SeqEdit:SeqEdit-Cmd-AttachSet
+  T,157,NCBI-SeqEdit:SeqEdit-Cmd-ResetSeqEntry
+  T,163,NCBI-SeqEdit:SeqEdit-Cmd-AttachSeqEntry
+  T,170,NCBI-SeqEdit:SeqEdit-Cmd-RemoveSeqEntry
+  T,177,NCBI-SeqEdit:SeqEdit-Cmd-AttachAnnot
+  T,183,NCBI-SeqEdit:SeqEdit-Cmd-RemoveAnnot
+  T,195,NCBI-SeqEdit:SeqEdit-Cmd-AddAnnot
+  T,215,NCBI-SeqEdit:SeqEdit-Cmd-ReplaceAnnot
+  T,236,NCBI-SeqEdit:SeqEdit-Cmd
+
+T,29,SeqEdit-Id,CHOICE
+  F,30,SeqEdit-Id:bioseq-id,/Seq-id
+  F,31,SeqEdit-Id:bioseqset-id,INTEGER
+  F,32,SeqEdit-Id:unique-num,INTEGER
+
+T,36,SeqEdit-Cmd-AddId,SEQUENCE
+-- Add a new seq-id to bioseq
+  F,37,SeqEdit-Cmd-AddId:id,/SeqEdit-Id
+  -- Bioseq id
+  F,38,SeqEdit-Cmd-AddId:add-id,/Seq-id
+  -- Seq id to add
+
+T,42,SeqEdit-Cmd-RemoveId,SEQUENCE
+-- Remove a seq-id from bioseq
+  F,43,SeqEdit-Cmd-RemoveId:id,/SeqEdit-Id
+  -- Bioseq id
+  F,44,SeqEdit-Cmd-RemoveId:remove-id,/Seq-id
+  -- Seq id to remove
+
+T,48,SeqEdit-Cmd-ResetIds,SEQUENCE
+-- Reset ids field of bioseq
+  F,49,SeqEdit-Cmd-ResetIds:id,/SeqEdit-Id
+  -- Bioseq id
+  F,50,SeqEdit-Cmd-ResetIds:remove-ids,SET /Seq-id
+  -- List of Seq ids to remove
+
+T,54,SeqEdit-Cmd-ChangeSeqAttr,SEQUENCE
+-- Change bioseq's attribure
+  F,55,SeqEdit-Cmd-ChangeSeqAttr:id,/SeqEdit-Id
+  -- Bioseq id
+  F,56,SeqEdit-Cmd-ChangeSeqAttr:data,CHOICE
+    F,57,SeqEdit-Cmd-ChangeSeqAttr:data:inst,/Seq-inst
+    -- whole seq-inst object
+    F,58,SeqEdit-Cmd-ChangeSeqAttr:data:repr,INTEGER
+    -- repr field of seq-inst object
+    F,59,SeqEdit-Cmd-ChangeSeqAttr:data:mol,INTEGER
+    -- mol field of seq-inst object
+    F,60,SeqEdit-Cmd-ChangeSeqAttr:data:length,INTEGER
+    -- length field of seq-inst object
+    F,61,SeqEdit-Cmd-ChangeSeqAttr:data:fuzz,/Int-fuzz
+    -- fuzz field of seq-inst object
+    F,62,SeqEdit-Cmd-ChangeSeqAttr:data:topology,INTEGER
+    -- topology field of seq-inst object
+    F,63,SeqEdit-Cmd-ChangeSeqAttr:data:strand,INTEGER
+    -- strand field of seq-inst object
+    F,64,SeqEdit-Cmd-ChangeSeqAttr:data:ext,/Seq-ext
+    -- extr field of seq-inst object
+    F,65,SeqEdit-Cmd-ChangeSeqAttr:data:hist,/Seq-hist
+    -- hist field of seq-inst object
+    F,66,SeqEdit-Cmd-ChangeSeqAttr:data:seq-data,/Seq-data
+    -- seq-data field of seq-inst object
+
+T,71,SeqEdit-Cmd-ResetSeqAttr,SEQUENCE
+-- Reset bioseq's attribute
+  F,72,SeqEdit-Cmd-ResetSeqAttr:id,/SeqEdit-Id
+  -- Bioseq id
+  F,73,SeqEdit-Cmd-ResetSeqAttr:what,ENUMERATED
+    V,74,SeqEdit-Cmd-ResetSeqAttr:what:not-set,0
+    V,75,SeqEdit-Cmd-ResetSeqAttr:what:inst,1
+    -- whole seq-inst object
+    V,76,SeqEdit-Cmd-ResetSeqAttr:what:repr,2
+    -- repr field of seq-inst object
+    V,77,SeqEdit-Cmd-ResetSeqAttr:what:mol,3
+    -- mol field of seq-inst object
+    V,78,SeqEdit-Cmd-ResetSeqAttr:what:length,4
+    -- length field of seq-inst object
+    V,79,SeqEdit-Cmd-ResetSeqAttr:what:fuzz,5
+    -- fuzz field of seq-inst object
+    V,80,SeqEdit-Cmd-ResetSeqAttr:what:topology,6
+    -- topology field of seq-inst object
+    V,81,SeqEdit-Cmd-ResetSeqAttr:what:strand,7
+    -- strand field of seq-inst object
+    V,82,SeqEdit-Cmd-ResetSeqAttr:what:ext,8
+    -- extr field of seq-inst object
+    V,83,SeqEdit-Cmd-ResetSeqAttr:what:hist,9
+    -- hist field of seq-inst object
+    V,84,SeqEdit-Cmd-ResetSeqAttr:what:seq-data,10
+    -- seq-data field of seq-inst object
+
+T,89,SeqEdit-Cmd-ChangeSetAttr,SEQUENCE
+-- Change bioseq-set's attribute
+  F,90,SeqEdit-Cmd-ChangeSetAttr:id,/SeqEdit-Id
+  -- Bioseq_set id
+  F,91,SeqEdit-Cmd-ChangeSetAttr:data,CHOICE
+    F,92,SeqEdit-Cmd-ChangeSetAttr:data:id,/Object-id
+    -- object id
+    F,93,SeqEdit-Cmd-ChangeSetAttr:data:coll,/Dbtag
+    -- db tag
+    F,94,SeqEdit-Cmd-ChangeSetAttr:data:level,INTEGER
+    -- level
+    F,95,SeqEdit-Cmd-ChangeSetAttr:data:class,INTEGER
+    -- class
+    F,96,SeqEdit-Cmd-ChangeSetAttr:data:release,VisibleString
+    -- release
+    F,97,SeqEdit-Cmd-ChangeSetAttr:data:date,/Date
+    -- date      
+
+T,102,SeqEdit-Cmd-ResetSetAttr,SEQUENCE
+-- Reset bioseq-set's attibute
+  F,103,SeqEdit-Cmd-ResetSetAttr:id,/SeqEdit-Id
+  -- Bioseq_set id
+  F,104,SeqEdit-Cmd-ResetSetAttr:what,ENUMERATED
+    V,105,SeqEdit-Cmd-ResetSetAttr:what:not-set,0
+    V,106,SeqEdit-Cmd-ResetSetAttr:what:id,1
+    -- object id
+    V,107,SeqEdit-Cmd-ResetSetAttr:what:coll,2
+    -- db tag
+    V,108,SeqEdit-Cmd-ResetSetAttr:what:level,3
+    -- level
+    V,109,SeqEdit-Cmd-ResetSetAttr:what:class,4
+    -- class
+    V,110,SeqEdit-Cmd-ResetSetAttr:what:release,5
+    -- release
+    V,111,SeqEdit-Cmd-ResetSetAttr:what:date,6
+    -- date
+
+T,116,SeqEdit-Cmd-AddDescr,SEQUENCE
+--***************************************************************
+-- Add descriptors to an object
+  F,117,SeqEdit-Cmd-AddDescr:id,/SeqEdit-Id
+  -- Bioseq or Bioseq_set id
+  F,118,SeqEdit-Cmd-AddDescr:add-descr,/Seq-descr
+  -- Descriptors
+
+T,122,SeqEdit-Cmd-SetDescr,SEQUENCE
+-- Set an objects's descriptors
+  F,123,SeqEdit-Cmd-SetDescr:id,/SeqEdit-Id
+  -- Bioseq or Bioseq_set id
+  F,124,SeqEdit-Cmd-SetDescr:set-descr,/Seq-descr
+  -- Descriptors
+
+T,128,SeqEdit-Cmd-ResetDescr,SEQUENCE
+-- Reset an objects's descriptors
+  F,129,SeqEdit-Cmd-ResetDescr:id,/SeqEdit-Id
+  -- Bioseq or Bioseq_set id
+
+T,133,SeqEdit-Cmd-AddDesc,SEQUENCE
+-- Add a descriptor ot an object
+  F,134,SeqEdit-Cmd-AddDesc:id,/SeqEdit-Id
+  -- Bioseq or Bioseq_set id
+  F,135,SeqEdit-Cmd-AddDesc:add-desc,/Seqdesc
+  -- descriptor
+
+T,139,SeqEdit-Cmd-RemoveDesc,SEQUENCE
+-- Remove a descripor from an object
+  F,140,SeqEdit-Cmd-RemoveDesc:id,/SeqEdit-Id
+  -- Bioseq or Bioseq_set id
+  F,141,SeqEdit-Cmd-RemoveDesc:remove-desc,/Seqdesc
+  -- descriptor
+
+T,145,SeqEdit-Cmd-AttachSeq,SEQUENCE
+-- Attach a bioseq to seq entry
+  F,146,SeqEdit-Cmd-AttachSeq:id,/SeqEdit-Id
+  -- Seq entry id
+  F,147,SeqEdit-Cmd-AttachSeq:seq,/Bioseq
+  -- bioseq
+
+T,151,SeqEdit-Cmd-AttachSet,SEQUENCE
+-- Attach a bioseq-set to seq entry
+  F,152,SeqEdit-Cmd-AttachSet:id,/SeqEdit-Id
+  -- Seq entry id
+  F,153,SeqEdit-Cmd-AttachSet:set,/Bioseq-set
+  -- bioseq-set
+
+T,157,SeqEdit-Cmd-ResetSeqEntry,SEQUENCE
+-- Detach an object from seq entry
+  F,158,SeqEdit-Cmd-ResetSeqEntry:id,/SeqEdit-Id
+  -- Seq entry id
+
+T,163,SeqEdit-Cmd-AttachSeqEntry,SEQUENCE
+--***************************************************************
+-- Attach a seq entry to bioseq-set
+  F,164,SeqEdit-Cmd-AttachSeqEntry:id,/SeqEdit-Id
+  -- Bioseq_set id
+  F,165,SeqEdit-Cmd-AttachSeqEntry:seq-entry,/Seq-entry,OPTIONAL
+  -- set entry
+  F,166,SeqEdit-Cmd-AttachSeqEntry:index,INTEGER
+  -- index
+
+T,170,SeqEdit-Cmd-RemoveSeqEntry,SEQUENCE
+-- Remove a seq entry from bioseq-set
+  F,171,SeqEdit-Cmd-RemoveSeqEntry:id,/SeqEdit-Id
+  -- Bioseq_set id
+  F,172,SeqEdit-Cmd-RemoveSeqEntry:entry-id,/SeqEdit-Id
+  -- Seq_entry for deletion
+
+T,177,SeqEdit-Cmd-AttachAnnot,SEQUENCE
+--***************************************************************
+-- Add an annotation to a bioseq or a bioseq-set
+  F,178,SeqEdit-Cmd-AttachAnnot:id,/SeqEdit-Id
+  -- Bioseq or Bioseq_set id
+  F,179,SeqEdit-Cmd-AttachAnnot:annot,/Seq-annot
+  -- complete annotation
+
+T,183,SeqEdit-Cmd-RemoveAnnot,SEQUENCE
+-- Remove an annotation object from a bioseq or a bioseq-set
+  F,184,SeqEdit-Cmd-RemoveAnnot:id,/SeqEdit-Id
+  -- Bioseq or Bioseq_set id
+  F,185,SeqEdit-Cmd-RemoveAnnot:name,VisibleString,OPTIONAL
+  -- Annotation's name
+  F,186,SeqEdit-Cmd-RemoveAnnot:named,BOOLEAN
+  -- TRUE if an annotation is named
+  F,187,SeqEdit-Cmd-RemoveAnnot:data,CHOICE
+  -- object for deletion
+    F,188,SeqEdit-Cmd-RemoveAnnot:data:feat,/Seq-feat
+    F,189,SeqEdit-Cmd-RemoveAnnot:data:align,/Seq-align
+    F,190,SeqEdit-Cmd-RemoveAnnot:data:graph,/Seq-graph
+
+T,195,SeqEdit-Cmd-AddAnnot,SEQUENCE
+-- Add an annotaion object to a bioseq or a bioseq-set 
+  F,196,SeqEdit-Cmd-AddAnnot:id,/SeqEdit-Id
+  -- Bioseq or Bioseq_set id
+  F,197,SeqEdit-Cmd-AddAnnot:name,VisibleString,OPTIONAL
+  -- Annotation's name
+  F,198,SeqEdit-Cmd-AddAnnot:named,BOOLEAN
+  -- TRUE if an annotation is named
+  F,199,SeqEdit-Cmd-AddAnnot:search-param,CHOICE,OPTIONAL
+  -- A search creteria
+    F,200,SeqEdit-Cmd-AddAnnot:search-param:descr,/Annot-descr
+    -- If an annotation does not have any objects,
+    F,201,SeqEdit-Cmd-AddAnnot:search-param:obj,CHOICE
+    -- use an annotaion descriptor,
+      F,202,SeqEdit-Cmd-AddAnnot:search-param:obj:feat,/Seq-feat
+      -- otherwise use an annot object
+      F,203,SeqEdit-Cmd-AddAnnot:search-param:obj:align,/Seq-align
+      F,204,SeqEdit-Cmd-AddAnnot:search-param:obj:graph,/Seq-graph
+  F,207,SeqEdit-Cmd-AddAnnot:data,CHOICE
+  -- an annotaion object to add
+    F,208,SeqEdit-Cmd-AddAnnot:data:feat,/Seq-feat
+    F,209,SeqEdit-Cmd-AddAnnot:data:align,/Seq-align
+    F,210,SeqEdit-Cmd-AddAnnot:data:graph,/Seq-graph
+
+T,215,SeqEdit-Cmd-ReplaceAnnot,SEQUENCE
+-- Replace an annotation object of a bioseq or a bioseq-set
+  F,216,SeqEdit-Cmd-ReplaceAnnot:id,/SeqEdit-Id
+  -- Bioseq or Bioseq_set id
+  F,217,SeqEdit-Cmd-ReplaceAnnot:name,VisibleString,OPTIONAL
+  -- Annotation's name
+  F,218,SeqEdit-Cmd-ReplaceAnnot:named,BOOLEAN
+  -- TRUE if an annotation is named
+  F,219,SeqEdit-Cmd-ReplaceAnnot:data,CHOICE
+    F,220,SeqEdit-Cmd-ReplaceAnnot:data:feat,SEQUENCE
+      F,221,SeqEdit-Cmd-ReplaceAnnot:data:feat:ovalue,/Seq-feat
+      -- old value
+      F,222,SeqEdit-Cmd-ReplaceAnnot:data:feat:nvalue,/Seq-feat
+      -- new value
+    F,224,SeqEdit-Cmd-ReplaceAnnot:data:align,SEQUENCE
+      F,225,SeqEdit-Cmd-ReplaceAnnot:data:align:ovalue,/Seq-align
+      -- old value
+      F,226,SeqEdit-Cmd-ReplaceAnnot:data:align:nvalue,/Seq-align
+      -- new value
+    F,228,SeqEdit-Cmd-ReplaceAnnot:data:graph,SEQUENCE
+      F,229,SeqEdit-Cmd-ReplaceAnnot:data:graph:ovalue,/Seq-graph
+      -- old value
+      F,230,SeqEdit-Cmd-ReplaceAnnot:data:graph:nvalue,/Seq-graph
+      -- new value
+
+T,236,SeqEdit-Cmd,CHOICE
+--***************************************************************
+  F,237,SeqEdit-Cmd:add-id,/SeqEdit-Cmd-AddId
+  -- Add a new seq-id to bioseq
+  F,238,SeqEdit-Cmd:remove-id,/SeqEdit-Cmd-RemoveId
+  -- Remove a seq-id from bioseq
+  F,239,SeqEdit-Cmd:reset-ids,/SeqEdit-Cmd-ResetIds
+  -- Reset ids field of bioseq
+  F,240,SeqEdit-Cmd:change-seqattr,/SeqEdit-Cmd-ChangeSeqAttr
+  -- Change bioseq's attribure
+  F,241,SeqEdit-Cmd:reset-seqattr,/SeqEdit-Cmd-ResetSeqAttr
+  -- Reset bioseq's attribute
+  F,242,SeqEdit-Cmd:change-setattr,/SeqEdit-Cmd-ChangeSetAttr
+  -- Change bioseq-set's attribure
+  F,243,SeqEdit-Cmd:reset-setattr,/SeqEdit-Cmd-ResetSetAttr
+  -- Reset bioseq-set's attribute
+  F,244,SeqEdit-Cmd:add-descr,/SeqEdit-Cmd-AddDescr
+  -- Add descriptors to an object
+  F,245,SeqEdit-Cmd:set-descr,/SeqEdit-Cmd-SetDescr
+  -- Set an objects's descriptors
+  F,246,SeqEdit-Cmd:reset-descr,/SeqEdit-Cmd-ResetDescr
+  -- Reset an objects's descriptors
+  F,247,SeqEdit-Cmd:add-desc,/SeqEdit-Cmd-AddDesc
+  -- Add a descriptor ot an object
+  F,248,SeqEdit-Cmd:remove-desc,/SeqEdit-Cmd-RemoveDesc
+  -- Remove a descripor from an object
+  F,249,SeqEdit-Cmd:attach-seq,/SeqEdit-Cmd-AttachSeq
+  -- Attach a bioseq to seq entry
+  F,250,SeqEdit-Cmd:attach-set,/SeqEdit-Cmd-AttachSet
+  -- Attach a bioseq-set to seq entry
+  F,251,SeqEdit-Cmd:reset-seqentry,/SeqEdit-Cmd-ResetSeqEntry
+  -- Detach an object from seq entry
+  F,252,SeqEdit-Cmd:attach-seqentry,/SeqEdit-Cmd-AttachSeqEntry
+  -- Attach a seq entry to bioseq-set
+  F,253,SeqEdit-Cmd:remove-seqentry,/SeqEdit-Cmd-RemoveSeqEntry
+  -- Remove a seq entry from bioseq-set
+  F,254,SeqEdit-Cmd:attach-annot,/SeqEdit-Cmd-AttachAnnot
+  -- Add a compelte annotation
+  F,255,SeqEdit-Cmd:remove-annot,/SeqEdit-Cmd-RemoveAnnot
+  -- Remove an annotation object
+  F,256,SeqEdit-Cmd:add-annot,/SeqEdit-Cmd-AddAnnot
+  -- Add an annotaion object
+  F,257,SeqEdit-Cmd:replace-annot,/SeqEdit-Cmd-ReplaceAnnot
+  -- Replace an annotation object

@@ -1,0 +1,139 @@
+#!/bin/bash
+
+# help info
+if [ $# -lt 1 ];then
+	echo0 1 "$0 genome"
+	exit 1
+fi
+
+# function: check file
+function checkFile(){
+	if [ -f $1 ];then
+		echo0 5 "check $2: $1 ... OK"
+	else
+		echo0 0 "check $2: $1 ... not found"
+	fi
+}
+function checkBowtieIndex(){
+	if [ -f BowtieIndex/$1.1.ebwt -a -f BowtieIndex/$1.2.ebwt -a -f BowtieIndex/$1.3.ebwt -a -f BowtieIndex/$1.4.ebwt -a -f BowtieIndex/$1.rev.1.ebwt -a -f BowtieIndex/$1.rev.2.ebwt ];then
+		echo0 5 "check $2: $1 ... OK"
+	else
+		if [ $3 -eq 1 ];then
+			echo0 0 "check $2: $1 ... not found"
+		else
+			echo0 4 "check $2: $1 ... not found"
+		fi
+	fi
+}
+function checkBowtie2Index(){
+	if [ -f Bowtie2Index/$1.1.bt2 -a -f Bowtie2Index/$1.2.bt2 -a -f Bowtie2Index/$1.3.bt2 -a -f Bowtie2Index/$1.4.bt2 -a -f Bowtie2Index/$1.rev.1.bt2 -a -f Bowtie2Index/$1.rev.2.bt2 ];then
+		echo0 5 "check $2: $1 ... OK"
+	else
+		if [ $3 -eq 1 ];then
+			echo0 0 "check $2: $1 ... not found"
+		else
+			echo0 4 "check $2: $1 ... not found"
+		fi
+	fi
+}
+function checkBWAIndex(){
+	if [ -f BWAIndex/$1.amb -a -f BWAIndex/$1.ann -a -f BWAIndex/$1.bwt -a -f BWAIndex/$1.pac -a -f BWAIndex/$1.sa ];then
+		echo0 5 "check $2: $1 ... OK"
+	else
+		if [ $3 -eq 1 ];then
+			echo0 0 "check $2: $1 ... not found"
+		else
+			echo0 4 "check $2: $1 ... not found"
+		fi
+	fi
+}
+function checkSTARIndex(){
+	if [ -f STARIndex/Genome -a -f STARIndex/SA -a -f STARIndex/SAindex -a -f STARIndex/chrLength.txt -a -f STARIndex/chrName.txt -a -f STARIndex/chrNameLength.txt -a -f STARIndex/chrStart.txt -a -f STARIndex/genomeParameters.txt ];then
+		echo0 5 "check STAR index for genome: STARIndex/ ... OK"
+	else
+		echo0 5 "check STAR index for genome: STARIndex/ ... not found"
+	fi
+}
+
+# get genome path
+PATH_PROG=`dirname $0` && PATH_GENOME=${PATH_PROG%/*}/annotation/$1 && cd ${PATH_GENOME}
+echo0 3 "start checking $1 in ${PATH_GENOME}"
+# check needed annotations
+checkFile $1.fa "genome sequence"
+checkFile $1.hairpin.fa "miRNA hairpin sequence"
+checkFile $1.rRNA.fa "rRNA sequence"
+checkFile $1.sncRNA.fa "other small noncoding RNA sequence"
+checkFile $1.transposon.fa "transposon consensus sequence"
+checkFile $1.chrom.size "chromosome size"
+checkFile $1.picluster.size "piRNA cluster size"
+checkFile $1.picluster.chopped.size "chopped piRNA size"
+checkFile $1.transposon.size "transposon size"
+checkFile $1.sncRNA.size "other small noncoding RNA size"
+checkFile $1.mRNA.bed "mRNA region"
+checkFile $1.mRNA.3UTR.bed "mRNA 3'UTR region"
+checkFile $1.mRNA.5UTR.bed "mRNA 5'UTR region"
+checkFile $1.mRNA.CDS.bed "mRNA CDS region"
+checkFile $1.mRNA.exon.bed "mRNA exon region"
+checkFile $1.mRNA.intron.bed "mRNA intron region"
+checkFile $1.sncRNA.bed "other small noncoding RNA region"
+checkFile $1.otherRNA.bed "other longRNA region"
+checkFile $1.otherRNA.exon.bed "other longRNA exon region"
+checkFile $1.otherRNA.intron.bed "other longRNA intron region"
+checkFile $1.picluster.bed "piRNA cluster region"
+checkFile $1.picluster.chopped.bed "chopped piRNA cluster (1kb bin) region"
+checkFile $1.rmsk.bed9 "repeatMasker annotation in bed9"
+checkFile $1.rmsk.bed "repeatMasker annotation in bed6"
+checkFile mRNA.name "mRNA name"
+checkFile otherRNA.name "other RNA name"
+checkBowtieIndex genome "bowtie index for genome" 1
+checkBowtieIndex rRNA "bowtie index for rRNA" 1
+checkBowtieIndex hairpin "bowtie index for hairpin" 1
+checkBowtieIndex sncRNA "bowtie index for sncRNA" 1
+checkBowtieIndex transposon "bowtie index for transposon" 1
+checkBowtieIndex picluster "bowtie index for picluster" 1
+checkBowtieIndex sncRNA "bowtie index for sncRNA" 2
+checkBowtie2Index genome "bowtie2 index for genome" 1
+checkBowtie2Index rRNA "bowtie2 index for rRNA" 1
+checkBowtie2Index transposon "bowtie2 index for transposon" 1
+checkBWAIndex genome "bwa index for genome" 1
+checkSTARIndex
+echo -e "files colored in \033[40;31;1mred\033[0m is needed, \033[40;33;1myellow\033[0m is suggested."
+echo0 6 "\nbasic information for $1 annotation:"
+if [ -f $1.chrom.size ];then
+	N50=(`awk 'BEGIN{FS=OFS="\t"} {if(NR==FNR){sum+=$2}else{sum1+=$2;if(sum1>sum/2){print $2}}}' $1.chrom.size $1.chrom.size`)
+	GENOME_LENGTH=(`awk '{sum+=$2} END{print sum}' $1.chrom.size`)
+	echo0 3 "genome length: ${GENOME_LENGTH}; scaffold N50: ${N50}"
+fi
+if [ -f $1.mRNA.bed -a -f $1.mRNA.exon.bed -a -f $1.mRNA.CDS.bed -a -f $1.mRNA.5UTR.bed -a -f $1.mRNA.3UTR.bed -a -f $1.mRNA.intron.bed ];then
+	INFO_MRNA=(`awk 'BEGIN{FS=OFS="\t"} {sum1++;sum2+=($3-$2)} END{print sum1" "sum2}' $1.mRNA.bed`)
+	INFO_EXON=(`awk 'BEGIN{FS=OFS="\t"} {sum1++;sum2+=($3-$2)} END{print sum1" "sum2}' $1.mRNA.exon.bed`)
+	INFO_CDS=(`awk 'BEGIN{FS=OFS="\t"} {sum1++;sum2+=($3-$2)} END{print sum1" "sum2}' $1.mRNA.CDS.bed`)
+	INFO_5UTR=(`awk 'BEGIN{FS=OFS="\t"} {sum1++;sum2+=($3-$2)} END{print sum1" "sum2}' $1.mRNA.5UTR.bed`)
+	INFO_3UTR=(`awk 'BEGIN{FS=OFS="\t"} {sum1++;sum2+=($3-$2)} END{print sum1" "sum2}' $1.mRNA.3UTR.bed`)
+	INFO_INTRON=(`awk 'BEGIN{FS=OFS="\t"} {sum1++;sum2+=($3-$2)} END{print sum1" "sum2}' $1.mRNA.intron.bed`)
+	echo0 4 "proteinCoding genes --- "
+	echo0 3 "\tgene number/length: ${INFO_MRNA[0]}/${INFO_MRNA[1]}; exon number/length: ${INFO_EXON[0]}/${INFO_EXON[1]}; CDS number/length: ${INFO_CDS[0]}/${INFO_CDS[1]}; 5'UTR number/length: ${INFO_5UTR[0]}/${INFO_5UTR[1]}; 3'UTR number/length: ${INFO_3UTR[0]}/${INFO_3UTR[1]}; intron number/length: ${INFO_INTRON[0]}/${INFO_INTRON[1]}"
+fi
+if [ -f $1.otherRNA.bed -a -f $1.otherRNA.exon.bed -a -f $1.otherRNA.intron.bed ];then
+	INFO_MRNA_O=(`awk 'BEGIN{FS=OFS="\t"} {sum1++;sum2+=($3-$2)} END{print sum1" "sum2}' $1.otherRNA.bed`)
+	INFO_EXON_O=(`awk 'BEGIN{FS=OFS="\t"} {sum1++;sum2+=($3-$2)} END{print sum1" "sum2}' $1.otherRNA.exon.bed`)
+	INFO_INTRON_O=(`awk 'BEGIN{FS=OFS="\t"} {sum1++;sum2+=($3-$2)} END{print sum1" "sum2}' $1.otherRNA.intron.bed`)
+	echo0 4 "other longRNA genes --- "
+	echo0 3 "\tgene number/length: ${INFO_MRNA_O[0]}/${INFO_MRNA_O[1]}; exon number/length: ${INFO_EXON_O[0]}/${INFO_EXON_O[1]}; intron number/length: ${INFO_INTRON_O[0]}/${INFO_INTRON_O[1]}"
+fi
+if [ -f $1.picluster.size ];then
+	INFO_PI=(`awk 'BEGIN{FS=OFS="\t"} {sum1++;sum2+=($2)} END{print sum1" "sum2}' $1.picluster.size`)
+	echo0 4 "piclusters --- "
+	echo0 3 "\tnumber/length: ${INFO_PI[0]}/${INFO_PI[1]}"
+fi
+if [ -f $1.transposon.size -a -f $1.rmsk.bed ];then
+	INFO_TRN=(`awk 'BEGIN{FS=OFS="\t"} {sum1++;sum2+=($2)} END{print sum1" "sum2}' $1.transposon.size`)
+	INFO_RMSK=(`awk 'BEGIN{FS=OFS="\t"} {sum1++;sum2+=($3-$2)} END{print sum1" "sum2}' $1.rmsk.bed`)
+	echo0 4 "transposons --- "
+	echo0 3 "\tnumber/length: ${INFO_TRN[0]}/${INFO_TRN[1]}; genome copies number/length: ${INFO_RMSK[0]}/${INFO_RMSK[1]}"
+fi
+if [ -f $1.virus.size ];then
+	INFO_VIRUS=(`awk 'BEGIN{FS=OFS="\t"} {sum1++;sum2+=($2)} END{print sum1" "sum2}' $1.virus.size`)
+	echo0 4 "viruses --- "
+	echo0 3 "\tnumber/length: ${INFO_VIRUS[0]}/${INFO_VIRUS[1]}"
+fi

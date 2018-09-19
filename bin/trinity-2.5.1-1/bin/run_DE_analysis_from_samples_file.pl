@@ -1,0 +1,1 @@
+../opt/trinity-2.5.1/util/run_DE_analysis_from_samples_file.pl

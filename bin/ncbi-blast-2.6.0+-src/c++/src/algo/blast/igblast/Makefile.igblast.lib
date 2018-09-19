@@ -1,0 +1,21 @@
+# $Id: Makefile.igblast.lib 427427 2014-02-20 13:40:13Z gouriano $
+
+SRC_CXX = igblast
+
+SRC = $(SRC_CXX)
+
+LIB = igblast
+
+DLL_LIB = $(BLAST_LIBS) xconnect $(SOBJMGR_LIBS)
+
+ASN_DEP = blastdb xnetblast
+
+CFLAGS   = $(FAST_CFLAGS)
+CXXFLAGS = $(FAST_CXXFLAGS)
+LDFLAGS  = $(FAST_LDFLAGS)
+
+WATCHERS = madden camacho
+
+
+USES_LIBRARIES =  \
+    $(BLAST_LIBS)

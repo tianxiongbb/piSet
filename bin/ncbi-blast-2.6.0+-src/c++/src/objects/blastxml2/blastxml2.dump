@@ -1,0 +1,195 @@
+M,1,blastxml2.asn:NCBI-BlastOutput2
+  T,4,NCBI-BlastOutput2:BlastOutput2
+  T,9,NCBI-BlastOutput2:BlastXML2
+  T,11,NCBI-BlastOutput2:Report
+  T,20,NCBI-BlastOutput2:Err
+  T,25,NCBI-BlastOutput2:Target
+  T,30,NCBI-BlastOutput2:Results
+  T,37,NCBI-BlastOutput2:Iteration
+  T,42,NCBI-BlastOutput2:Search
+  T,52,NCBI-BlastOutput2:Parameters
+  T,71,NCBI-BlastOutput2:Range
+  T,76,NCBI-BlastOutput2:Statistics
+  T,87,NCBI-BlastOutput2:HitDescr
+  T,95,NCBI-BlastOutput2:Hit
+  T,102,NCBI-BlastOutput2:Hsp
+
+T,4,BlastOutput2,SEQUENCE
+  F,5,BlastOutput2:report,/Report,OPTIONAL
+  F,6,BlastOutput2:error,/Err,OPTIONAL
+
+T,9,BlastXML2,SET /BlastOutput2
+
+T,11,Report,SEQUENCE
+  F,12,Report:program,VisibleString
+  -- BLAST program: blastp, tblastx etc.
+  F,13,Report:version,VisibleString
+  -- Program version 
+  F,14,Report:reference,VisibleString
+  -- Steven, David, Tom and others
+  F,15,Report:search-target,/Target
+  F,16,Report:params,/Parameters
+  -- search parameters
+  F,17,Report:results,/Results
+
+T,20,Err,SEQUENCE
+  F,21,Err:code,INTEGER
+  F,22,Err:message,VisibleString,OPTIONAL
+
+T,25,Target,CHOICE
+  F,26,Target:db,VisibleString
+  -- BLAST Database name
+  F,27,Target:subjects,SEQUENCE VisibleString
+  -- Subject IDs
+
+T,30,Results,CHOICE
+  F,31,Results:iterations,SEQUENCE /Iteration
+  F,33,Results:search,/Search
+  --  iterative search (psi and delta blast)
+  --  db search   
+  F,34,Results:bl2seq,SEQUENCE /Search
+  --  bl2seq
+
+T,37,Iteration,SEQUENCE
+  F,38,Iteration:iter-num,INTEGER
+  -- iteration number (use with psiblast)
+  F,39,Iteration:search,/Search
+
+T,42,Search,SEQUENCE
+  F,43,Search:query-id,VisibleString,OPTIONAL
+  -- SeqId of query
+  F,44,Search:query-title,VisibleString,OPTIONAL
+  -- Definition line of query
+  F,45,Search:query-len,INTEGER,OPTIONAL
+  -- length of query sequence
+  F,46,Search:query-masking,SEQUENCE /Range,OPTIONAL
+  -- Masked offsets.
+  F,47,Search:hits,SEQUENCE /Hit,OPTIONAL
+  -- Hits one for every db sequence
+  F,48,Search:stat,/Statistics,OPTIONAL
+  -- search statistics            
+  F,49,Search:message,VisibleString,OPTIONAL
+  -- Some (error?) information
+
+T,52,Parameters,SEQUENCE
+  F,53,Parameters:matrix,VisibleString,OPTIONAL
+  -- Matrix used (-M)
+  F,54,Parameters:expect,REAL
+  -- Expectation threshold (-e)
+  F,55,Parameters:include,REAL,OPTIONAL
+  -- Inclusion threshold (-h)
+  F,56,Parameters:sc-match,INTEGER,OPTIONAL
+  -- match score for NT (-r)
+  F,57,Parameters:sc-mismatch,INTEGER,OPTIONAL
+  -- mismatch score for NT (-q)
+  F,58,Parameters:gap-open,INTEGER,OPTIONAL
+  -- Gap opening cost (-G)
+  F,59,Parameters:gap-extend,INTEGER,OPTIONAL
+  -- Gap extension cost (-E)
+  F,60,Parameters:filter,VisibleString,OPTIONAL
+  -- Filtering options (-F)
+  F,61,Parameters:pattern,VisibleString,OPTIONAL
+  -- PHI-BLAST pattern
+  F,62,Parameters:entrez-query,VisibleString,OPTIONAL
+  -- Limit of request to Entrez query
+  F,63,Parameters:cbs,INTEGER,OPTIONAL
+  -- composition-based stats (numbers correspond to
+  -- numbering in stand-alone application parameter -comp_based_stats).
+  F,65,Parameters:query-gencode,INTEGER,OPTIONAL
+  -- genetic code for query (blastx or tblastx)
+  F,66,Parameters:db-gencode,INTEGER,OPTIONAL
+  -- genetic code for db or subjects (tblastn or tblastx)
+  F,67,Parameters:bl2seq-mode,VisibleString,OPTIONAL
+  -- bl2seq mode 
+
+T,71,Range,SEQUENCE
+-- Used to specify start/stop of masking on query.
+  F,72,Range:from,INTEGER
+  -- Beginning of masked range (one-offset)
+  F,73,Range:to,INTEGER
+  -- End of masked range (one-offset)
+
+T,76,Statistics,SEQUENCE
+  F,77,Statistics:db-num,BigInt,OPTIONAL
+  -- Number of sequences in BLAST db
+  F,78,Statistics:db-len,BigInt,OPTIONAL
+  -- Length of BLAST db
+  F,79,Statistics:hsp-len,INTEGER
+  -- Effective HSP length
+  F,80,Statistics:eff-space,BigInt
+  -- Effective search space
+  F,81,Statistics:kappa,REAL
+  -- Karlin-Altschul parameter K
+  F,82,Statistics:lambda,REAL
+  -- Karlin-Altschul parameter Lambda
+  F,83,Statistics:entropy,REAL
+  -- Karlin-Altschul parameter H
+
+T,87,HitDescr,SEQUENCE
+-- Description of entries for this (possibly non-redundant) sequence.
+  F,88,HitDescr:id,VisibleString
+  -- SeqId of subject
+  F,89,HitDescr:accession,VisibleString,OPTIONAL
+  -- accession
+  F,90,HitDescr:title,VisibleString,OPTIONAL
+  -- title (definition line) of subject
+  F,91,HitDescr:taxid,INTEGER,OPTIONAL
+  -- NCBI taxid (9606 for human)
+  F,92,HitDescr:sciname,VisibleString,OPTIONAL
+  -- binomial scientific name ("Homo sapiens" for human).  
+
+T,95,Hit,SEQUENCE
+  F,96,Hit:num,INTEGER
+  -- hit number
+  F,97,Hit:description,SEQUENCE /HitDescr
+  -- ID, title, and taxonomy for each entry in the PIG
+  F,98,Hit:len,INTEGER
+  -- length of subject
+  F,99,Hit:hsps,SEQUENCE /Hsp,OPTIONAL
+  -- all HSP regions for the given subject
+
+T,102,Hsp,SEQUENCE
+  F,103,Hsp:num,INTEGER
+  -- HSP number
+  F,104,Hsp:bit-score,REAL
+  -- score (in bits) of HSP
+  F,105,Hsp:score,REAL
+  -- score of HSP
+  F,106,Hsp:evalue,REAL
+  -- e-value of HSP
+  F,107,Hsp:identity,INTEGER,OPTIONAL
+  -- number of identities in HSP
+  F,108,Hsp:positive,INTEGER,OPTIONAL
+  -- number of positives in HSP
+  F,109,Hsp:density,INTEGER,OPTIONAL
+  -- score density
+  F,110,Hsp:pattern-from,INTEGER,OPTIONAL
+  -- start of PHI-BLAST pattern
+  F,111,Hsp:pattern-to,INTEGER,OPTIONAL
+  -- end of PHI-BLAST pattern
+  F,112,Hsp:query-from,INTEGER
+  -- start of HSP in query
+  F,113,Hsp:query-to,INTEGER
+  -- end of HSP
+  F,114,Hsp:query-strand,VisibleString,OPTIONAL
+  -- Strand of query (blastn)
+  F,115,Hsp:query-frame,INTEGER,OPTIONAL
+  -- translation frame of query (blastx, tblastx)
+  F,116,Hsp:hit-from,INTEGER
+  -- start of HSP in subject
+  F,117,Hsp:hit-to,INTEGER
+  -- end of HSP in subject
+  F,118,Hsp:hit-strand,VisibleString,OPTIONAL
+  -- Strand of subject (blastn)
+  F,119,Hsp:hit-frame,INTEGER,OPTIONAL
+  -- translation frame of subject (tblastn, tblastx)
+  F,120,Hsp:align-len,INTEGER,OPTIONAL
+  -- length of the alignment used
+  F,121,Hsp:gaps,INTEGER,OPTIONAL
+  -- number of gaps in HSP
+  F,122,Hsp:qseq,VisibleString
+  -- alignment string for the query (with gaps)
+  F,123,Hsp:hseq,VisibleString
+  -- alignment string for subject (with gaps)
+  F,124,Hsp:midline,VisibleString,OPTIONAL
+  -- formating middle line

@@ -1,0 +1,10 @@
+.cvsignore
+HGVS_Coordinate_.cpp
+HGVS_Coordinate_Set_.cpp
+HGVS_Coordinate.cpp
+HGVS_Coordinate_Set.cpp
+NCBI_HGVSCoordinate_module.cpp
+objcoords___.cpp
+objcoords__.cpp
+objcoords.files
+objcoords.dump

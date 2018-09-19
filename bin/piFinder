@@ -1,0 +1,998 @@
+#!/bin/bash
+
+##----INTRO-----------##
+# Name=piFinder
+# Date=Nov15 ,2016
+# Update=Jan09, 2017
+# Update information:
+# Remove small RNA reads mapped to protein-coding genes in antisense and in intron
+# Trim 5' and 3' more stricted though it has significant boundary or it is a exon
+
+########################
+# Purpose
+# This pipeline can define pachytene piRNA gene via small-RNA-seq and/or RNA-seq
+
+#######--Arguments--#######
+help_info(){
+	echo ""
+	echo -e "\033[32m  =========================================================================================================================\033[0m"
+	echo "   Author: Tianxiong & Kaili"
+	echo ""
+	echo "   Usage:"
+	echo "	bash piFinder <option>* [-q srna.fq] [-g genome] [-G reference.gtf]"
+	echo -e "\033[33m\tpiFinder can generally call piRNA genes/clusters for mammals and calculate basic information of the genes/clusters.\033[0m"
+	echo ""
+	echo "   Optional arguments:"
+	echo "	-o output directory. --default: temporary directory"
+	echo "	-p prefix for output file. --default: BB"
+	echo "	-w window size for piRNA cluster searching. --default: 100000"
+	echo "	-s shifting size for piRNA cluster searching. --default: 1000"
+	echo "	-c CPU number used for bowtie mapping. --default:1"
+	echo "	-R RPM cutoff for piRNA cluster filtering. --default:100"
+	echo "	-S sequence complexity cutoff for piRNA cluster filtering. --default:200"
+	echo "	-l left side reads for paired-end RNA-seq or reads for single-end RNA-seq. --default: no file in"
+	echo "	-r right side reads for paired-end RNA-seq. --default: no file in"
+	echo ""
+	echo -e "\033[31m  !!! Caution: \033[0m"
+	echo -e "	The program only can deal with single-end ff-firststrand library. If not, please modify the program."
+	echo "	Program needed: BB_GetBinFromGenome.py bowtie fastq_to_insert insertBed_to_bed2 samtools bedtools"
+	echo "	Program needed (with RNA-seq input): STAR bowtie2"
+	echo "	Make sure all the program is contained by environment viariable PATH."
+	echo "	The pipeline also need index files builded already."
+	echo ""
+	echo "    (￣(工)￣) Enjoy yourself~~~"
+	echo -e "\033[32m  =========================================================================================================================\033[0m"
+	echo ""
+}
+##TODO(BB): all index file needed, add to the help info. 
+
+if [ $# -lt 3 ];then
+	help_info
+	exit 1
+fi
+
+#############################
+# chmod of programs #
+#############################
+chmod 755 /data/tongji2/piRNA/Code/Tianxiong/piFinder/bin/*
+
+#############################
+# functions #
+#############################
+function fun_bedTogtf()
+{
+	awk 'BEGIN{FS=OFS="\t"} {print $1,"piFinder","exon",$2,$3,".",$6,".","gene_id \""$4"\"; type \"protein_coding\"; transcript_id \""$4".1\";"}' $1 > $2
+}
+
+function fun_sort()
+{
+	sort -k1,1 -k2,2n $1 > t_fun_sort && mv t_fun_sort $1
+}
+# sort bed file
+
+#############################
+# ARGS reading and checking #
+#############################
+OUTPATH=./
+PREFIX=BB
+WINDOW=100000
+SHIFT=10000
+CPU=1
+DISTAL=50000
+RPMCUT=100
+SEQCUT=200
+# TODO configuration
+INDEX_RRNA=/data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/phaCin/BowtieIndex/rRNA
+INDEX_MIRNA=/data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/phaCin/BowtieIndex/hairpin
+INDEX_NCRNA=/data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/phaCin/BowtieIndex/sncRNA
+INDEX_GENOME=/data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/phaCin/BowtieIndex/genome
+INDEX_STAR=/data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/phaCin/STARIndex/
+INDEX_RRNA_BOWTIE2=/data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/phaCin/Bowtie2Index/rRNA
+CHROM_SIZE=/data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/phaCin/phaCin.chrom.size
+GENOME_FASTA=/data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/phaCin/phaCin.fa
+PROTEIN_EXON_BED=/data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/phaCin/phaCin.mRNA.exon.bed
+LINCRNA_BED=/data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/phaCin/phaCin.otherRNA.bed
+INPUT_LEFT=N
+INPUT_RIGHT=N
+
+while getopts "hvq:c:o:g:p:w:s:R:S:G:d:l:r:" OPTION; do
+	case $OPTION in
+		h)	help_info && exit 0 ;;
+		q)	INPUT_FASTQ=${OPTARG} ;;
+		o)	OUTPATH=${OPTARG} ;;
+		c)	CPU=${OPTARG} ;;
+		v)	echo "BB_Pip_piRNAcall VERSION: Beta 1.0" && exit 0 ;;
+		g)	GENOME=${OPTARG};;
+		p)	PREFIX=${OPTARG};;
+		w)	WINDOW=${OPTARG};;
+		s)	SHIFT=${OPTARG};;
+		R)	RPMCUT=${OPTARG};;
+		S)	SEQCUT=${OPTARG};;
+		G)	GTF=${OPTARG};;
+		d)	DISTAL=${OPTARG};;
+		l)	INPUT_LEFT=${OPTARG};;
+		r)	INPUT_RIGHT=${OPTARG};;
+		*)	usage && exit 1 ;;
+	esac
+done
+
+##TODO(Kaili): can I try to change these arguments into option ones?
+
+###########
+# process #
+###########
+
+
+#####################################
+###calculate piRNA reads in genome###
+#####################################
+
+
+###make directories
+echo -e "\033[40;36m\033[1m---Calculate piRNA reads in genome---\t"$DATE"\033[0m"
+DATE=`date --date="-24 hour"`
+echo -e "\033[32mmake directory\t"$DATE"\033[0m"
+if [ -d ${OUTPATH} ];then
+	echo "Path Exists"
+else
+	mkdir ${OUTPATH}
+fi
+
+cd ${OUTPATH}
+if [ ! -d log_file ];then
+	mkdir log_file
+fi
+
+if [ ! -d ncRNA_bed ];then
+	mkdir ncRNA_bed
+fi
+
+if [ ! -d insert_reads ];then
+	mkdir insert_reads
+fi
+
+if [ ! -d map_info ];then
+	mkdir map_info
+fi
+
+if [ ! -d figures ];then
+	mkdir figures
+fi
+if [ ! -d bigWig ];then
+	mkdir bigWig
+fi
+if [ ! -d splicing_junction ];then
+	mkdir splicing_junction
+fi
+if [ ! -d STAR_piRNA ];then
+	mkdir STAR_piRNA
+fi
+if [ ! -d STAR_RNA ];then
+	mkdir STAR_RNA
+fi
+##TODO(Kaili): try mkdir -p to make folder tree
+###mapping
+#check small RNA-seq data for mapping
+if [ ! -f ${INPUT_FASTQ} ];then
+	echo -e "\033[40;31m\033[1mthere is no file in "${INPUT_FASTQ}". Exit\033[0m"
+	exit 1
+fi
+##TODO(Kaili): add check out step after arguments input, check all the arguments are valid.
+
+#fastq to insert for space saving
+DATE=`date --date="-24 hour"`
+echo -e "\033[31mcreate insert format file for saving space\t"$DATE"\033[0m"
+fastq_to_insert ${INPUT_FASTQ} insert_reads/${PREFIX}.insert
+
+#calculate average length of small rna reads
+echo -e "\033[32mcheck averge length of small RNA reads\t"$DATE"\033[0m"
+AVERAGE_LENGTH=`awk 'BEGIN{tl=0;tn=0} {tl=tl+length($1)*$2;tn=tn+$2} END{print tl/tn}' insert_reads/${PREFIX}.insert`
+STATUS_LENGTH=`awk -v al=$AVERAGE_LENGTH 'BEGIN{if(al<26){print "too_short"}else if(al<28){print "short"}else if(al<=31){print "proper"}else if(al<=35){print "long"}else{print "too_long"}}'`
+case $STATUS_LENGTH in
+	too_short)	echo -e "\033[1;31;47maverage length of small RNA reads: "$AVERAGE_LENGTH"......few piRNA reads, abort\033[0m" && exit 1;;
+	short)		echo -e "\033[1;31;40maverage length of small RNA reads: "$AVERAGE_LENGTH"......the piRNAs are mainly Mili binded\033[0m";;
+	proper)		echo -e "\033[1;36;40maverage length of small RNA reads: "$AVERAGE_LENGTH"......the piRNAs are mainly Miwi binded, proper\033[0m";;
+	long)		echo -e "\033[1;31;40maverage length of small RNA reads: "$AVERAGE_LENGTH"......a bit longer, some reads may be wrong adapt cut033[0m";;
+	too_long)	echo -e "\033[1;31;47maverage length of small RNA reads: "$AVERAGE_LENGTH"......too long, adaptor not removed or low quality, anyway continue\033[0m";;
+esac
+
+#map to rRNA
+DATE=`date --date="-24 hour"`
+echo -e "\033[31mmap to rRNA\t"$DATE"\033[0m"
+bowtie -r -v 1 -a --best --strata -S -p ${CPU} ${INDEX_RRNA} insert_reads/${PREFIX}.insert --un ${PREFIX}_rRNA.insert --al insert_reads/${PREFIX}.rRNA.insert > /dev/null 2> log_file/bowtie_rRNA.log
+
+#map to miRNA hairpin
+DATE=`date --date="-24 hour"`
+echo -e "\033[33mmap to hairpin\t"$DATE"\033[0m"
+bowtie -r -v 1 -m 1 -S --best --strata -p ${CPU} ${INDEX_MIRNA} ${PREFIX}_rRNA.insert --un ${PREFIX}_rRNA_miRNA.insert --al insert_reads/${PREFIX}.hairpin.insert > ${PREFIX}.hairpin.sam 2> log_file/bowtie_hairpin.log
+
+samtools view -uS -F0x4 ${PREFIX}.hairpin.sam 2>/dev/null | \
+bedtools bamtobed -i - > ${PREFIX}.hairpin.insert.bed && \
+insertBed_to_bed2 ${PREFIX}_rRNA.insert ${PREFIX}.hairpin.insert.bed > ${PREFIX}.hairpin.bed2 && rm -rf ${PREFIX}.hairpin.sam ${PREFIX}.hairpin.insert.bed
+
+#map to other ncRNA like snRNA,snoRNA,tRNA,processed_transcript......
+DATE=`date --date="-24 hour"`
+echo -e "\033[32mmap to ncRNA\t"$DATE"\033[0m"
+bowtie -r -v 1 -m 1 -S --best --strata -p ${CPU} ${INDEX_NCRNA} ${PREFIX}_rRNA_miRNA.insert --un ${PREFIX}_rRNA_miRNA_ncRNA.insert --al insert_reads/${PREFIX}.ncRNA.insert > /dev/null 2> log_file/bowtie_ncRNA.log
+
+#length filtering to 24-32bp
+DATE=`date --date="-24 hour"`
+echo -e "\033[31mfilter length\t"$DATE"\033[0m"
+awk '{FS=OFS="\t"} {if(length($1)>23 && length($1)<33 && $1~/^T/){print $0}}' ${PREFIX}_rRNA_miRNA_ncRNA.insert > insert_reads/${PREFIX}.pilikeRNA.insert
+awk '{FS=OFS="\t"} {if(length($1)>23 && length($1)<33 && $1~/^[ACG]/){print $0}}' ${PREFIX}_rRNA_miRNA_ncRNA.insert > insert_reads/${PREFIX}.pilikeRNA.ACG.insert
+awk '{FS=OFS="\t"} {if(length($1)<24 || length($1)>32){print $0}}' ${PREFIX}_rRNA_miRNA_ncRNA.insert > insert_reads/${PREFIX}.unknown.insert
+
+#map to genome
+DATE=`date --date="-24 hour"`
+echo -e "\033[33mmap to genome\t"$DATE"\033[0m"
+bowtie -r -m 1 -v 1 -S -p ${CPU} ${INDEX_GENOME} insert_reads/${PREFIX}.pilikeRNA.insert > ${PREFIX}.pilikeRNA.uniq.sam 2> log_file/bowtie_genome_1U.log
+CATCH_FASLE=`awk '{if(NR==2){rt=substr($10,2,length($10)-3);if(rt<1){print "0"}else if(rt<10){print "1"}else{print "2"}}}' log_file/bowtie_genome_1U.log`
+if [ $CATCH_FASLE -eq 0 ];then
+	echo -e "\033[1;31;47mthe mapping rate is too low, please check if -g is right\033[0m" && exit 1
+elif [ $CATCH_FASLE -eq 1 ];then
+	echo -e "\033[1;31;40mthe mapping rate is low, maybe due to low quality data\033[0m"
+fi
+
+samtools view -uS -F0x4 ${PREFIX}.pilikeRNA.uniq.sam 2>/dev/null | bedtools bamtobed -i - > ${PREFIX}.pilikeRNA.uniq.insert.bed && insertBed_to_bed2 insert_reads/${PREFIX}.pilikeRNA.insert ${PREFIX}.pilikeRNA.uniq.insert.bed > ${PREFIX}.pilikeRNA.uniq.bed2
+rm -rf ${PREFIX}.pilikeRNA.uniq.sam ${PREFIX}.pilikeRNA.uniq.insert.bed 
+rm ${PREFIX}_rRNA.insert ${PREFIX}_rRNA_miRNA.insert ${PREFIX}_rRNA_miRNA_ncRNA.insert
+
+bowtie -r -m 1 -v 1 -S -p ${CPU} ${INDEX_GENOME} insert_reads/${PREFIX}.pilikeRNA.ACG.insert > ${PREFIX}.pilikeRNA.ACG.uniq.sam 2> log_file/bowtie_genome_N1U.log
+
+samtools view -uS -F0x4 ${PREFIX}.pilikeRNA.ACG.uniq.sam 2>/dev/null | bedtools bamtobed -i - > ${PREFIX}.pilikeRNA.ACG.uniq.insert.bed && insertBed_to_bed2 insert_reads/${PREFIX}.pilikeRNA.ACG.insert ${PREFIX}.pilikeRNA.ACG.uniq.insert.bed > ${PREFIX}.pilikeRNA.ACG.uniq.bed2
+rm -rf ${PREFIX}.pilikeRNA.ACG.uniq.sam ${PREFIX}.pilikeRNA.ACG.uniq.insert.bed
+
+###remove ncRNA reads from ensembl gtf file
+DATE=`date --date="-24 hour"`
+echo -e "\033[31mremove ncRNA reads\t"$DATE"\033[0m"
+#snoRNA scaRNA snRNA miRNA rRNA Mt_tRNA Mt_rRNA
+fun_sort ${PREFIX}.pilikeRNA.uniq.bed2
+fun_sort ${PREFIX}.pilikeRNA.ACG.uniq.bed2
+cat ${PREFIX}.pilikeRNA.uniq.bed2 ${PREFIX}.pilikeRNA.ACG.uniq.bed2 > ${PREFIX}.pilikeRNA.ACGT.uniq.bed2
+READ_PILIKE_UNIQ=(`awk 'BEGIN{sum=0} {sum=sum+$4} END{print sum}' ${PREFIX}.pilikeRNA.ACGT.uniq.bed2`)
+
+READ_PILIKE_UNIQ_RMSRNA=(`awk 'BEGIN{sum=0} {sum=sum+$4} END{print sum}' ${PREFIX}.pilikeRNA.ACGT.uniq.bed2`)
+# bed2 file to bed file
+awk '{FS=OFS="\t"} {for(i=0;i<$4;i++){print $1,$2,$3,1,1,$6}}' ${PREFIX}.pilikeRNA.uniq.bed2 > ${PREFIX}.pilikeRNA.uniq.bed
+awk '{FS=OFS="\t"} {for(i=0;i<$4;i++){print $1,$2,$3,1,1,$6}}' ${PREFIX}.pilikeRNA.ACG.uniq.bed2 > ${PREFIX}.pilikeRNA.ACG.uniq.bed
+cat ${PREFIX}.pilikeRNA.uniq.bed2 ${PREFIX}.pilikeRNA.ACG.uniq.bed2 > ${PREFIX}.genome.uniq.bed2
+PILIKE_UNIQREADS=(`wc -l ${PREFIX}.pilikeRNA.uniq.bed`)
+PILIKE_FACTOR=`awk -v v1=$PILIKE_UNIQREADS 'BEGIN{print v1/1000000}'`
+echo -e "\033[40;36m\033[1mpiRNA like reads with 1U: "${PILIKE_UNIQREADS}"\033[0m"
+
+
+#####################################
+###find protein coding piRNA genes###
+#####################################
+
+
+echo -e "\033[40;36m\033[1m---Find protein coding piRNA genes---\t"$DATE"\033[0m"
+###intersect with protein coding genes to get signal of pilike reads
+DATE=`date --date="-24 hour"`
+echo -e "\033[31mPick up potential genic piRNA genes\t"$DATE"\033[0m"
+grep "gene_biotype \"protein_coding\"" ${GTF} > protein_coding.gtf
+#BB_GtfToExonForEachGene.py protein_coding.gtf ${PREFIX}.protein_coding.exon.bed name
+cp ${PROTEIN_EXON_BED} ${PREFIX}.protein_coding.exon.bed
+fun_sort ${PREFIX}.protein_coding.exon.bed
+bedtools intersect -c -sorted -s -F 0.5 -a ${PREFIX}.protein_coding.exon.bed -b ${PREFIX}.pilikeRNA.uniq.bed > ${PREFIX}.protein_coding.exon.readsig.bed
+bedtools intersect -c -sorted -s -F 0.5 -a ${PREFIX}.protein_coding.exon.bed -b ${PREFIX}.pilikeRNA.uniq.bed2 | awk '{FS=OFS="\t"} {print $7}' > ${PREFIX}.protein_coding.exon.seqsig.bed
+bedtools intersect -c -sorted -s -F 0.5 -a ${PREFIX}.protein_coding.exon.bed -b ${PREFIX}.pilikeRNA.ACG.uniq.bed | awk '{FS=OFS="\t"} {print $7}' > ${PREFIX}.protein_coding.exon.ACG.readsig.bed
+bedtools intersect -c -sorted -s -F 0.5 -a ${PREFIX}.protein_coding.exon.bed -b ${PREFIX}.pilikeRNA.ACG.uniq.bed2 | awk '{FS=OFS="\t"} {print $7}' > ${PREFIX}.protein_coding.exon.ACG.seqsig.bed
+paste ${PREFIX}.protein_coding.exon.readsig.bed ${PREFIX}.protein_coding.exon.seqsig.bed ${PREFIX}.protein_coding.exon.ACG.readsig.bed ${PREFIX}.protein_coding.exon.ACG.seqsig.bed | awk '{FS=OFS="\t"} {print $0}' > ${PREFIX}.protein_coding.exon.signal.bed && rm ${PREFIX}.protein_coding.exon.readsig.bed ${PREFIX}.protein_coding.exon.seqsig.bed ${PREFIX}.protein_coding.exon.ACG.readsig.bed ${PREFIX}.protein_coding.exon.ACG.seqsig.bed
+
+###firstly filter those protein_coding genes whose signal is lower than cutoff/10
+sort -k4,4 ${PREFIX}.protein_coding.exon.signal.bed | awk '{FS=OFS="\t"} {if(NR==1){rs=$7;ss=$8;rs1=$9;ss1=$10;N=$4}else if($4!=N){print N,rs,ss,rs1,ss1;rs=$7;ss=$8;rs1=$9;ss1=$10;N=$4}else{rs=rs+$7;ss=ss+$8;rs1=rs1+$9;ss1=ss1+$10;N=$4}} END{print N,rs,ss,rs1,ss1}' | awk -v R=$RPMCUT -v S=$SEQCUT -v F=$PILIKE_FACTOR 'BEGIN{FS=OFS="\t"} {if($2/F>R/10 && $3>S/10 && $2>$4/2 && $3>$5/2){print $1}}' > ${PREFIX}.piRNA.protein_coding.name.list
+sort -k4,4 -k1,1 -k2,2n ${PREFIX}.protein_coding.exon.bed > t && mv t ${PREFIX}.protein_coding.exon.bed
+awk 'BEGIN{FS=OFS="\t"} {if(FNR==NR){a[$1]=1}else{if(a[$4]){print $0}}}' ${PREFIX}.piRNA.protein_coding.name.list ${PREFIX}.protein_coding.exon.bed > ${PREFIX}.piRNA.protein_coding.bed
+
+###confirm 5' and 3' of potential genic piRNA genes
+DATE=`date --date="-24 hour"`
+echo -e "\033[32mconfirm 5' and 3' of potential genic piRNA genes\t"$DATE"\033[0m"
+# get 5'end and 3'end of a gene
+awk 'BEGIN{FS=OFS="\t"} {if(NR==1){print $1,$2,$4,$6,"5"}else if($4!=N){print chr,ender,N,strand,"3\n"$1,$2,$4,$6,"5"};chr=$1;ender=$3;strand=$6;N=$4} END{print chr,ender,N,strand,"3"}' ${PREFIX}.piRNA.protein_coding.bed > ${PREFIX}.piRNA.protein_coding.5_3TIME.bed
+# extend 2000bp on each end
+awk 'BEGIN{FS=OFS="\t"} {if($5==5 && $2>2000){print $1,$2-2000,$2-1,$3,"5",$4}else if($5==5 && $2<=2000){print $1,1,$2-1,$3,"5",$4}else{print $1,$2+1,$2+2000,$3,"3",$4}}' ${PREFIX}.piRNA.protein_coding.5_3TIME.bed > ${PREFIX}.piRNA.protein_coding.5_3TIME_extend.bed
+fun_sort ${PREFIX}.piRNA.protein_coding.5_3TIME_extend.bed
+# get extend region signals
+bedtools intersect -c -sorted -s -F 0.5 -a ${PREFIX}.piRNA.protein_coding.5_3TIME_extend.bed -b ${PREFIX}.pilikeRNA.uniq.bed > temp1
+bedtools intersect -c -sorted -s -F 0.5 -a ${PREFIX}.piRNA.protein_coding.5_3TIME_extend.bed -b ${PREFIX}.pilikeRNA.uniq.bed2 | awk '{print $7}' > temp2
+paste temp1 temp2 > temp
+# filter
+awk -v R=$RPMCUT -v S=$SEQCUT -v F=$PILIKE_FACTOR 'BEGIN{FS=OFS="\t"} {if($7/F>=1 && $8>=5 && ($7/F<S/5 || $8<R/5)){print $0}}' temp >> ${PREFIX}.piRNA.protein_coding.UTR.bed
+awk -v R=$RPMCUT -v S=$SEQCUT -v F=$PILIKE_FACTOR 'BEGIN{FS=OFS="\t"} {if($7/F>=S/5 && $8>=R/5){print $0}}' temp > temp3
+# extend single exon
+#extend 2000bp step by step until no significant signal or the iteration times has been 10
+ITER_NUM=1
+ITER_CON=(`wc -l temp3`)
+while [ $ITER_CON -gt 0 ] && [ $ITER_NUM -lt 11 ]
+do
+	awk 'BEGIN{FS=OFS="\t"} {if($5==5 && $2>2000){print $1,$2-2000,$2-1,$4,"5",$6}else if($5==5 && $2<=2000){print $1,1,$2-1,$4,"5",$6}else{print $1,$3+1,$3+2000,$4,"3",$6}}' temp3 > temp4
+	fun_sort temp4
+	bedtools intersect -c -sorted -s -F 0.5 -a temp4 -b ${PREFIX}.pilikeRNA.uniq.bed > temp1
+	bedtools intersect -c -sorted -s -F 0.5 -a temp4 -b ${PREFIX}.pilikeRNA.uniq.bed2 | awk '{print $7}' > temp2
+	paste temp1 temp2 > temp
+	awk -v R=$RPMCUT -v S=$SEQCUT -v F=$PILIKE_FACTOR 'BEGIN{FS=OFS="\t"} {if($7/F>=1 && $8>=5 && ($7/F<S/5 || $8<R/5)){print $0}}' temp >> ${PREFIX}.piRNA.protein_coding.UTR.bed
+	awk -v R=$RPMCUT -v S=$SEQCUT -v F=$PILIKE_FACTOR 'BEGIN{FS=OFS="\t"} {if($7/F>=S/5 || $8>=R/5){print $0}}' temp > temp3
+	ITER_CON=(`wc -l temp3`)
+	echo -e "\033[32miteration times: "$ITER_NUM"\t\033[0m"
+	ITER_NUM=`expr $ITER_NUM + 1`
+done
+
+###secondly filter protein_coding piRNA genes whose signal is lower than cutoff and refine 5' and 3' with resolution of 100bp
+#filtering
+DATE=`date --date="-24 hour"`
+echo -e "\033[31mfilter and find protein_coding piRNA genes\t"$DATE"\033[0m"
+fun_sort ${PREFIX}.piRNA.protein_coding.bed
+bedtools intersect -c -sorted -s -F 0.5 -a ${PREFIX}.piRNA.protein_coding.bed -b ${PREFIX}.pilikeRNA.uniq.bed > temp_readsig.bed
+bedtools intersect -c -sorted -s -F 0.5 -a ${PREFIX}.piRNA.protein_coding.bed -b ${PREFIX}.pilikeRNA.uniq.bed2 | awk '{FS=OFS="\t"} {print $7}' > temp_seqsig.bed
+paste temp_readsig.bed temp_seqsig.bed > temp_signal.bed && rm temp_readsig.bed temp_seqsig.bed
+cat ${PREFIX}.piRNA.protein_coding.UTR.bed temp_signal.bed > temp_allsignal.bed
+sort -k4,4 temp_allsignal.bed | awk '{FS=OFS="\t"} {if(NR==1){rs=$7;ss=$8;rs1=$9;ss1=$10;N=$4}else if($4!=N){print N,rs,ss,rs1,ss1;rs=$7;ss=$8;rs1=$9;ss1=$10;N=$4}else{rs=rs+$7;ss=ss+$8;rs1=rs1+$9;ss1=ss1+$10;N=$4}} END{print N,rs,ss,rs1,ss1}' | awk -v R=$RPMCUT -v S=$SEQCUT -v F=$PILIKE_FACTOR 'BEGIN{FS=OFS="\t"} {if($2/F>R && $3>S && $2>$4/2 && $3>$5/2){print $1}}' > ${PREFIX}.piRNA.protein_coding.name.list
+
+#break 5' and 3' into 100bp bins
+DATE=`date --date="-24 hour"`
+echo -e "\033[32mrefine the 5' and 3' of genic piRNA genes\t"$DATE"\033[0m"
+cp ${PREFIX}.piRNA.protein_coding.bed temp_body
+cp ${PREFIX}.piRNA.protein_coding.UTR.bed temp_utr
+sort -k4,4 -k1,1 -k2,2n -k3,3n temp_utr | awk '{if($5==5){print $0}}' | awk '!a[$4]++' > temp_5utr_unrefined
+sort -k4,4 -k1,1 -k2,2n -k3,3n temp_utr | awk '{if($5==5){print $0}}' | awk 'a[$4]++' > temp_5utr_refined_body
+sort -k4,4 -k1,1 -k2,2n -k3,3n temp_utr | awk '{if($5==3){print $0}}' | awk 'BEGIN{FS=OFS="\t"} {if($4!=name && NR!=1){print P};P=$0;name=$4} END{print P}' > temp_3utr_unrefined
+sort -k4,4 -k1,1 -k2,2n -k3,3n temp_utr | awk '{if($5==3){print $0}}' | awk 'BEGIN{FS=OFS="\t"} {if($4==name && NR!=1){print P};P=$0;name=$4} END{print P}' > temp_3utr_refined_body
+awk 'BEGIN{FS=OFS="\t"} {for(i=0;i<20;i++){print $1,$2+i*100,$2+i*100+99,$4,$5,$6}}' temp_5utr_unrefined > temp_5utr_unrefined_break
+awk 'BEGIN{FS=OFS="\t"} {for(i=0;i<20;i++){print $1,$3-i*100-99,$3-i*100,$4,$5,$6}}' temp_3utr_unrefined | awk '{if($2<=0 && $3>0){print $1,1,$3,$4,$5,$6}else if($2>0){print $0}}' > temp_3utr_unrefined_break
+
+#calculate signal of bins
+fun_sort temp_5utr_unrefined_break
+bedtools intersect -sorted -s -F 0.5 -c -a temp_5utr_unrefined_break -b ${PREFIX}.pilikeRNA.uniq.bed > temp_readsig.bed
+bedtools intersect -sorted -s -F 0.5 -c -a temp_5utr_unrefined_break -b ${PREFIX}.pilikeRNA.uniq.bed2 | awk '{FS=OFS="\t"} {print $7}' > temp_seqsig.bed
+paste temp_readsig.bed temp_seqsig.bed | sort -k4,4 > temp_signal.bed && rm temp_readsig.bed temp_seqsig.bed
+# signal < RPM/100 && SeqNumber < SeqCutoff/100 for each 100bp bin, then filter.
+awk -v R=$RPMCUT -v S=$SEQCUT -v F=$PILIKE_FACTOR 'BEGIN{FS=OFS="\t"} {if($7/F>R/100 && $8>S/100){print $1,$2,$3,$4,$5,$6;a[$4]=1}if(a[$4]){print $1,$2,$3,$4,$5,$6}}' temp_signal.bed > temp_5utr_refined
+fun_sort temp_3utr_unrefined_break
+bedtools intersect -sorted -s -F 0.5 -c -a temp_3utr_unrefined_break -b ${PREFIX}.pilikeRNA.uniq.bed > temp_readsig.bed
+bedtools intersect -sorted -s -F 0.5 -c -a temp_3utr_unrefined_break -b ${PREFIX}.pilikeRNA.uniq.bed2 | awk '{FS=OFS="\t"} {print $7}' > temp_seqsig.bed
+paste temp_readsig.bed temp_seqsig.bed | sort -k4,4 -k1,1 -k2,2nr > temp_signal.bed && rm temp_readsig.bed temp_seqsig.bed
+
+#determine the boundaries of protein_coding piRNA genes
+awk -v R=$RPMCUT -v S=$SEQCUT -v F=$PILIKE_FACTOR 'BEGIN{FS=OFS="\t"} {if($7/F>R/100 && $8>S/100){print $1,$2,$3,$4,$5,$6;a[$4]=1}if(a[$4]){print $1,$2,$3,$4,$5,$6}}' temp_signal.bed > temp_3utr_refined
+cat temp_3utr_refined temp_5utr_refined temp_5utr_refined_body temp_3utr_refined_body temp_body | sort -k4,4 -k1,1 -k2,2n -k3,3n | awk '{if($2){print $0}}' | awk 'BEGIN{FS=OFS="\t"} {if(NR==1){chr=$1;start=$2;ender=$3;name=$4;strand=$6}else if($4==name && $2<=ender+1){ender=$3}else{print chr,start,ender,name,0,strand;chr=$1;start=$2;ender=$3;name=$4;strand=$6}} END{if($4==name && $2<=ender+1){print chr,start,ender,name,0,strand}}' > ${PREFIX}.piRNA.protein_coding.bed
+awk 'BEGIN{FS=OFS="\t"} {if(FNR==NR){a[$1]=1}else{if(!a[$4]){print $0}}}' ${PREFIX}.piRNA.protein_coding.name.list ${PREFIX}.piRNA.protein_coding.bed > ${PREFIX}.piRNA.protein_coding.potential.bed 
+awk 'BEGIN{FS=OFS="\t"} {if(FNR==NR){a[$1]=1}else{if(a[$4]){print $0}}}' ${PREFIX}.piRNA.protein_coding.name.list ${PREFIX}.piRNA.protein_coding.bed > t && mv t ${PREFIX}.piRNA.protein_coding.bed 
+
+#calculate signal of introns in protein_coding piRNA genes to look at if some intron can be filled
+DATE=`date --date="-24 hour"`
+echo -e "\033[33mcalculate signal for introns\t"$DATE"\033[0m"
+sort -k4,4 -k2,2n ${PREFIX}.piRNA.protein_coding.bed > t && mv t ${PREFIX}.piRNA.protein_coding.bed  
+awk 'BEGIN{FS=OFS="\t";name=0;ender=0} {if($4==name){print $1,ender,$2,name,0,$6;ender=$3}else{name=$4;ender=$3}}' ${PREFIX}.piRNA.protein_coding.bed > ${PREFIX}.piRNA.protein_coding.intron.bed
+fun_sort ${PREFIX}.piRNA.protein_coding.intron.bed
+bedtools intersect -sorted -s -F 0.5 -c -a ${PREFIX}.piRNA.protein_coding.intron.bed -b ${PREFIX}.pilikeRNA.uniq.bed > temp_readsig.bed
+bedtools intersect -sorted -s -F 0.5 -c -a ${PREFIX}.piRNA.protein_coding.intron.bed -b ${PREFIX}.pilikeRNA.uniq.bed2 | awk '{FS=OFS="\t"} {print $7}' > temp_seqsig.bed
+paste temp_readsig.bed temp_seqsig.bed | sort -k4,4 -k1,1 -k2,2nr > temp_signal.bed && rm temp_readsig.bed temp_seqsig.bed
+awk -v R=$RPMCUT -v S=$SEQCUT -v F=$PILIKE_FACTOR 'BEGIN{FS=OFS="\t"} {if($7/($3-$2)*5000/F>R && $8/($3-$2)*5000>S){print $1,$2,$3,$4,1,$6}}' temp_signal.bed > introns.bed
+cat ${PREFIX}.piRNA.protein_coding.bed introns.bed | sort -k4,4 -k2,2n | awk 'BEGIN{FS=OFS="\t"} {if(NR==1){chrom=$1;start=$2;ender=$3;name=$4;strand=$6}else if($4!=name){print chrom,start,ender,name,0,strand;chrom=$1;start=$2;ender=$3;name=$4;strand=$6}else if($2==ender+1){ender=$3}else{print chrom,start,ender,name,0,strand;chrom=$1;start=$2;ender=$3;name=$4;strand=$6}} END{print chrom,start,ender,name,0,strand}' > t && mv t ${PREFIX}.piRNA.protein_coding.bed
+awk -v g=$GENOME 'BEGIN{FS=OFS="\t"} {print $1,"piFinder","exon",$2,$3,".",$6,".","gene_id \"pi_"g"_PC_"$4"\"; type \"protein_coding\"; transcript_id \"pi_"g"_PC_"$4".1\";"}' ${PREFIX}.piRNA.protein_coding.bed > ${PREFIX}.piRNA.protein_coding.gtf
+rm temp*
+
+###make bigWig file for genome browser
+DATE=`date --date="-24 hour"`
+echo -e "\033[33mmake bigWig file\t"$DATE"\033[0m"
+bedtools genomecov -strand + -bg -5 -i ${PREFIX}.pilikeRNA.uniq.bed -g ${CHROM_SIZE} > temp_Watson.bdg
+bedtools genomecov -strand - -bg -5 -i ${PREFIX}.pilikeRNA.uniq.bed -g ${CHROM_SIZE} > temp_Crick.bdg
+awk -v v1=$PILIKE_FACTOR '{FS=OFS="\t"} {print $1,$2,$3,$4/v1}' temp_Watson.bdg > temp_Watson_nor.bdg
+awk -v v1=$PILIKE_FACTOR '{FS=OFS="\t"} {print $1,$2,$3,-$4/v1}' temp_Crick.bdg > temp_Crick_nor.bdg
+bedGraphToBigWig temp_Watson_nor.bdg ${CHROM_SIZE} bigWig/${PREFIX}.pilikeRNA.uniq.Watson.bw
+bedGraphToBigWig temp_Crick_nor.bdg ${CHROM_SIZE} bigWig/${PREFIX}.pilikeRNA.uniq.Crick.bw
+rm temp*
+
+###remove protein_coding piRNA reads
+#get protein_coding piRNA genes bed files ( only with start and end)
+DATE=`date --date="-24 hour"`
+echo -e "\033[31mremove protein_coding piRNA reads\t"$DATE"\033[0m"
+sort -k4,4 -k2,2n ${PREFIX}.piRNA.protein_coding.bed | awk 'BEGIN{FS=OFS="\t"} {if(NR==1){chrom=$1;start=$2;ender=$3;name=$4;strand=$6}else if($4==name){ender=$3}else{print chrom,start,ender,name,0,strand;chrom=$1;start=$2;ender=$3;name=$4;strand=$6}} END{print chrom,start,ender,name,0,strand}' > ${PREFIX}.piRNA.protein_coding.ns.bed 
+fun_sort ${PREFIX}.piRNA.protein_coding.bed
+fun_sort ${PREFIX}.piRNA.protein_coding.ns.bed
+
+#first remove protein_coding piRNA reads, no matter intron and antisense
+bedtools intersect -sorted -f 0.5 -wa -a ${PREFIX}.pilikeRNA.uniq.bed2 -b ${PREFIX}.piRNA.protein_coding.ns.bed > ${PREFIX}.piRNA.protein_coding.U.uniq.bed2
+bedtools intersect -sorted -v -f 0.5 -wa -a ${PREFIX}.pilikeRNA.uniq.bed2 -b ${PREFIX}.piRNA.protein_coding.ns.bed > t.bed2 && mv t.bed2 ${PREFIX}.pilikeRNA.uniq.bed2
+bedtools intersect -sorted -f 0.5 -wa -a ${PREFIX}.pilikeRNA.ACG.uniq.bed2 -b ${PREFIX}.piRNA.protein_coding.ns.bed > ${PREFIX}.piRNA.protein_coding.ACG.uniq.bed2
+bedtools intersect -sorted -v -f 0.5 -wa -a ${PREFIX}.pilikeRNA.ACG.uniq.bed2 -b ${PREFIX}.piRNA.protein_coding.ns.bed > t.bed2 && mv t.bed2 ${PREFIX}.pilikeRNA.ACG.uniq.bed2
+##TODO(BB): U & T & ACG, figure it out!
+
+#secondly remove protential protein_coding piRNA reads, no matter antisense 
+fun_sort ${PREFIX}.piRNA.protein_coding.potential.bed 
+bedtools intersect -sorted -f 0.5 -wa -a ${PREFIX}.pilikeRNA.uniq.bed2 -b ${PREFIX}.piRNA.protein_coding.potential.bed > ${PREFIX}.piRNA.protein_coding.potential.U.uniq.bed2
+bedtools intersect -sorted -v -f 0.5 -wa -a ${PREFIX}.pilikeRNA.uniq.bed2 -b ${PREFIX}.piRNA.protein_coding.potential.bed > t.bed2 && mv t.bed2 ${PREFIX}.pilikeRNA.uniq.bed2
+bedtools intersect -sorted -f 0.5 -wa -a ${PREFIX}.pilikeRNA.ACG.uniq.bed2 -b ${PREFIX}.piRNA.protein_coding.potential.bed > ${PREFIX}.piRNA.protein_coding.potential.ACG.uniq.bed2
+bedtools intersect -sorted -v -f 0.5 -wa -a ${PREFIX}.pilikeRNA.ACG.uniq.bed2 -b ${PREFIX}.piRNA.protein_coding.potential.bed > t.bed2 && mv t.bed2 ${PREFIX}.pilikeRNA.ACG.uniq.bed2
+
+#thirdly remove protein_coding reads
+fun_sort ${PREFIX}.protein_coding.exon.bed 
+bedtools intersect -sorted -f 0.5 -wa -a ${PREFIX}.pilikeRNA.uniq.bed2 -b ${PREFIX}.protein_coding.exon.bed > ${PREFIX}.protein_coding.U.uniq.bed2
+bedtools intersect -sorted -v -s -f 0.5 -wa -a ${PREFIX}.pilikeRNA.uniq.bed2 -b ${PREFIX}.protein_coding.exon.bed > t.bed2 && mv t.bed2 ${PREFIX}.pilikeRNA.uniq.bed2
+bedtools intersect -sorted -f 0.5 -wa -a ${PREFIX}.pilikeRNA.ACG.uniq.bed2 -b ${PREFIX}.protein_coding.exon.bed > ${PREFIX}.protein_coding.ACG.uniq.bed2
+bedtools intersect -sorted -v -s -f 0.5 -wa -a ${PREFIX}.pilikeRNA.ACG.uniq.bed2 -b ${PREFIX}.protein_coding.exon.bed > t.bed2 && mv t.bed2 ${PREFIX}.pilikeRNA.ACG.uniq.bed2
+
+#merge protein_coding reads
+cat ${PREFIX}.piRNA.protein_coding.U.uniq.bed2 ${PREFIX}.piRNA.protein_coding.ACG.uniq.bed2 | awk 'BEGIN{FS=OFS="\t"} {print $7,$4}' > insert_reads/${PREFIX}.piRNA.protein_coding.uniq.insert && rm ${PREFIX}.piRNA.protein_coding.U.uniq.bed2 ${PREFIX}.piRNA.protein_coding.ACG.uniq.bed2
+cat ${PREFIX}.piRNA.protein_coding.potential.U.uniq.bed2 ${PREFIX}.piRNA.protein_coding.potential.ACG.uniq.bed2 | awk 'BEGIN{FS=OFS="\t"} {print $7,$4}' > insert_reads/${PREFIX}.piRNA.protein_coding.potential.uniq.insert && rm ${PREFIX}.piRNA.protein_coding.potential.U.uniq.bed2 ${PREFIX}.piRNA.protein_coding.potential.ACG.uniq.bed2
+cat ${PREFIX}.protein_coding.U.uniq.bed2 ${PREFIX}.protein_coding.ACG.uniq.bed2 | awk 'BEGIN{FS=OFS="\t"} {print $7,$4}' > insert_reads/${PREFIX}.protein_coding.uniq.insert && rm ${PREFIX}.protein_coding.U.uniq.bed2 ${PREFIX}.protein_coding.ACG.uniq.bed2
+awk '{FS=OFS="\t"} {for(i=0;i<$4;i++){print $1,$2,$3,1,1,$6}}' ${PREFIX}.pilikeRNA.uniq.bed2 > ${PREFIX}.pilikeRNA.uniq.bed
+awk '{FS=OFS="\t"} {for(i=0;i<$4;i++){print $1,$2,$3,1,1,$6}}' ${PREFIX}.pilikeRNA.ACG.uniq.bed2 > ${PREFIX}.pilikeRNA.ACG.uniq.bed
+
+
+#################################
+###find intergenic piRNA genes###
+#################################
+
+
+echo -e "\033[40;36m\033[1m---Find intergenic piRNA genes---\t"$DATE"\033[0m"
+###call potential intergenic piRNA genes without gene structure
+#get genome window
+DATE=`date --date="-24 hour"`
+echo -e "\033[32mmake bed file for each window in genome\t"$DATE"\033[0m"
+BB_GetBinFromGenome.py ${CHROM_SIZE} ${GENOME}_W${WINDOW}_S${SHIFT}.bed ${WINDOW} ${SHIFT}
+fun_sort ${GENOME}_W${WINDOW}_S${SHIFT}.bed
+
+#calculate window sequence signal
+DATE=`date --date="-24 hour"`
+echo -e "\033[31mcalculate sequence and reads signal in each window\t"$DATE"\033[0m"
+bedtools intersect -c -sorted -s -F 0.5 -a ${GENOME}_W${WINDOW}_S${SHIFT}.bed -b ${PREFIX}.pilikeRNA.uniq.bed2 > ${GENOME}_W${WINDOW}_S${SHIFT}.seqsignal.plus.bed
+bedtools intersect -c -sorted -s -F 0.5 -a ${GENOME}_W${WINDOW}_S${SHIFT}.bed -b ${PREFIX}.pilikeRNA.ACG.uniq.bed2 | awk '{FS=OFS="\t"} {print $7}' > ${GENOME}_W${WINDOW}_S${SHIFT}.seqsignal.ACG.plus.bed
+bedtools intersect -c -sorted -S -F 0.5 -a ${GENOME}_W${WINDOW}_S${SHIFT}.bed -b ${PREFIX}.pilikeRNA.uniq.bed2 | awk '{FS=OFS="\t"} {print $7}' > ${GENOME}_W${WINDOW}_S${SHIFT}.seqsignal.minus.bed
+bedtools intersect -c -sorted -S -F 0.5 -a ${GENOME}_W${WINDOW}_S${SHIFT}.bed -b ${PREFIX}.pilikeRNA.ACG.uniq.bed2 | awk '{FS=OFS="\t"} {print $7}' > ${GENOME}_W${WINDOW}_S${SHIFT}.seqsignal.ACG.minus.bed
+
+#calculate window reads signal
+bedtools intersect -c -s -sorted -F 0.5 -a ${GENOME}_W${WINDOW}_S${SHIFT}.bed \
+-b ${PREFIX}.pilikeRNA.uniq.bed | awk '{FS=OFS="\t"} {print $7}' > ${GENOME}_W${WINDOW}_S${SHIFT}.readsignal.plus.bed
+bedtools intersect -c -s -sorted -F 0.5 -a ${GENOME}_W${WINDOW}_S${SHIFT}.bed \
+-b ${PREFIX}.pilikeRNA.ACG.uniq.bed | awk '{FS=OFS="\t"} {print $7}' > \
+${GENOME}_W${WINDOW}_S${SHIFT}.readsignal.ACG.plus.bed
+bedtools intersect -c -S -sorted -F 0.5 -a ${GENOME}_W${WINDOW}_S${SHIFT}.bed \
+-b ${PREFIX}.pilikeRNA.uniq.bed | awk '{FS=OFS="\t"} {print $7}' > \
+${GENOME}_W${WINDOW}_S${SHIFT}.readsignal.minus.bed
+bedtools intersect -c -S -sorted -F 0.5 -a ${GENOME}_W${WINDOW}_S${SHIFT}.bed \
+-b ${PREFIX}.pilikeRNA.ACG.uniq.bed | awk '{FS=OFS="\t"} {print $7}' > \
+${GENOME}_W${WINDOW}_S${SHIFT}.readsignal.ACG.minus.bed
+
+#merge sequence signal and reads signal
+DATE=`date --date="-24 hour"`
+echo -e "\033[33mmerge signal\t"$DATE"\033[0m"
+paste ${GENOME}_W${WINDOW}_S${SHIFT}.seqsignal.plus.bed ${GENOME}_W${WINDOW}_S${SHIFT}.seqsignal.ACG.plus.bed ${GENOME}_W${WINDOW}_S${SHIFT}.seqsignal.minus.bed ${GENOME}_W${WINDOW}_S${SHIFT}.seqsignal.ACG.minus.bed ${GENOME}_W${WINDOW}_S${SHIFT}.readsignal.plus.bed ${GENOME}_W${WINDOW}_S${SHIFT}.readsignal.ACG.plus.bed ${GENOME}_W${WINDOW}_S${SHIFT}.readsignal.minus.bed ${GENOME}_W${WINDOW}_S${SHIFT}.readsignal.ACG.minus.bed > ${GENOME}_W${WINDOW}_S${SHIFT}.signal.bed
+rm ${GENOME}_W${WINDOW}_S${SHIFT}.seqsignal* ${GENOME}_W${WINDOW}_S${SHIFT}.readsignal*
+
+#filter windows with signal
+DATE=`date --date="-24 hour"`
+echo -e "\033[32mfilter window to find potential piRNA cluster\t"$DATE"\033[0m"
+awk -v v1=$PILIKE_FACTOR -v R=$RPMCUT -v S=$SEQCUT '{FS=OFS="\t"} {if(($11/v1)>R && $7>S && $11>$13){print $1,$2,$3,$11/v1,$7,"+"}else if(($13/v1)>R && $9>S && $13>$11){print $1,$2,$3,$13/v1,$9,"-"}}' ${GENOME}_W${WINDOW}_S${SHIFT}.signal.bed > ${PREFIX}.picluster.unmerged.bed
+rm ${GENOME}_W${WINDOW}_S${SHIFT}.bed
+
+#merge overlapped piRNA cluster
+DATE=`date --date="-24 hour"`
+echo -e "\033[31mmerge potential piRNA cluster\t"$DATE"\033[0m"
+sort -k1,1 -k2,2n ${PREFIX}.picluster.unmerged.bed | bedtools merge -s -d 101 -i - -c 6 -o first | awk 'BEGIN{FS=OFS="\t";N=1} {print $1,$2,$3,N,0,$4;N++}' > ${PREFIX}.picluster.extend.bed
+rm ${PREFIX}.picluster.unmerged.bed
+
+#try predict potential piRNA expression regions by break the clusters into 100bp bin
+DATE=`date --date="-24 hour"`
+echo -e "\033[32mtry predict potential piRNA clusters exons\t"$DATE"\033[0m"
+bedtools intersect -c -s -sorted -F 0.5 -a ${PREFIX}.picluster.extend.bed -b ${PREFIX}.pilikeRNA.uniq.bed | awk -v v1=$PILIKE_FACTOR '{FS=OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7/v1}' > ${PREFIX}.picluster.extend.readsignal.bed
+rm ${PREFIX}.picluster.extend.bed
+awk '{FS=OFS="\t"} {for(i=1;i*100<=($3-$2+1);i++){print $1,$2+i*100-100,$2+i*100-1,$4,$7,$6}}' ${PREFIX}.picluster.extend.readsignal.bed | sort -k1,1 -k2,2n > ${PREFIX}.picluster.extend.breaked.bed
+bedtools intersect -s -c -sorted -F 0.5 -a ${PREFIX}.picluster.extend.breaked.bed -b ${PREFIX}.pilikeRNA.uniq.bed | awk -v v1=$PILIKE_FACTOR '{FS=OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7/v1}' > ${PREFIX}.picluster.extend.breaked.readsignal.plus.bed
+bedtools intersect -s -c -sorted -F 0.5 -a ${PREFIX}.picluster.extend.breaked.bed -b ${PREFIX}.pilikeRNA.uniq.bed2 | awk '{FS=OFS="\t"} {print $7}' > ${PREFIX}.picluster.extend.breaked.seqsignal.plus.bed
+bedtools intersect -S -c -sorted -F 0.5 -a ${PREFIX}.picluster.extend.breaked.bed -b ${PREFIX}.pilikeRNA.uniq.bed | awk -v v1=$PILIKE_FACTOR '{FS=OFS="\t"} {print $7/v1}' > ${PREFIX}.picluster.extend.breaked.readsignal.minus.bed
+bedtools intersect -S -c -sorted -F 0.5 -a ${PREFIX}.picluster.extend.breaked.bed -b ${PREFIX}.pilikeRNA.uniq.bed2 | awk '{FS=OFS="\t"} {print $7}' > ${PREFIX}.picluster.extend.breaked.seqsignal.minus.bed
+paste ${PREFIX}.picluster.extend.breaked.readsignal.plus.bed ${PREFIX}.picluster.extend.breaked.seqsignal.plus.bed ${PREFIX}.picluster.extend.breaked.readsignal.minus.bed ${PREFIX}.picluster.extend.breaked.seqsignal.minus.bed > ${PREFIX}.picluster.extend.breaked.signal.bed && rm ${PREFIX}.picluster.extend.breaked.readsignal.plus.bed ${PREFIX}.picluster.extend.breaked.seqsignal.plus.bed ${PREFIX}.picluster.extend.breaked.readsignal.minus.bed ${PREFIX}.picluster.extend.breaked.seqsignal.minus.bed ${PREFIX}.picluster.extend.breaked.bed
+sort -k6,6 -k1,1 -k2,2n ${PREFIX}.picluster.extend.breaked.signal.bed | awk -v R=$RPMCUT -v S=$SEQCUT '{FS=OFS="\t"} {if(($7>R/50 || $7>$5/200) && ($8>S/50) && $7>=$9){print $0}}' | sort -k1,1 -k2,2n > ${PREFIX}.picluster.extend.breaked.signal.filtered.bed
+
+###confirm break point
+DATE=`date --date="-24 hour"`
+echo -e "\033[32mconfirm the break points of overlapped piclusters\t"$DATE"\033[0m"
+piFinder_IdentifyDividePoint.py ${PREFIX}.picluster.extend.breaked.signal.filtered.bed ${PREFIX}.picluster.extend.bed > log_file/identifyDividePoint.log
+
+###merge bins within 1000bp
+DATE=`date --date="-24 hour"`
+echo -e "\033[32mmerge 100bp exons within 1000bp gap\t"$DATE"\033[0m"
+awk 'BEGIN{FS=OFS="\t";P=0} {if(NR==1){CHR=$1;S=$2;E=$3;P=$4;STRAND=$6;RPM=$7;SEQNUM=$8}else if($4!=P || $3-1000>E){print CHR,S,E,P,0,STRAND,RPM,SEQNUM;CHR=$1;S=$2;E=$3;P=$4;STRAND=$6;RPM=$7;SEQNUM=$8}else{E=$3;RPM=RPM+$7;SEQNUM=SEQNUM+$8}} END{print CHR,S,E,P,0,STRAND,RPM,SEQNUM}' ${PREFIX}.picluster.extend.bed > ${PREFIX}.picluster.merged.bed
+awk -v R=$RPMCUT -v S=$SEQCUT '{FS=OFS="\t"} {if($7>R && $8>S){print $0}}' ${PREFIX}.picluster.merged.bed > t && mv t ${PREFIX}.picluster.merged.bed
+
+#filter genic piclusters(done by previous step, update time: Jan09, 2017)
+#get non-structure piRNA clusters
+fun_sort ${PREFIX}.picluster.merged.bed
+fun_sort ${PREFIX}.protein_coding.exon.bed
+cp ${PREFIX}.picluster.merged.bed ${PREFIX}.picluster.pcfiltered.bed
+sort -k4,4 -k1,1 -k2,2n ${PREFIX}.picluster.pcfiltered.bed | awk 'BEGIN{FS=OFS="\t"} {if(NR==1){start=$2;chr=$1;ender=$3;name=$4;strand=$6;rpm=$7;seqnum=$8}else if($4==name){ender=$3;rpm=rpm+$7;seqnum=seqnum+$8}else{print chr,start,ender,name,0,strand,rpm,seqnum;start=$2;chr=$1;ender=$3;name=$4;strand=$6;rpm=$7;seqnum=$8}} END{print chr,start,ender,name,0,strand,rpm,seqnum}' | sort -k1,1 -k2,2n > ${PREFIX}.picluster.pcfiltered.nostructure.bed
+
+######confirm piRNA gene structure
+echo -e "\033[40;36m\033[1m---Confirm piRNA Gene Structure---\033[0m"
+
+###insert to fasta for piRNA like reads with 1ACGT
+DATE=`date --date="-24 hour"`
+echo -e "\033[33mconvert piRNA like reads from insert format to fasta format\t"$DATE"\033[0m"
+cat insert_reads/${PREFIX}.pilikeRNA.insert insert_reads/${PREFIX}.pilikeRNA.ACG.insert > insert_reads/${PREFIX}.pilikeRNA.ACGT.insert
+awk -v N=1 -v P=$PREFIX '{FS=OFS="\t"} {for(i=0;i<$2;i++){print ">"P"."N"\n"$1}} {N++}' insert_reads/${PREFIX}.pilikeRNA.ACGT.insert > ${PREFIX}.pilikeRNA.ACGT.fa
+
+###map piRNA like reads to genome
+DATE=`date --date="-24 hour"`
+echo -e "\033[33mmap piRNA like reads to piRNA clusters\nCaution: piFinder set min overhang of SJ to only 6 for piRNA reads\t"$DATE"\033[0m"
+STAR --genomeDir ${INDEX_STAR} --runThreadN ${CPU} --readFilesIn ${PREFIX}.pilikeRNA.ACGT.fa --outFileNamePrefix STAR_piRNA/${PREFIX} --outFilterMismatchNmax 1 --outFilterMultimapNmax -1 --outSAMattributes All --outFilterIntronMotifs RemoveNoncanonicalUnannotated --outSJfilterOverhangMin 30 6 6 6 --outSJfilterIntronMaxVsReadN 50000 --alignIntronMax 50000 --alignSJoverhangMin 6 > log_file/STAR_piRNA.log 2>&1
+
+###transform SJ.tab to SJ.bed
+awk 'BEGIN{FS=OFS="\t";s[1]="+";s[2]="-";t[1]="GT/AG";t[2]="CT/AC";t[3]="GC/AG";t[4]="CT/GC";t[5]="AT/AC";t[6]="GT/AT"} {print $1,$2,$3,0,t[$5],s[$4],$7,$8,$9}' STAR_piRNA/${PREFIX}SJ.out.tab | sort -k1,1 -k2,2n | bedtools intersect -wo -s -sorted -f 1 -a - -b ${PREFIX}.picluster.pcfiltered.nostructure.bed | awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,$13,$5,$6,$7,$8,$9}' > ${PREFIX}_SJ_piRNA.bed
+
+###check RNA-seq file for transcriptome assemble
+DATE=`date --date="-24 hour"`
+echo -e "\033[32mcheck RNA-seq file for picluster mapping\t"$DATE"\033[0m"
+if [ ! -f ${INPUT_LEFT} ];then
+	echo -e "\033[40;31m\033[1mno RNA-seq file for SJ finding, skipping...\033[0m"
+	rm -rf STAR_RNA
+elif [ ! -f ${INPUT_RIGHT} ];then
+	echo -e "\033[40;31m\033[1msingle-end RNA-seq file for SJ finding...\033[0m"
+	#remove rRNA
+	DATE=`date --date="-24 hour"`
+	echo -e "\033[33mremove rRNA via bowtie2\t"$DATE"\033[0m"
+	#bowtie2 -N 1 -p ${CPU} -q -x ${INDEX_RRNA_BOWTIE2} -U ${INPUT_LEFT} -S /dev/null --un ${PREFIX}.RNAseq_rRNA.fq > log_file/bowtie2_rRNA.log 2>&1
+	#calculate the mismatch for STRA via read length
+	DATE=`date --date="-24 hour"`
+	echo -e "\033[31mmap to genome via STAR\t"$DATE"\033[0m"
+	RNA_LENGTH=`head -2 ${INPUT_LEFT} | tail -1 | awk '{print length($1)}'`
+	RNA_MISMATCH=`expr $RNA_LENGTH / 51 + 1`
+	echo -e "\033[40;36m\033[1mread length of RNA-seq is "${RNA_LENGTH}", allowed "${RNA_MISMATCH}" mismatch for STAR mapping\033[0m"
+	#map to genome by STAR
+	#STAR --genomeDir ${INDEX_STAR} --runThreadN ${CPU} --readFilesIn ${PREFIX}.RNAseq_rRNA.fq --outFileNamePrefix STAR_RNA/${PREFIX} --outFilterMismatchNmax ${RNA_MISMATCH} --outFilterMultimapNmax 100 --outSAMattributes All --outFilterIntronMotifs RemoveNoncanonicalUnannotated --outSJfilterOverhangMin 30 8 8 8 --outSJfilterIntronMaxVsReadN 50000 --alignIntronMax 50000 --alignSJoverhangMin 8 > log_file/STAR_RNA.log 2>&1
+else
+	echo -e "\033[40;31m\033[1mpaired-end RNA-seq file for SJ finding...\033[0m"
+	#remove rRNA
+	DATE=`date --date="-24 hour"`
+	echo -e "\033[33mremove rRNA via bowtie2\t"$DATE"\033[0m"
+	#bowtie2 -N 1 -p ${CPU} -q -x ${INDEX_RRNA_BOWTIE2} -1 ${INPUT_LEFT} -2 ${INPUT_RIGHT} -S /dev/null --un-conc ${PREFIX}.RNAseq_rRNA.fq > log_file/bowtie2_rRNA.log 2>&1
+	#calculate the mismatch for STRA via read length
+	DATE=`date --date="-24 hour"`
+	echo -e "\033[31mmap to genome via STAR\t"$DATE"\033[0m"
+	RNA_LENGTH=`head -2 ${INPUT_LEFT} | tail -1 | awk '{print length($1)}'`
+	RNA_MISMATCH=`expr $RNA_LENGTH / 51 + 1`
+	echo -e "\033[40;36m\033[1mread length of RNA-seq is "${RNA_LENGTH}", allowed "${RNA_MISMATCH}" mismatch for STAR mapping\033[0m"
+	#map to genome by STAR
+	#STAR --genomeDir ${INDEX_STAR} --runThreadN ${CPU} --readFilesIn ${PREFIX}.RNAseq_rRNA.1.fq ${PREFIX}.RNAseq_rRNA.2.fq --outFileNamePrefix STAR_RNA/${PREFIX} --outFilterMismatchNmax ${RNA_MISMATCH} --outFilterMultimapNmax 100 --outSAMattributes All --outFilterIntronMotifs RemoveNoncanonicalUnannotated --outSJfilterOverhangMin 30 8 8 8 --outSJfilterIntronMaxVsReadN 50000 --alignIntronMax 50000 --alignSJoverhangMin 8 > log_file/STAR_RNA.log 2>&1
+fi
+
+###merge SJ file and calculate intron signal
+if [ -d STAR_RNA ];then
+	DATE=`date --date="-24 hour"`
+	echo -e "\033[33mmerge SJ files and calculate signal\t"$DATE"\033[0m"
+	awk 'BEGIN{FS=OFS="\t";s[1]="+";s[2]="-";t[1]="GT/AG";t[2]="GT/AG";t[3]="GC/AG";t[4]="GC/AG";t[5]="AT/AC";t[6]="AT/AC"} {print $1,$2,$3,0,t[$5],s[$4],$7,$8,$9}' STAR_RNA/${PREFIX}SJ.out.tab | sort -k1,1 -k2,2n | bedtools intersect -wo -s -sorted -f 1 -a - -b ${PREFIX}.picluster.pcfiltered.nostructure.bed | awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,$13,$5,$6,$7,$8,$9}' > ${PREFIX}_SJ_RNA.bed
+	cat ${PREFIX}_SJ_RNA.bed ${PREFIX}_SJ_piRNA.bed | sort -k1,1 -k2,2n -k3,3n -k6,6 	|  awk 'BEGIN{FS=OFS="\t"} {if(NR==1){chr=$1;start=$2;ender=$3;name=$4;type=$5;strand=$6;uniqread=$7;multiread=$8;overhang=$9}else if($1==chr && $2==start && $3==ender){uniqread=uniqread+$7;multiread=multiread+$8;if($9>overhang){overhang=$9}}else{print chr,start,ender,name,type,strand,uniqread,multiread,overhang;chr=$1;start=$2;ender=$3;name=$4;type=$5;strand=$6;uniqread=$7;multiread=$8;overhang=$9}} END{print chr,start,ender,name,type,strand,uniqread,multiread,overhang}' > splicing_junction/${PREFIX}_SJ.bed
+else
+	cat ${PREFIX}_SJ_piRNA.bed > splicing_junction/${PREFIX}_SJ.bed
+fi
+N1=(`grep "Uniquely mapped reads number" STAR_piRNA/*Log.final.out | cut -f 2`)
+if [ -d STAR_RNA ];then
+	N2=(`grep "Uniquely mapped reads number" STAR_RNA/*Log.final.out | cut -f 2`)
+else
+	N2=0
+fi
+N1=`expr $N1 / 20000000`
+N2=`expr $N2 / 40000000`
+INTRON_CUTOFF=`expr 1 + $N1 + $N2`
+awk -v F=$INTRON_CUTOFF 'BEGIN{FS=OFS="\t"} {if($7>=F){print $0}}' splicing_junction/${PREFIX}_SJ.bed > splicing_junction/${PREFIX}_SJ_confident.bed
+awk 'BEGIN{FS=OFS="\t";N=1} {print $1,$2-500,$2-1,$4,$5,$6,$7,$8,$9,"1",N"\n"$1,$2,$3,$4,$5,$6,$7,$8,$9,"2",N"\n"$1,$3+1,$3+500,$4,$5,$6,$7,$8,$9,"3",N;N++}' splicing_junction/${PREFIX}_SJ_confident.bed | awk 'BEGIN{FS=OFS="\t"} {if($2<1){print $1,1,$3,$4,$5,$6,$7,$8,$9,$10}else{print $0}}' > splicing_junction/${PREFIX}_SJ_confident_extend.bed
+fun_sort splicing_junction/${PREFIX}_SJ_confident_extend.bed
+bedtools intersect -c -s -sorted -F 1 -a splicing_junction/${PREFIX}_SJ_confident_extend.bed -b ${PREFIX}.pilikeRNA.uniq.bed > splicing_junction/${PREFIX}_SJ_confident_extend_readsig.bed
+bedtools intersect -c -s -sorted -F 1 -a splicing_junction/${PREFIX}_SJ_confident_extend.bed -b ${PREFIX}.pilikeRNA.uniq.bed2 | awk '{print $12}' > splicing_junction/${PREFIX}_SJ_confident_extend_seqsig.bed
+paste splicing_junction/${PREFIX}_SJ_confident_extend_readsig.bed splicing_junction/${PREFIX}_SJ_confident_extend_seqsig.bed | awk -v factor=$PILIKE_FACTOR 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12*5000/factor/($3-$2),$13*5000/($3-$2)}' > splicing_junction/${PREFIX}_SJ_confident_extend_signal.bed && rm splicing_junction/${PREFIX}_SJ_confident_extend_seqsig.bed splicing_junction/${PREFIX}_SJ_confident_extend_readsig.bed
+sort -k11,11n -k2,2n splicing_junction/${PREFIX}_SJ_confident_extend_signal.bed | cut -f 1-10,12,13 > t && mv t splicing_junction/${PREFIX}_SJ_confident_extend_signal.bed
+awk 'BEGIN{FS=OFS="\t"} {if(NR%3==1){rpm_pre=$11;seqnum_pre=$12}else if(NR%3==2){rpm_this=$11;seqnum_this=$12;start=$2;ender=$3}else{print $1,start,ender,$4,$5,$6,$7,$8,$9,$10,rpm_pre,seqnum_pre,rpm_this,seqnum_this,$11,$12}}' splicing_junction/${PREFIX}_SJ_confident_extend_signal.bed > temp && mv temp splicing_junction/${PREFIX}_SJ_confident_extend_signal.bed
+
+###call intron for piRNA clusters
+DATE=`date --date="-24 hour"`
+echo -e "\033[31mcall intron for piRNA cluster\t"$DATE"\033[0m"
+piFinder_FindIntron.py ${PREFIX}.picluster.pcfiltered.nostructure.bed splicing_junction/${PREFIX}_SJ_confident_extend_signal.bed splicing_junction/${PREFIX}_SJ.bed $INTRON_CUTOFF > log_file/findIntron.log 2>&1
+T=(`wc -l splicing_junction/${PREFIX}_SJ.bed`)
+if [ "$T" != "0" ];then
+	sort -k4,4 -k2,2n -k3,3n splicing_junction/${PREFIX}_SJ.bed | awk 'BEGIN{FS=OFS="\t"} {if(NR==1){name=$4;ender=$3;prefix=$0;length_intron=$3-$2}else if($4==name && $2<=ender+1 && $3-$2>length_intron){name=$4;ender=$3;prefix=$0;length_intron=$3-$2}else if($4!=name || $2>ender+1){print prefix;name=$4;ender=$3;prefix=$0;length_intron=$3-$2}} END{print prefix}' > ${PREFIX}_SJ_merged.bed
+	cut -f 4 ${PREFIX}_SJ_merged.bed | sort -u > SJ.list
+	awk 'BEGIN{FS=OFS="\t"} {if(FNR==NR){a[$1]=1}else{if(!a[$4]){print $0}}}' SJ.list ${PREFIX}.picluster.pcfiltered.nostructure.bed | awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,$4,"N",$6,0,0,0,$7,$8}' > ${PREFIX}.picluster.pcfiltered.nostructure.nointron.bed
+	awk 'BEGIN{FS=OFS="\t"} {if(FNR==NR){start[$4]=$2;ender[$4]=$3;rpm[$4]=$7;seqnum[$4]=$8}else{if(FNR==1){print $1,start[$4],$2-1,$4,$5,$6,$7,$8,$9,rpm[$4],seqnum[$4];name=$4;start_temp=$3+1;chr=$1;type=$5;strand=$6;uniqread=$7;multiread=$8;overhang=$9}else if($4==name){print $1,start_temp,$2-1,$4,$5,$6,$7,$8,$9,rpm[$4],seqnum[$4];start_temp=$3+1;chr=$1;type=$5;strand=$6;uniqread=$7;multiread=$8;overhang=$9}else{print chr,start_temp,ender[name],name,type,strand,uniqread,multiread,overhang,rpm[name],seqnum[name];name=$4;start_temp=$3+1;chr=$1;type=$5;strand=$6;uniqread=$7;multiread=$8;overhang=$9;print $1,start[$4],$2-1,$4,$5,$6,$7,$8,$9,rpm[$4],seqnum[$4]}}} END{print $1,start_temp,ender[name],$4,$5,$6,$7,$8,$9,rpm[$4],seqnum[$4]}' ${PREFIX}.picluster.pcfiltered.nostructure.bed ${PREFIX}_SJ_merged.bed > ${PREFIX}.picluster.pcfiltered.nostructure.intron.bed
+	cat ${PREFIX}.picluster.pcfiltered.nostructure.intron.bed ${PREFIX}.picluster.pcfiltered.nostructure.nointron.bed | sort -k4,4 -k1,1 -k2,2n -k3,3n > ${PREFIX}.piRNA.intergenic.notrefined.bed
+	rm SJ.list ${PREFIX}.picluster.pcfiltered.nostructure.intron.bed ${PREFIX}.picluster.pcfiltered.nostructure.nointron.bed
+else
+	awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,$4,"N",$6,0,0,0,$7,$8}' ${PREFIX}.picluster.pcfiltered.nostructure.bed | sort -k4,4 -k1,1 -k2,2n -k3,3n > ${PREFIX}.piRNA.intergenic.notrefined.bed
+fi
+
+###refine 5' and 3' for intergenic piRNA genes
+DATE=`date --date="-24 hour"`
+echo -e "\033[33mrefine 5' and 3' for intergenic piRNA genes\t"$DATE"\033[0m"
+cp ${PREFIX}.piRNA.intergenic.notrefined.bed ${PREFIX}.piRNA.intergenic.iteration.bed
+cut -f 4 ${PREFIX}.piRNA.intergenic.iteration.bed | sort -u > iteration.list
+#iteration for piRNA genes with exons not refined
+iteration=(`wc -l iteration.list`)
+if [ $iteration == 1 ];then
+	iteration=(`head -1 iteration.list | awk '{print NF}'`)
+fi
+ITER_NUM=0
+while [ $iteration -gt 0 ]
+do
+	ITER_NUM=`expr $ITER_NUM + 1`
+	echo -e "\033[31mthe "$ITER_NUM"th iteration......\033[0m"
+	#get utr.bed for each piRNA gene in iteration.list
+	awk 'BEGIN{FS=OFS="\t"} {if(FNR==NR){a[$1]=1}else{if(a[$4]){print $0}}}' iteration.list ${PREFIX}.piRNA.intergenic.iteration.bed | awk 'BEGIN{FS=OFS="\t"} {if(NR==1){print $0,5}else if($4!=name){print prefix,"3\n"$0,"5"};name=$4;prefix=$0} END{print prefix,"3"}' > temp_utr.bed
+	cut -f 1-11 temp_utr.bed > temp_utr_11c.bed
+	fun_sort temp_utr_11c.bed
+	fun_sort ${PREFIX}.piRNA.intergenic.iteration.bed
+	#get body.bed for exons not overlapped with utrs
+	bedtools intersect -v -s -sorted -wa -a ${PREFIX}.piRNA.intergenic.iteration.bed -b temp_utr_11c.bed > temp_body.bed
+	#break utrs to 100bp bins
+	awk 'BEGIN{FS=OFS="\t"} {if($12==5){print $1,$2,$3,$4,$5,$6,$7,$8,$3,$10,$11}}' temp_utr.bed > temp_5utr_unrefined.bed
+	awk 'BEGIN{FS=OFS="\t"} {if($12==3){print $1,$2,$3,$4,$5,$6,$7,$8,$2,$10,$11}}' temp_utr.bed > temp_3utr_unrefined.bed
+	awk 'BEGIN{FS=OFS="\t"} {for(i=0;i*100<($3-$2+1-100);i++){print $1,$2+i*100,$2+i*100+99,$4,$5,$6,$7,$8,$9,$10,$11};print $1,$2+i*100,$3,$4,$5,$6,$7,$8,$9,$10,$11}' temp_5utr_unrefined.bed > temp_5utr_unrefined_break.bed
+	awk 'BEGIN{FS=OFS="\t"} {for(i=0;i*100<($3-$2+1-100);i++){print $1,$3-i*100-99,$3-i*100,$4,$5,$6,$7,$8,$9,$10,$11};print $1,$2,$3-i*100,$4,$5,$6,$7,$8,$9,$10,$11}' temp_3utr_unrefined.bed > temp_3utr_unrefined_break.bed
+	#filter utr bins without enough signal
+	fun_sort temp_5utr_unrefined_break.bed
+	fun_sort temp_3utr_unrefined_break.bed
+	bedtools intersect -s -sorted -c -F 0.5 -a temp_5utr_unrefined_break.bed -b ${PREFIX}.pilikeRNA.uniq.bed > temp_5utr_unrefined_break_readsig.bed
+	bedtools intersect -s -sorted -c -F 0.5 -a temp_3utr_unrefined_break.bed -b ${PREFIX}.pilikeRNA.uniq.bed > temp_3utr_unrefined_break_readsig.bed
+	bedtools intersect -s -sorted -c -F 0.5 -a temp_5utr_unrefined_break.bed -b ${PREFIX}.pilikeRNA.uniq.bed2 > temp_5utr_unrefined_break_seqsig.bed
+	bedtools intersect -s -sorted -c -F 0.5 -a temp_3utr_unrefined_break.bed -b ${PREFIX}.pilikeRNA.uniq.bed2 | awk '{print $12}' > temp_3utr_unrefined_break_seqsig.bed
+	paste temp_5utr_unrefined_break_readsig.bed temp_5utr_unrefined_break_seqsig.bed | sort -k4,4 -k1,1 -k2,2n > temp_5utr_unrefined_break_signal.bed
+	paste temp_3utr_unrefined_break_readsig.bed temp_3utr_unrefined_break_seqsig.bed | sort -k4,4 -k1,1 -k2,2nr > temp_3utr_unrefined_break_signal.bed
+	awk -v factor=$PILIKE_FACTOR -v R=$RPMCUT -v S=$SEQCUT '{FS=OFS="\t"} {if(($12/factor)>R/50 && $13>S/50){print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11}}' temp_5utr_unrefined_break_signal.bed > temp_5utr_unrefined_break_filtered.bed
+	awk -v factor=$PILIKE_FACTOR -v R=$RPMCUT -v S=$SEQCUT '{FS=OFS="\t"} {if(($12/factor)>R/50 && $13>S/50){print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11}}' temp_3utr_unrefined_break_signal.bed > temp_3utr_unrefined_break_filtered.bed
+	#get 5' and 3' start for each utr, set to 0 if the utr doesn't pass the cutoff
+	awk 'BEGIN{FS=OFS="\t"} {if(NR==1){name=$4;start=$2;ender=$3};if($2+600>=$9){a[$4]=1}else if($4==name && !a[$4]){if($2-1001<=ender){a[$4]=1}else{start=$2;ender=$3}}else if($4==name && a[$4]){};if($4!=name && a[name]){print start,name;name=$4;start=$2;ender=$3}else if($4!=name && !a[name]){print 0,name;name=$4;start=$2;ender=$3}} END{if(a[name]){print start,name}else{print 0,name}}' temp_5utr_unrefined_break_filtered.bed > temp_5_start
+	awk 'BEGIN{FS=OFS="\t"} {if(NR==1){name=$4;start=$2;ender=$3};if($3-600<=$9){a[$4]=1}else if($4==name && !a[$4]){if($3+1001>=start){a[$4]=1}else{start=$2;ender=$3}}else if($4==name && a[$4]){};if($4!=name && a[name]){print ender,name;name=$4;start=$2;ender=$3}else if($4!=name && !a[name]){print 0,name;name=$4;start=$2;ender=$3}} END{if(a[name]){print ender,name}else{print 0,name}}' temp_3utr_unrefined_break_filtered.bed > temp_3_end
+	#refine the 5' and 3' end and write piRNA names to iteration.list with value 0
+	awk 'BEGIN{FS=OFS="\t"} {if(FNR==NR){a[$2]=$1}else{if(a[$4]){print $1,a[$4],$3,$4,$5,$6,$7,$8,$9,$10,$11}}}' temp_5_start temp_5utr_unrefined.bed > temp_5utr_refined.bed
+	awk 'BEGIN{FS=OFS="\t"} {if(FNR==NR){a[$2]=$1}else{if(!a[$4]){print $4}}}' temp_5_start temp_5utr_unrefined.bed > temp_5utr_unrefined.list
+	awk 'BEGIN{FS=OFS="\t"} {if(FNR==NR){a[$2]=$1}else{if(a[$4]){print $1,$2,a[$4],$4,$5,$6,$7,$8,$9,$10,$11}}}' temp_3_end temp_3utr_unrefined.bed > temp_3utr_refined.bed
+	awk 'BEGIN{FS=OFS="\t"} {if(FNR==NR){a[$2]=$1}else{if(!a[$4]){print $4}}}' temp_3_end temp_3utr_unrefined.bed > temp_3utr_unrefined.list
+	cat temp_5utr_unrefined.list temp_3utr_unrefined.list | sort -u > iteration.list
+	#rewrite iteration.bed for next iteration
+	cat temp_5utr_refined.bed temp_3utr_refined.bed temp_body.bed | sort -u -k4,4 -k1,1 -k2,2n -k3,3n | awk 'BEGIN{FS=OFS="\t"} {if(NR==1){chr=$1;name=$4;start=$2;ender=$3;type=$5;strand=$6;uniqread=$7;multiread=$8;overhang=$9;rpm=$10;seqnum=$11}else if($2<=ender && $4==name){start=$2}else{print chr,start,ender,name,type,strand,uniqread,multiread,overhang,rpm,seqnum;chr=$1;name=$4;start=$2;ender=$3;type=$5;strand=$6;uniqread=$7;multiread=$8;overhang=$9;rpm=$10;seqnum=$11}} END{print chr,start,ender,name,type,strand,uniqread,multiread,overhang,rpm,seqnum}' > ${PREFIX}.piRNA.intergenic.iteration.bed
+	iteration=(`wc -l iteration.list`)
+	if [ $iteration == 1 ];then
+		iteration=(`head -1 iteration.list | awk '{print NF}'`)
+	fi
+done
+
+#rename
+mv ${PREFIX}.piRNA.intergenic.iteration.bed ${PREFIX}.piRNA.intergenic.bed
+
+###extract lincRNA piRNA genes
+DATE=`date --date="-24 hour"`
+echo -e "\033[32mextract lincRNA piRNA genes\t"$DATE"\033[0m"
+#grep "gene_biotype \"lincRNA\"" ${GTF} | awk '{FS=OFS="\t"} {if($3=="gene"){print $1,$4,$5,$9,0,$7}}' | sort -k1,1 -k2,2n | awk 'BEGIN{FS=" ";OFS="\t"} {if(NF>6){print $0}}' | awk 'BEGIN{FS=" ";OFS="\t"} {a["name"]=0;a["id"]=0;for(i=1;i<=NF;i++){if($i=="gene_name"){a["name"]=i+1}else if($i=="gene_id"){a["id"]=i+1}};if(a["name"]>0){print $1,$2,$3,substr($a["name"],2,length($a["name"])-3),$(NF-1),$NF}else{print $1,$2,$3,substr($a["id"],2,length($a["id"])-3),$(NF-1),$NF}}' > lincRNA.bed
+sort -k1,1 -k2,2n ${LINCRNA_BED} > lincRNA.bed
+fun_sort ${PREFIX}.picluster.pcfiltered.nostructure.bed
+bedtools intersect -s -sorted -e -f 0.5 -wo -a ${PREFIX}.picluster.pcfiltered.nostructure.bed -b lincRNA.bed | awk 'BEGIN{FS=" ";OFS="\t"} {print $4,$12}' > lincRNA.map.list
+
+TC=(`wc -l lincRNA.map.list`)
+if [ $TC -gt 0 ];then
+	awk 'BEGIN{FS=OFS="\t";N=1} {if(FNR==NR){a[$1]=$2}else{if(!a[$4]){print $4,N;N++}}}' lincRNA.map.list ${PREFIX}.picluster.pcfiltered.nostructure.bed > intergenic.map.list
+else
+	awk 'BEGIN{FS=OFS="\t";N=1} {print $4,N;N++}' ${PREFIX}.picluster.pcfiltered.nostructure.bed > intergenic.map.list
+fi
+
+###modify piRNA names
+DATE=`date --date="-24 hour"`
+echo -e "\033[32mmodify piRNA names\t"$DATE"\033[0m"
+awk 'BEGIN{FS=OFS="\t"} {if(FNR==NR){a[$1]=$2}else{if(a[$4]){print $1,$2,$3,a[$4],$5,$6,$7,$8,$9,$10,$11}}}' lincRNA.map.list ${PREFIX}.piRNA.intergenic.bed > ${PREFIX}.piRNA.lincRNA.bed
+awk 'BEGIN{FS=OFS="\t"} {if(FNR==NR){a[$1]=$2}else{if(a[$4]){print $1,$2,$3,a[$4],$5,$6,$7,$8,$9,$10,$11}}}' intergenic.map.list ${PREFIX}.piRNA.intergenic.bed > temp.bed && mv temp.bed ${PREFIX}.piRNA.intergenic.bed
+awk -v g=$GENOME 'BEGIN{FS=OFS="\t"} {print $1,"piFinder","exon",$2,$3,".",$6,".","gene_id \"pi_"g"_LR_"$4"\"; type \"lincRNA\"; transcript_id \"pi_"g"_LR_"$4".1\"; sj_motif \""$5"\"; sj_uniq_reads \""$7"\"; sj_multi_reads \""$8"\"; sj_overhang \""$9"\"; rpm \""$10"\"; seq_num \""$11"\";"}' ${PREFIX}.piRNA.lincRNA.bed > ${PREFIX}.piRNA.lincRNA.gtf
+awk -v g=$GENOME 'BEGIN{FS=OFS="\t"} {print $1,"piFinder","exon",$2,$3,".",$6,".","gene_id \"pi_"g"_IG_"$4"\"; type \"intergenic\"; transcript_id \"pi_"g"_IG_"$4".1\"; sj_motif \""$5"\"; sj_uniq_reads \""$7"\"; sj_multi_reads \""$8"\"; sj_overhang \""$9"\"; rpm \""$10"\"; seq_num \""$11"\";"}' ${PREFIX}.piRNA.intergenic.bed > ${PREFIX}.piRNA.intergenic.gtf
+rm temp*
+#merge three types of piRNA genes
+awk -v g=$GENOME 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,"pi_"g"_IG_"$4,$5,$6}' ${PREFIX}.piRNA.intergenic.bed > temp && mv temp ${PREFIX}.piRNA.intergenic.bed
+awk -v g=$GENOME 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,"pi_"g"_LR_"$4,$5,$6}' ${PREFIX}.piRNA.lincRNA.bed > temp && mv temp ${PREFIX}.piRNA.lincRNA.bed
+awk -v g=$GENOME 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,"pi_"g"_PC_"$4,$5,$6}' ${PREFIX}.piRNA.protein_coding.bed > temp && mv temp ${PREFIX}.piRNA.protein_coding.bed
+cat ${PREFIX}.piRNA.intergenic.bed ${PREFIX}.piRNA.lincRNA.bed ${PREFIX}.piRNA.protein_coding.bed > ${PREFIX}.piRNA.bed
+cat ${PREFIX}.piRNA.intergenic.gtf ${PREFIX}.piRNA.lincRNA.gtf ${PREFIX}.piRNA.protein_coding.gtf > ${PREFIX}.piRNA.gtf
+#extract intergenic and lincRNA piRNA reads
+DATE=`date --date="-24 hour"`
+echo -e "\033[31mextract intergenic and lincRNA piRNA reads\t"$DATE"\033[0m"
+fun_sort ${PREFIX}.genome.uniq.bed2 
+fun_sort ${PREFIX}.piRNA.protein_coding.bed
+bedtools intersect -s -sorted -f 0.5 -wa -a ${PREFIX}.genome.uniq.bed2 -b ${PREFIX}.piRNA.protein_coding.bed > ${PREFIX}.piRNA.protein_coding.uniq.bed2
+bedtools intersect -v -sorted -s -f 0.5 -wa -a ${PREFIX}.genome.uniq.bed2 -b ${PREFIX}.piRNA.protein_coding.bed > t.bed2 && mv t.bed2 ${PREFIX}.genome.uniq.bed2
+fun_sort ${PREFIX}.piRNA.intergenic.bed
+bedtools intersect -s -sorted -f 0.5 -wa -a ${PREFIX}.genome.uniq.bed2 -b ${PREFIX}.piRNA.intergenic.bed > ${PREFIX}.piRNA.intergenic.uniq.bed2
+bedtools intersect -v -sorted -s -f 0.5 -wa -a ${PREFIX}.genome.uniq.bed2 -b ${PREFIX}.piRNA.intergenic.bed > t.bed2 && mv t.bed2 ${PREFIX}.genome.uniq.bed2
+fun_sort ${PREFIX}.piRNA.lincRNA.bed
+bedtools intersect -s -sorted -f 0.5 -wa -a ${PREFIX}.genome.uniq.bed2 -b ${PREFIX}.piRNA.lincRNA.bed > ${PREFIX}.piRNA.lincRNA.uniq.bed2
+bedtools intersect -v -sorted -s -f 0.5 -wa -a ${PREFIX}.genome.uniq.bed2 -b ${PREFIX}.piRNA.lincRNA.bed > ${PREFIX}.piRNA.unknown.uniq.bed2
+cat ${PREFIX}.piRNA.intergenic.uniq.bed2 | awk 'BEGIN{FS=OFS="\t"} {print $7,$4}' > insert_reads/${PREFIX}.piRNA.intergenic.uniq.insert
+cat ${PREFIX}.piRNA.lincRNA.uniq.bed2 | awk 'BEGIN{FS=OFS="\t"} {print $7,$4}' > insert_reads/${PREFIX}.piRNA.lincRNA.uniq.insert
+fun_sort ${PREFIX}.piRNA.unknown.uniq.bed2
+###extract intron and anti-sense reads
+DATE=`date --date="-24 hour"`
+echo -e "\033[32mextract intron and anti-sense piRNA reads\t"$DATE"\033[0m"
+#get intron
+sort -k4,4 -k1,1 -k2,2n ${PREFIX}.piRNA.intergenic.bed > t && mv t ${PREFIX}.piRNA.intergenic.bed
+sort -k4,4 -k1,1 -k2,2n ${PREFIX}.piRNA.protein_coding.bed > t && mv t ${PREFIX}.piRNA.protein_coding.bed
+sort -k4,4 -k1,1 -k2,2n ${PREFIX}.piRNA.lincRNA.bed > t && mv t ${PREFIX}.piRNA.lincRNA.bed
+awk 'BEGIN{FS=OFS="\t";name=0} {if($4==name){print $1,ender+1,$2-1,$4,0,$6}} {name=$4;ender=$3}' ${PREFIX}.piRNA.intergenic.bed > ${PREFIX}.piRNA.intergenic.intron.bed
+awk 'BEGIN{FS=OFS="\t";name=0} {if($4==name){print $1,ender+1,$2-1,$4,0,$6}} {name=$4;ender=$3}' ${PREFIX}.piRNA.protein_coding.bed > ${PREFIX}.piRNA.protein_coding.intron.bed
+awk 'BEGIN{FS=OFS="\t";name=0} {if($4==name){print $1,ender+1,$2-1,$4,0,$6}} {name=$4;ender=$3}' ${PREFIX}.piRNA.lincRNA.bed > ${PREFIX}.piRNA.lincRNA.intron.bed
+#get intron reads
+fun_sort ${PREFIX}.piRNA.intergenic.intron.bed
+fun_sort ${PREFIX}.piRNA.protein_coding.intron.bed
+fun_sort ${PREFIX}.piRNA.lincRNA.intron.bed
+bedtools intersect -s -sorted -f 0.5 -wa -a ${PREFIX}.piRNA.unknown.uniq.bed2 -b ${PREFIX}.piRNA.intergenic.intron.bed | awk 'BEGIN{FS=OFS="\t"} {print $7,$4}' > insert_reads/${PREFIX}.piRNA.intergenic.uniq.intron.insert
+bedtools intersect -v -sorted -s -f 0.5 -wa -a ${PREFIX}.piRNA.unknown.uniq.bed2 -b ${PREFIX}.piRNA.intergenic.intron.bed > t && mv t ${PREFIX}.piRNA.unknown.uniq.bed2
+bedtools intersect -s -sorted -f 0.5 -wa -a ${PREFIX}.piRNA.unknown.uniq.bed2 -b ${PREFIX}.piRNA.lincRNA.intron.bed | awk 'BEGIN{FS=OFS="\t"} {print $7,$4}' > insert_reads/${PREFIX}.piRNA.lincRNA.uniq.intron.insert
+bedtools intersect -v -sorted -s -f 0.5 -wa -a ${PREFIX}.piRNA.unknown.uniq.bed2 -b ${PREFIX}.piRNA.lincRNA.intron.bed > t && mv t ${PREFIX}.piRNA.unknown.uniq.bed2
+bedtools intersect -s -sorted -f 0.5 -wa -a ${PREFIX}.piRNA.unknown.uniq.bed2 -b ${PREFIX}.piRNA.protein_coding.intron.bed | awk 'BEGIN{FS=OFS="\t"} {print $7,$4}' > insert_reads/${PREFIX}.piRNA.protein_coding.uniq.intron.insert
+bedtools intersect -v -sorted -s -f 0.5 -wa -a ${PREFIX}.piRNA.unknown.uniq.bed2 -b ${PREFIX}.piRNA.protein_coding.intron.bed > t && mv t ${PREFIX}.piRNA.unknown.uniq.bed2
+#get anti-sense reads
+fun_sort ${PREFIX}.piRNA.intergenic.bed
+fun_sort ${PREFIX}.piRNA.lincRNA.bed
+fun_sort ${PREFIX}.piRNA.protein_coding.bed
+bedtools intersect -S -sorted -f 0.5 -wa -a ${PREFIX}.piRNA.unknown.uniq.bed2 -b ${PREFIX}.piRNA.intergenic.bed | awk 'BEGIN{FS=OFS="\t"} {print $7,$4}' > insert_reads/${PREFIX}.piRNA.intergenic.uniq.antisense.insert
+bedtools intersect -v -sorted -S -f 0.5 -wa -a ${PREFIX}.piRNA.unknown.uniq.bed2 -b ${PREFIX}.piRNA.intergenic.bed > t && mv t ${PREFIX}.piRNA.unknown.uniq.bed2
+bedtools intersect -S -sorted -f 0.5 -wa -a ${PREFIX}.piRNA.unknown.uniq.bed2 -b ${PREFIX}.piRNA.lincRNA.bed | awk 'BEGIN{FS=OFS="\t"} {print $7,$4}' > insert_reads/${PREFIX}.piRNA.lincRNA.uniq.antisense.insert
+bedtools intersect -v -sorted -S -f 0.5 -wa -a ${PREFIX}.piRNA.unknown.uniq.bed2 -b ${PREFIX}.piRNA.lincRNA.bed > t && mv t ${PREFIX}.piRNA.unknown.uniq.bed2
+bedtools intersect -S -sorted -f 0.5 -wa -a ${PREFIX}.piRNA.unknown.uniq.bed2 -b ${PREFIX}.piRNA.protein_coding.bed | awk 'BEGIN{FS=OFS="\t"} {print $7,$4}' > insert_reads/${PREFIX}.piRNA.protein_coding.uniq.antisense.insert
+bedtools intersect -v -sorted -S -f 0.5 -wa -a ${PREFIX}.piRNA.unknown.uniq.bed2 -b ${PREFIX}.piRNA.protein_coding.bed > t && mv t ${PREFIX}.piRNA.unknown.uniq.bed2
+#get anti-sense intron reads
+bedtools intersect -S -sorted -f 0.5 -wa -a ${PREFIX}.piRNA.unknown.uniq.bed2 -b ${PREFIX}.piRNA.intergenic.intron.bed | awk 'BEGIN{FS=OFS="\t"} {print $7,$4}' > insert_reads/${PREFIX}.piRNA.intergenic.uniq.intron.antisense.insert
+bedtools intersect -v -sorted -S -f 0.5 -wa -a ${PREFIX}.piRNA.unknown.uniq.bed2 -b ${PREFIX}.piRNA.intergenic.intron.bed > t && mv t ${PREFIX}.piRNA.unknown.uniq.bed2
+bedtools intersect -S -sorted -f 0.5 -wa -a ${PREFIX}.piRNA.unknown.uniq.bed2 -b ${PREFIX}.piRNA.lincRNA.intron.bed | awk 'BEGIN{FS=OFS="\t"} {print $7,$4}' > insert_reads/${PREFIX}.piRNA.lincRNA.uniq.intron.antisense.insert
+bedtools intersect -v -sorted -S -f 0.5 -wa -a ${PREFIX}.piRNA.unknown.uniq.bed2 -b ${PREFIX}.piRNA.lincRNA.intron.bed > t && mv t ${PREFIX}.piRNA.unknown.uniq.bed2
+bedtools intersect -S -sorted -f 0.5 -wa -a ${PREFIX}.piRNA.unknown.uniq.bed2 -b ${PREFIX}.piRNA.protein_coding.intron.bed | awk 'BEGIN{FS=OFS="\t"} {print $7,$4}' > insert_reads/${PREFIX}.piRNA.protein_coding.uniq.intron.antisense.insert
+bedtools intersect -v -sorted -S -f 0.5 -wa -a ${PREFIX}.piRNA.unknown.uniq.bed2 -b ${PREFIX}.piRNA.protein_coding.intron.bed > t && mv t ${PREFIX}.piRNA.unknown.uniq.bed2
+sort -k4,4 -k1,1 -k2,2n ${PREFIX}.piRNA.intergenic.bed > t && mv t ${PREFIX}.piRNA.intergenic.bed
+sort -k4,4 -k1,1 -k2,2n ${PREFIX}.piRNA.protein_coding.bed > t && mv t ${PREFIX}.piRNA.protein_coding.bed
+sort -k4,4 -k1,1 -k2,2n ${PREFIX}.piRNA.lincRNA.bed > t && mv t ${PREFIX}.piRNA.lincRNA.bed
+#unknow reads
+awk 'BEGIN{FS=OFS="\t"} {print $7,$4}' ${PREFIX}.piRNA.unknown.uniq.bed2 > insert_reads/${PREFIX}.piRNA.unknown.uniq.insert
+
+####calculate basic information
+DATE=`date --date="-24 hour"`
+echo -e "\033[33mcalculate basic piRNA gene information\t"$DATE"\033[0m"
+#gene length
+LEN_PROTEINCODING_EXON=(`awk 'BEGIN{sum=0} {sum=sum+$3-$2+1} END{print sum}' ${PREFIX}.protein_coding.exon.bed`)
+LEN_PROTEINCODING=(`awk 'BEGIN{sum=0} {if(NR==1){name=4;start=$2;ender=$3}else if($4==name){ender=$3}else{sum=sum+ender-start+1;name=$4;start=$2;ender=$3}} END{sum=sum+ender-start+1;print sum}' ${PREFIX}.protein_coding.exon.bed`)
+LEN_PROTEINCODING_PI=(`awk 'BEGIN{sum=0} {if(NR==1){name=4;start=$2;ender=$3}else if($4==name){ender=$3}else{sum=sum+ender-start+1;name=$4;start=$2;ender=$3}} END{sum=sum+ender-start+1;print sum}' ${PREFIX}.piRNA.protein_coding.bed`)
+LEN_PROTEINCODING_PI_EXON=(`awk 'BEGIN{sum=0} {sum=sum+$3-$2+1} END{print sum}' ${PREFIX}.piRNA.protein_coding.bed`)
+LEN_INTERGENIC_PI=(`awk 'BEGIN{sum=0} {if(NR==1){name=4;start=$2;ender=$3}else if($4==name){ender=$3}else{sum=sum+ender-start+1;name=$4;start=$2;ender=$3}} END{sum=sum+ender-start+1;print sum}' ${PREFIX}.piRNA.intergenic.bed`)
+LEN_INTERGENIC_PI_EXON=(`awk 'BEGIN{sum=0} {sum=sum+$3-$2+1} END{print sum}' ${PREFIX}.piRNA.intergenic.bed`)
+TC=(`wc -l ${PREFIX}.piRNA.lincRNA.bed`)
+if [ $TC -gt 0 ];then
+	LEN_LINCRNA_PI=(`awk 'BEGIN{sum=0} {if(NR==1){name=4;start=$2;ender=$3}else if($4==name){ender=$3}else{sum=sum+ender-start+1;name=$4;start=$2;ender=$3}} END{sum=sum+ender-start+1;print sum}' ${PREFIX}.piRNA.lincRNA.bed`)
+	LEN_LINCRNA_PI_EXON=(`awk 'BEGIN{sum=0} {sum=sum+$3-$2+1} END{print sum}' ${PREFIX}.piRNA.lincRNA.bed`)
+else
+	LEN_LINCRNA_PI=0
+	LEN_LINCRNA_PI_EXON=0
+fi
+TC=(`wc -l lincRNA.bed`)
+if [ $TC -gt 0 ];then
+	LEN_LINCRNA=(`awk 'BEGIN{sum=0} {sum=sum+$3-$2+1} END{print sum}' lincRNA.bed`)
+	grep "gene_biotype \"lincRNA\"" ${GTF} > lincRNA.gtf
+	BB_GtfToExonForEachGene.py lincRNA.gtf ${PREFIX}.lincRNA.exon.bed name
+	LEN_LINCRNA_EXON=(`awk 'BEGIN{sum=0} {sum=sum+$3-$2+1} END{print sum}' ${PREFIX}.lincRNA.exon.bed`)
+else
+	LEN_LINCRNA=0
+	LEN_LINCRNA_EXON=0
+fi
+
+
+#gene number
+NUM_INTERGENIC_PI=(`cut -f 4 ${PREFIX}.piRNA.intergenic.bed | sort -u | wc -l`)
+NUM_PROTEINCODING=(`cut -f 4 ${PREFIX}.protein_coding.exon.bed | sort -u | wc -l`)
+NUM_PROTEINCODING_PI=(`cut -f 4 ${PREFIX}.piRNA.protein_coding.bed | sort -u | wc -l`)
+NUM_LINCRNA_PI=(`cut -f 4 ${PREFIX}.piRNA.lincRNA.bed | sort -u | wc -l`)
+NUM_LINCRNA=(`cut -f 4 lincRNA.bed | sort -u | wc -l`)
+
+#read number
+READ_ALL=(`awk 'BEGIN{sum=0} {sum=sum+$2} END{print sum}' insert_reads/${PREFIX}.insert`)
+READ_PILIKE=(`awk 'BEGIN{sum=0} {sum=sum+$2} END{print sum}' insert_reads/${PREFIX}.pilikeRNA.ACGT.insert`)
+READ_HAIRPIN=(`awk 'BEGIN{sum=0} {sum=sum+$2} END{print sum}' insert_reads/${PREFIX}.hairpin.insert`)
+READ_PROTEINCODING_PI=(`awk 'BEGIN{sum=0} {sum=sum+$2} END{print sum}' insert_reads/${PREFIX}.piRNA.protein_coding.uniq.insert`)
+READ_INTERGENIC_PI=(`awk 'BEGIN{sum=0} {sum=sum+$2} END{print sum}' insert_reads/${PREFIX}.piRNA.intergenic.uniq.insert`)
+READ_LINCRNA_PI=(`awk 'BEGIN{sum=0} {sum=sum+$2} END{print sum}' insert_reads/${PREFIX}.piRNA.lincRNA.uniq.insert`)
+READ_UNKNOWN_PI=(`awk 'BEGIN{sum=0} {sum=sum+$2} END{print sum}' insert_reads/${PREFIX}.piRNA.unknown.uniq.insert`)
+READ_PROTEINCODING_PI_INTRON=(`awk 'BEGIN{sum=0} {sum=sum+$2} END{print sum}' insert_reads/${PREFIX}.piRNA.protein_coding.uniq.intron.insert`)
+READ_INTERGENIC_PI_INTRON=(`awk 'BEGIN{sum=0} {sum=sum+$2} END{print sum}' insert_reads/${PREFIX}.piRNA.intergenic.uniq.intron.insert`)
+READ_LINCRNA_PI_INTRON=(`awk 'BEGIN{sum=0} {sum=sum+$2} END{print sum}' insert_reads/${PREFIX}.piRNA.lincRNA.uniq.intron.insert`)
+READ_PROTEINCODING_PI_ANTISENSE=(`awk 'BEGIN{sum=0} {sum=sum+$2} END{print sum}' insert_reads/${PREFIX}.piRNA.protein_coding.uniq.antisense.insert`)
+READ_INTERGENIC_PI_ANTISENSE=(`awk 'BEGIN{sum=0} {sum=sum+$2} END{print sum}' insert_reads/${PREFIX}.piRNA.intergenic.uniq.antisense.insert`)
+READ_LINCRNA_PI_ANTISENSE=(`awk 'BEGIN{sum=0} {sum=sum+$2} END{print sum}' insert_reads/${PREFIX}.piRNA.lincRNA.uniq.antisense.insert`)
+READ_PROTEINCODING_PI_INTRON_ANTISENSE=(`awk 'BEGIN{sum=0} {sum=sum+$2} END{print sum}' insert_reads/${PREFIX}.piRNA.protein_coding.uniq.intron.antisense.insert`)
+READ_INTERGENIC_PI_INTRON_ANTISENSE=(`awk 'BEGIN{sum=0} {sum=sum+$2} END{print sum}' insert_reads/${PREFIX}.piRNA.intergenic.uniq.intron.antisense.insert`)
+READ_LINCRNA_PI_INTRON_ANTISENSE=(`awk 'BEGIN{sum=0} {sum=sum+$2} END{print sum}' insert_reads/${PREFIX}.piRNA.lincRNA.uniq.intron.antisense.insert`)
+#write summary file
+mkdir summary
+echo -e "\tprotein_coding\tprotein_coding_pi\tlincRNA\tlincRNA_pi\tintergenic_pi\ngene_length\t$LEN_PROTEINCODING\t$LEN_PROTEINCODING_PI\t$LEN_LINCRNA\t$LEN_LINCRNA_PI\t$LEN_INTERGENIC_PI\nexon_length\t$LEN_PROTEINCODING_EXON\t$LEN_PROTEINCODING_PI_EXON\t$LEN_LINCRNA_EXON\t$LEN_LINCRNA_PI_EXON\t$LEN_INTERGENIC_PI_EXON\ngene_number\t$NUM_PROTEINCODING\t$NUM_PROTEINCODING_PI\t$NUM_LINCRNA\t$NUM_LINCRNA_PI\t$NUM_INTERGENIC_PI" > summary/${PREFIX}.gene_info.tab
+echo -e "\tread_number\nall\t$READ_ALL\nhairpin\t$READ_HAIRPIN\npilike\t$READ_PILIKE\npilike_uniq\t$READ_PILIKE_UNIQ\npi_uniq\t$READ_PILIKE_UNIQ_RMSRNA\nprotein_coding_pi\t$READ_PROTEINCODING_PI\nprotein_coding_pi_intron\t$READ_PROTEINCODING_PI_INTRON\nprotein_coding_pi_antisense\t$READ_PROTEINCODING_PI_ANTISENSE\nprotein_coding_pi_intron_antisense\t$READ_PROTEINCODING_PI_INTRON_ANTISENSE\nlincRNA_pi\t$READ_LINCRNA_PI\nlincRNA_pi_intron\t$READ_LINCRNA_PI_INTRON\nnlincRNA_pi_antisense\t$READ_LINCRNA_PI_ANTISENSE\nlincRNA_pi_intron_antisense\t$READ_LINCRNA_PI_INTRON_ANTISENSE\nintergenic_pi\t$READ_INTERGENIC_PI\nintergenic_pi_intron\t$READ_INTERGENIC_PI_INTRON\nintergenic_pi_antisense\t$READ_INTERGENIC_PI_ANTISENSE\nintergenic_pi_intron_antisense\t$READ_INTERGENIC_PI_INTRON_ANTISENSE\nunknown_pi\t$READ_UNKNOWN_PI" > summary/${PREFIX}.read_num.tab
+###calculate length distribution for small RNA
+DATE=`date --date="-24 hour"`
+echo -e "\033[33mcalculate small RNA information\t$DATE\033[0m"
+BB_InsertLength.py insert_reads/${PREFIX}.insert map_info/${PREFIX}.lendis 15-40
+BB_InsertLength.py insert_reads/${PREFIX}.hairpin.insert map_info/${PREFIX}.hairpin.lendis 15-40
+BB_InsertNulDis.py insert_reads/${PREFIX}.insert map_info/${PREFIX}.nuldis
+BB_InsertNulDis.py insert_reads/${PREFIX}.hairpin.insert map_info/${PREFIX}.hairpin.nuldis
+BB_InsertLength.py insert_reads/${PREFIX}.piRNA.protein_coding.uniq.insert map_info/${PREFIX}.protein_coding.lendis 15-40
+BB_InsertLength.py insert_reads/${PREFIX}.piRNA.lincRNA.uniq.insert map_info/${PREFIX}.lincRNA.lendis 15-40
+BB_InsertLength.py insert_reads/${PREFIX}.piRNA.intergenic.uniq.insert map_info/${PREFIX}.intergenic.lendis 15-40
+BB_InsertLength.py insert_reads/${PREFIX}.piRNA.unknown.uniq.insert map_info/${PREFIX}.unknown.lendis 15-40
+BB_InsertNulDis.py insert_reads/${PREFIX}.piRNA.protein_coding.uniq.insert map_info/${PREFIX}.protein_coding.nuldis
+BB_InsertNulDis.py insert_reads/${PREFIX}.piRNA.lincRNA.uniq.insert map_info/${PREFIX}.lincRNA.nuldis
+BB_InsertNulDis.py insert_reads/${PREFIX}.piRNA.intergenic.uniq.insert map_info/${PREFIX}.intergenic.nuldis
+BB_InsertNulDis.py insert_reads/${PREFIX}.piRNA.unknown.uniq.insert map_info/${PREFIX}.unknown.nuldis
+
+###################
+###make filgures###
+###################
+
+#########Rscript############
+cat << EOF > plot_dis.R
+#!/usr/bin/env Rscript
+###library packages###
+
+###read data###
+Args <- commandArgs()
+prefix=Args[6]
+
+lendis_all=read.table(paste("map_info/",prefix,".lendis",sep=""),header=FALSE,row.names=1)
+lendis_miRNA=read.table(paste("map_info/",prefix,".hairpin.lendis",sep=""),header=FALSE,row.names=1)
+lendis_pc_pi=read.table(paste("map_info/",prefix,".protein_coding.lendis",sep=""),header=FALSE,row.names=1)
+lendis_lr_pi=read.table(paste("map_info/",prefix,".lincRNA.lendis",sep=""),header=FALSE,row.names=1)
+lendis_ig_pi=read.table(paste("map_info/",prefix,".intergenic.lendis",sep=""),header=FALSE,row.names=1)
+lendis_uk_pi=read.table(paste("map_info/",prefix,".unknown.lendis",sep=""),header=FALSE,row.names=1)
+nuldis_all=read.table(paste("map_info/",prefix,".nuldis",sep=""),header=FALSE,row.names=1)
+nuldis_miRNA=read.table(paste("map_info/",prefix,".hairpin.nuldis",sep=""),header=FALSE,row.names=1)
+nuldis_pc_pi=read.table(paste("map_info/",prefix,".protein_coding.nuldis",sep=""),header=FALSE,row.names=1)
+nuldis_lr_pi=read.table(paste("map_info/",prefix,".lincRNA.nuldis",sep=""),header=FALSE,row.names=1)
+nuldis_ig_pi=read.table(paste("map_info/",prefix,".intergenic.nuldis",sep=""),header=FALSE,row.names=1)
+nuldis_uk_pi=read.table(paste("map_info/",prefix,".unknown.nuldis",sep=""),header=FALSE,row.names=1)
+gene_info=read.table(paste("summary/",prefix,".gene_info.tab",sep=""),header=TRUE,row.names=1)
+read_num=read.table(paste("summary/",prefix,".read_num.tab",sep=""),header=TRUE,row.names=1)
+
+###plot: basic information###
+
+###layout
+pdf(paste("figures/",prefix,"_basic_info.pdf",sep=""),height=15,width=9)
+laymat=matrix(0,6,6)
+laymat[1:6,1]=1
+laymat[1,2:3]=2
+laymat[1,4:5]=3
+laymat[2,2:3]=4
+laymat[2,4:5]=5
+laymat[3,2:3]=6
+laymat[3,4:5]=7
+laymat[4,2:3]=8
+laymat[4,4:5]=9
+laymat[5,2:3]=10
+laymat[5,4:5]=11
+laymat[6,2:3]=12
+laymat[6,4:5]=13
+laymat[3:4,6]=14
+layout(laymat)
+
+###rownames for figures
+par(mar=c(0,0,0,0))
+plot(-1,-1,xlim=c(0,1),ylim=c(0,6),xaxt="n",yaxt="n")
+text(rep(0.5,6),0:5+0.5,label=c("all reads","miRNA","protein coding\npiRNA","lincRNA\npiRNA","intergenic\npiRNA","unknown reads")[6:1],font=2,cex=1.5,srt=45)
+###lendis and nuldis for 6 types of reads
+plot_lendis_nuldis=function(ld,nd){
+	barplot(ld[,1],names.arg=15:39,col="black",border="white",space=0,yaxt="n")
+	barplot(apply(nd,2,function(x){x/sum(x)*100}),names.arg=1:35,col=c("black","#084594","#99000d","#005824","#4a1486"),border="white",space=0,yaxt="n")
+}
+par(mar=c(3,1,2,1))
+plot_lendis_nuldis(lendis_all,nuldis_all)
+plot_lendis_nuldis(lendis_miRNA,nuldis_miRNA)
+plot_lendis_nuldis(lendis_pc_pi,nuldis_pc_pi)
+plot_lendis_nuldis(lendis_lr_pi,nuldis_lr_pi)
+plot_lendis_nuldis(lendis_ig_pi,nuldis_ig_pi)
+plot_lendis_nuldis(lendis_uk_pi,nuldis_uk_pi)
+###legend fpr figures
+par(mar=c(0,0,0,0))
+plot(-1,-1,xlim=c(0,1),ylim=c(0,6),xaxt="n",yaxt="n")
+legend("center",col=c("black","#084594","#99000d","#005824","#4a1486"),pch=15,pt.cex=2.5,legend=c("U","C","G","A","N"),cex=1.5,bty="n")
+dev.off()
+
+###plot: gene information###
+
+###layout
+pdf(paste("figures/",prefix,"_gene_info.pdf",sep=""),height=8,width=10)
+par(mfrow=c(2,2))
+
+###number of genes
+par(mar=c(2,4,4,1),cex=0.8)
+barplot(log10(as.vector(as.matrix(gene_info[3,1:5]))+1),space=2,col=c("#084594","#99000d","#ffd92f","#005824","#4a1486"),border="white",ylim=c(0,max(log10(gene_info[3,1:5]+1))+2),main="Number of Genes",ylab="log10Number",xlim=c(2,17))
+lb=c(paste("n=",prettyNum(gene_info[3,1],big.mark=","),seq=""),
+	paste("n=",prettyNum(gene_info[3,2],big.mark=","),seq=""),
+	paste("n=",prettyNum(gene_info[3,3],big.mark=","),seq=""),
+	paste("n=",prettyNum(gene_info[3,4],big.mark=","),seq=""),
+	paste("n=",prettyNum(gene_info[3,5],big.mark=","),seq=""))
+text(c(2.5,5.5,8.5,11.5,14.5),log10(gene_info[3,1:5]+1)+0.1,label=lb,srt=45,cex=0.8,pos=4,offset=-0.25)
+###length of genes
+barplot(log10(as.vector(as.matrix(gene_info[1,1:5]))+1),space=2,col=c("#084594","#99000d","#ffd92f","#005824","#4a1486"),border="white",ylim=c(0,max(log10(gene_info[1,1:5]+1))+2),main="Length of Genes",ylab="log10Length",xlim=c(2,17))
+lb=c(paste("n=",prettyNum(gene_info[1,1],big.mark=","),seq=""),
+	paste("n=",prettyNum(gene_info[1,2],big.mark=","),seq=""),
+	paste("n=",prettyNum(gene_info[1,3],big.mark=","),seq=""),
+	paste("n=",prettyNum(gene_info[1,4],big.mark=","),seq=""),
+	paste("n=",prettyNum(gene_info[1,5],big.mark=","),seq=""))
+text(c(2.5,5.5,8.5,11.5,14.5),log10(gene_info[1,1:5]+1)+0.1,label=lb,srt=45,cex=0.8,pos=4,offset=-0.25)
+###exon length of genes
+barplot(log10(as.vector(as.matrix(gene_info[2,1:5]))+1),space=2,col=c("#084594","#99000d","#ffd92f","#005824","#4a1486"),border="white",ylim=c(0,max(log10(gene_info[2,1:5]+1))+3),main="Exon Length of Genes",ylab="log10Length",xlim=c(2,17))
+lb=c(paste("n=",prettyNum(gene_info[2,1],big.mark=","),seq=""),
+	paste("n=",prettyNum(gene_info[2,2],big.mark=","),seq=""),
+	paste("n=",prettyNum(gene_info[2,3],big.mark=","),seq=""),
+	paste("n=",prettyNum(gene_info[2,4],big.mark=","),seq=""),
+	paste("n=",prettyNum(gene_info[2,5],big.mark=","),seq=""))
+text(c(2.5,5.5,8.5,11.5,14.5),log10(gene_info[2,1:5]+1)+0.1,label=lb,srt=45,cex=0.8,pos=4,offset=-0.25)
+###legend of figures
+plot(-1,-1,xlim=c(0,1),ylim=c(0,6),xaxt="n",yaxt="n")
+legend("center",col=c("#084594","#99000d","#ffd92f","#005824","#4a1486"),pch=15,pt.cex=2,legend=c("protein coding","protein coding piRNA","lincRNA","lincRNA piRNA","intergenic piRNA"),cex=1,bty="n")
+dev.off()
+
+###plot: reads features###
+
+###layout
+pdf(paste("figures/",prefix,"_read_feature.pdf",sep=""),height=8,width=8)
+laymat=matrix(1,3,4)
+laymat[1,3:4]=2
+laymat[2:3,3:4]=3
+layout(laymat)
+
+###read number in each feature
+par(mar=c(1,5,1,1),las=2)
+barplot(log10(read_num[18:1,1]+1),
+	horiz=T,xaxt="n",yaxt="n",space=c(rep(1,13),5,rep(1,4)),
+	xlim=c(0,max(log10(read_num[18:1,1]+1))+2),
+	col=c("#969696",rep("#386cb0",4),rep("#f0027f",4),rep("#66a61e",4),rep("black",5)),
+	angle=c(0,rep(c(0,45,90,135)[4:1],3),rep(0,5)),
+	density=c(-1,rep(c(-1,5,50,5)[4:1],3),rep(-1,5)),
+	border=c("#969696",rep("#386cb0",4),rep("#f0027f",4),rep("#66a61e",4),rep("black",5))
+	)
+lb=c()
+for(i in 18:1){
+	lb=c(lb,prettyNum(read_num[i,1],big.mark=","))
+}
+text(log10(read_num[18:1,1]+1),c(1:13*2-0.5,14:18*2+3.5),
+	label=lb,cex=0.8,pos=4)
+text(max(log10(read_num[18:1,1]+1)+2)/4*c(1,2,3),28.5,srt=270,
+	label=rep(">>>>>",3),font=2)
+axis(2,at=c(13.5,14:18*2+3.5),lwd=0,cex.axis=0.8,
+	label=c("piRNA uniq\nreads","piRNA\nuniq reads","piRNA like\nuniq reads","piRNA like\nreads","miRNA reads","all reads"))
+
+###legend for figure 1
+plot.new()
+legend("topright",angle=c(0,45,90,135),density=c(-1,15,50,15),bty="n",
+	legend=c("exon, sense","intron, sense","exon, anti-sense","intron, anti-sense"),cex=1.2)
+legend("topleft",density=-1,fill=c("#386cb0","#f0027f","#66a61e","#969696"),bty="n",
+	legend=c("intergenic","lincRNA","protein_coding","unknown"),cex=1.2)
+
+###reads distribution
+rd=c(sum(read_num[14:17,1]),
+	sum(read_num[10:13,1]),
+	sum(read_num[6:9,1]),
+	read_num[18,1])
+lb=paste(format(rd/sum(rd)*100,digit=2),"%",sep="")
+pie(rd,label=lb,border="white",radius=0.6,
+	col=c("#386cb0","#f0027f","#66a61e","#969696"),main="uniq piRNA reads")
+legend("topleft",density=-1,fill=c("#386cb0","#f0027f","#66a61e","#969696"),
+	legend=c("intergenic","lincRNA","protein_coding","unknown"),bty="n",cex=1.2)
+EOF
+#########Rscript############
+
+###make figures
+DATE=`date --date="-24 hour"`
+echo -e "\033[33mmake figures for basic information\t"$DATE"\033[0m"
+Rscript plot_dis.R ${PREFIX}
+
+DATE=`date --date="-24 hour"`
+echo -e "\033[31mremove big file for saving space\t"$DATE"\033[0m"
+mkdir process
+rm *fq *fa lincRNA* protein_coding*
+rm -rf STAR_RNA/*.sam STAR_piRNA/*.sam
+mv *.signal.bed *.bed2 *merged* *pcfiltered* *.uniq.bed process
+mv *extend* *SJ* process
+mv *protein_coding* *lincRNA* *intergenic* process
+mv *unknown* *.list process
+
+#finished
+DATE=`date --date="-24 hour"`
+echo -e "\033[32mcongraulations, done!\t"$DATE"\033[0m"
+

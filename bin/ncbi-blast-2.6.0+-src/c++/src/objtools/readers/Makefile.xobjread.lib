@@ -1,0 +1,27 @@
+# $Id: Makefile.xobjread.lib 515962 2016-10-06 18:16:16Z ivanov $
+
+WATCHERS = jcherry sapojnik bollin ludwigf ucko gotvyans
+
+
+ASN_DEP = submit
+
+CPPFLAGS = $(ORIG_CPPFLAGS) $(BOOST_INCLUDE)
+
+LIB = xobjread
+SRC = read_util format_guess_ex \
+      acc_pattern agp_read agp_seq_entry agp_util agp_validate_reader aln_reader bed_reader cigar fasta \
+	  fasta_aln_builder getfeature gff_reader track_data reader_data \
+      microarray_reader phrap reader_base readfeat rm_reader \
+      wiggle_reader gff3_sofa gff3_reader gtf_reader \
+      gff2_data gff2_reader \
+      gvf_reader \
+      vcf_reader \
+      best_feat_finder source_mod_parser fasta_exception agp_converter \
+      ucscregion_reader struct_cmt_reader \
+      message_listener line_error
+
+
+DLL_LIB = submit seqset $(SEQ_LIBS) general creaders xutil
+
+USES_LIBRARIES =  \
+    creaders submit

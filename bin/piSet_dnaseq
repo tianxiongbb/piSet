@@ -1,0 +1,190 @@
+#!/bin/bash
+
+# function
+function checkTools(){
+	if [ `which $1` ];then
+		echo0 3 "$1: `which $1`"
+	else
+		echo0 0 "$1 not found, please install it or add it into your PATH!"
+		exit 1
+	fi
+}
+
+function delet(){
+	[ -f $1 ] && rm -rf $1
+}
+
+# help information
+help_info(){
+	echo0 4 "$0"
+	echo0 1 "\t-l <file>\tleft DNA sequencing reads in fastq or fastq.gz"
+	echo0 1 "\t-r <file>\tright DNA sequencing reads in fastq or fastq.gz"
+	echo0 1 "\t-p <file>\tprefix for output. eg: TEMP/sample1. default: ./result"
+	echo0 1 "\t-g <genome>\tgenome used. eg: dm3, mm10. default: dm3"
+	echo0 4 "transposon insertion and deletion:"
+	echo0 1 "\t-T  \tset -T to run TEMP_insertion and TEMP_deletion. default: not run"
+	echo0 1 "\t-F  \tset -F with -T to run TEMP in fixed TE mode (more accurate). default: not set"
+	echo0 1 "\t-s <int>\tfragment size of the DNAseq library, use with -F to determine how far to fix TE mapping. default: 300"
+	echo0 1 "\t-f <file>\tfasta file for transposon annotation. default: genome/genome.transposon.fa"
+	echo0 1 "\t-b <file>\tbed file for transposon annotation. default: genome/genome.rmsk.bed"
+	echo0 1 "\t-m <int>\tmismatch allowed when mapping to TE concensus sequences. default: 3"
+	echo0 1 "\t-t <file>\tgenome 2bit file used for TEMP_Absence. default: genome/genome.2bit"
+	echo0 1 "\t-S <file>\tchrom size file used for TEMP_Insertion. default: genome/genome.chrom.size"
+	echo0 4 "mapping:"
+	echo0 1 "\t-B <index>\tbwa index used for genome mapping. default: genome/BWAIndex/genome"
+	echo0 1 "\t-Y <0|1>\twhether to use soft clip for bwa mapping. default: 1, used"
+	echo0 4 "other:"
+	echo0 1 "\t-c <int>\tCPU number used in this pipeline. default: 1"
+}
+
+if [ $# -lt 1 ];then
+	help_info && exit 1
+fi
+
+# parameters
+FRAGMENT_SIZE=300
+CPU=1
+PREFIX=./result
+GENOME=dm3
+SWITCH_SOFT_CLIP=1
+MISMATCH_CONSENSUS=3
+
+while getopts "hl:r:p:g:TFs:f:b:B:Y:c:m:t:S:" OPTION; do
+	case $OPTION in
+		l)	LEFT=`readlink -f ${OPTARG}`;;
+		r)	RIGHT=`readlink -f ${OPTARG}`;;
+		p)	PREFIX=${OPTARG};;
+		g)	GENOME=${OPTARG};;
+		T)	IF_TEMP=1;;
+		F)	IF_FIX=1;;
+		s)	FRAGMENT_SIZE=${OPTARG};;
+		f)	TE_FA=`readlink -f ${OPTARG}`;;
+		b)	TE_BED=`readlink -f ${OPTARG}`;;
+		m)	MISMATCH_CONSENSUS=${OPTARG};;
+		B)	BWA_INDEX=`readlink -f ${OPTARG}`;;
+		t)	GENOME_2BIT=`readlink -f ${OPTARG}`;;
+		S)	GENOME_SIZE=`readlink -f ${OPTARG}`;;
+		Y)	SWITCH_SOFT_CLIP=${OPTARG};;
+		c)	CPU=${OPTARG};;
+		h)	help_info && exit 1;;
+		*)	help_info && exit 1;;
+	esac
+done
+
+PATH_ANNO=`dirname ${0}` && PATH_ANNO=${PATH_ANNO%/bin}/annotation/${GENOME}
+PATH_PROG=`dirname ${0}`
+[ -z ${TE_FA} ] && TE_FA=${PATH_ANNO}/${GENOME}.transposon.fa
+[ -z ${TE_BED} ] && TE_BED=${PATH_ANNO}/${GENOME}.rmsk.bed
+[ -z ${BWA_INDEX} ] && BWA_INDEX=${PATH_ANNO}/BWAIndex/genome
+[ -z ${GENOME_2BIT} ] && GENOME_2BIT=${PATH_ANNO}/${GENOME}.2bit
+[ -z ${GENOME_SIZE} ] && GENOME_SIZE=${PATH_ANNO}/${GENOME}.chrom.size
+if [ "${SWITCH_SOFT_CLIP}" == "0" ];then
+	SOFT_CLIP=
+else
+	SOFT_CLIP="-Y"
+fi
+OUTDIR=`dirname ${PREFIX}`
+[ ! -d ${OUTDIR} ] && mkdir -p ${OUTDIR}
+PREFIX=`readlink -f ${PREFIX}` && OUTDIR=`dirname ${PREFIX}`
+
+# check tools
+echo0 1 "check tools......"
+checkTools bwa
+checkTools samtools
+checkTools TEMP_Insertion.sh
+checkTools TEMP_Absence.sh
+echo0 1 "OK"
+
+# check parameters
+echo0 1 "check parameters......"
+[ ! -f ${LEFT} ] && echo0 0 "no left.fastq file ${LEFT}" && exit 1
+[ ! -f ${RIGHT} ] && echo0 0 "no right.fastq file ${RIGHT}" && exit 1
+[ ! -f ${RIGHT} ] && echo0 0 "no right.fastq file ${RIGHT}" && exit 1
+[ ! -d ${PATH_ANNO} ] && echo0 4 "genome ${GENOME} not installed, please make sure you have give all the annotation files via -f -b and -B"
+! [ ${FRAGMENT_SIZE} -gt 0 ] 2>/dev/null && echo0 0 "-s must be interger" && exit 1
+! [ ${MISMATCH_CONSENSUS} -ge 0 ] 2>/dev/null && echo0 0 "-m must be interger" && exit 1
+[ ! -z ${IF_TEMP} ] && [ ! -f ${TRANSPOSON_FASTA} ] && echo0 0 "no transposon.fa file ${TRANSPOSON_FASTA}" && exit 1
+[ ! -z ${IF_TEMP} ] && [ ! -f ${TRANSPOSON_BED} ] && echo0 0 "no rmsk.bed file ${TRANSPOSON_BED}" && exit 1
+[ ! -f ${BWA_INDEX}.amb ] && echo0 0 "no bwa index ${BWA_INDEX}" && exit 1
+echo0 1 "OK"
+
+###############
+### process ###
+###############
+
+if [ ! -f ${PREFIX}.sorted.bam ];then # skip this step if already mapped
+	# map DNAseq to genome via bwa mem
+	echo0 2 "map to genome via bwa mem......"
+	SAMPLE_NAME=`basename ${PREFIX}`
+	[ ! -f ${PREFIX}.sam ] && bwa mem -R "@RG\tID:"${SAMPLE_NAME}"\tLB:lib\tPL:illumina\tSM:"${SAMPLE_NAME}"\tPU:unit" -T 0 ${SOFT_CLIP} -t ${CPU} ${BWA_INDEX} ${LEFT} ${RIGHT} > ${PREFIX}.sam 2>${PREFIX}.bwamem.log
+	TIME_GENOME_MAPPING=${SECONDS} && SECONDS=0
+	# sam to sorted.bam
+	echo0 2 "sam to sorted.bam......"
+	samtools view -bhS -@ ${CPU} ${PREFIX}.sam > ${PREFIX}.bam
+	samtools sort -@ ${CPU} -o ${PREFIX}.sorted.bam ${PREFIX}.bam
+	rm ${PREFIX}.sam ${PREFIX}.bam
+	TIME_SAM_TO_SORTED_BAM=${SECONDS} && SECONDS=0
+else
+	echo0 4 "already mapped to genome and converted mapping files to sorted.bam, skip"
+fi
+# make index for sorted.bam
+[ ! -f ${PREFIX}.sorted.bam.bai ] && samtools index -@ ${CPU} ${PREFIX}.sorted.bam
+
+#if [ ! -z ${IF_FIX} ];then
+#	echo0 2 "get both ends of transposons......"
+#	awk -v fl=$FRAGMENT_SIZE 'BEGIN{FS=OFS="\t"} {if($1~/^>/){name=substr($1,2);a[name]=""}else{a[name]=a[name]""$1}} END{for(i in a){print ">"i;if(length(a[i])<=2*fl){print a[i]}else{print substr(a[i],1,fl)""substr(a[i],length(a[i])-fl+1)}}}' ${TE_FA} > ${OUTDIR}/chopped.te.fa
+#	TE_FA=${OUTDIR}/chopped.te.fa
+#fi
+
+# run TEMP_Insertion to find transposon insertion
+if [ ! -z ${IF_TEMP} ];then
+	# delete old TEMP run
+	delet ${PREFIX}.absence.refined.bp.summary
+	delet ${PREFIX}.clipped.reads.aln
+	delet ${PREFIX}.deletion.result
+	delet ${PREFIX}.excision.cluster.rpmk
+	delet ${PREFIX}.excision.cluster.rpmk.refined.bp
+	delet ${PREFIX}.excision.cluster.rpmk.refined.bp.refsup
+	delet ${PREFIX}.excision.cluster.rpmk.sfcp
+	delet ${PREFIX}.insertion.1p1.bb
+	delet ${PREFIX}.insertion.2p.bb
+	delet ${PREFIX}.insertion.all.bb
+	delet ${PREFIX}.insertion.singleton.bb
+	delet ${PREFIX}.insertion.bp.bed
+	delet ${PREFIX}.insertion.bed9
+	delet ${PREFIX}.insertion.result
+	delet ${PREFIX}.insertion.refined.bp
+	delet ${PREFIX}.insertion.refined.bp.summary
+	delet ${PREFIX}.uniq.transposons.filtered.wGap.class.bed
+	delet ${PREFIX}.unpair.uniq.transposons.bed
+	delet ${PREFIX}.unpair.uniq.transposons.filtered.bed
+	delet ${PREFIX}.unpair.transposon.bam
+	delet ${PREFIX}.unpair.transposon.bam.bai
+	echo0 2 "run TEMP_Insertion to get transposon insertion......"
+	#TEMP_Insertion.sh -i ${PREFIX}.sorted.bam -s ${PATH_PROG}/ -o ${OUTDIR} -r ${TE_FA} -c ${CPU} -t ${TE_BED} -f ${FRAGMENT_SIZE} -x 5 -m ${MISMATCH_CONSENSUS} > ${PREFIX}.TEMP_Insertion.log 2>&1
+	awk 'BEGIN{FS=OFS="\t"} {if($1~/^>/){name=substr($1,2);a[name]=0}else{a[name]+=length($1)}} END{for(i in a){print i,a[i]}}' ${TE_FA} > ${OUTDIR}/temp.te.size
+	if [ ! -z ${IF_FIX} ];then
+		echo0 3 "also filter false positives which unpaired reads is not in the ends of transposons"
+		TEMP_Insertion.sh -i ${PREFIX}.sorted.bam -s ${PATH_PROG}/ -o ${OUTDIR} -r ${TE_FA} -c ${CPU} -t ${TE_BED} -f ${FRAGMENT_SIZE} -x 5 -m ${MISMATCH_CONSENSUS} -S ${OUTDIR}/temp.te.size > ${PREFIX}.TEMP_Insertion.log 2>&1
+	else
+		TEMP_Insertion_original.sh -i ${PREFIX}.sorted.bam -s ${PATH_PROG}/ -o ${OUTDIR} -r ${TE_FA} -c ${CPU} -t ${TE_BED} -f ${FRAGMENT_SIZE} -x 5 -m ${MISMATCH_CONSENSUS} > ${PREFIX}.TEMP_Insertion.log 2>&1
+	fi
+	awk 'BEGIN{FS=OFS="\t";a["sense"]="+";a["antisense"]="-"} {if(NR>1){print $1,$2,$3,$4,$6,a[$5],$8,$7,$7/($8+0.0000001)}}' ${PREFIX}.insertion.refined.bp.summary > ${PREFIX}.insertion.bed9 
+	awk 'BEGIN{FS=OFS="\t"} {if(NR==FNR){a[$4]["all"]+=$7;a[$4][$5]+=$7}else{print $1,a[$1]["all"]?a[$1]["all"]:0,a[$1]["1p1"]?a[$1]["1p1"]:0,a[$1]["2p"]?a[$1]["2p"]:0,a[$1]["singleton"]?a[$1]["singleton"]:0}}' ${PREFIX}.insertion.bed9 ${OUTDIR}/temp.te.size > ${PREFIX}.insertion.result
+	trn_summary2bb.sh ${PREFIX}.insertion.refined.bp.summary ${GENOME}
+	trn_bucket.py ${PREFIX} ${OUTDIR}/temp.te.size ${PREFIX}.trn_pos.buckets.pdf
+	TIME_TEMP_INSERTION=${SECONDS} && SECONDS=0
+	
+	# run TEMP_Absence to find transposon deletion
+	echo0 2 "run TEMP_Absence to get transposon deletion......"
+	TEMP_Absence.sh -i ${PREFIX}.sorted.bam -s ${PATH_PROG}/ -o ${OUTDIR} -r ${TE_BED} -t ${GENOME_2BIT} -f ${FRAGMENT_SIZE} -x 5 -c ${CPU} > ${PREFIX}.TEMP_Absence.log 2>&1
+	awk 'BEGIN{FS=OFS="\t"} {if(NR==FNR){ab[$4]+=$9}else{print $1,ab[$1]/1}}' ${PREFIX}.absence.refined.bp.summary ${OUTDIR}/temp.te.size > ${PREFIX}.deletion.result
+	rm ${OUTDIR}/temp.te.size
+	TIME_TEMP_DELETION=${SECONDS} && SECONDS=0
+fi
+
+echo0 4 "------ finished, congras🍺🍺🍺 ------"
+echo0 3 "Genome mapping:\t$((${TIME_GENOME_MAPPING} / 3600))h $((${TIME_GENOME_MAPPING} / 60))m" 2>/dev/null
+echo0 3 "Sam to sorted bam:\t$((${TIME_SAM_TO_SORTED_BAM} / 3600))h $((${TIME_SAM_TO_SORTED_BAM} / 60))m" 2>/dev/null
+[ ! -z ${TIME_TEMP_INSERTION} ] && echo0 3 "Transposon insertion:\t$((${TIME_TEMP_INSERTION} / 3600))h $((${TIME_TEMP_INSERTION} / 60))m" 2>/dev/null
+[ ! -Z ${TIME_TEMP_DELETION} ] && echo0 3 "Transposon deletion:\t$((${TIME_TEMP_DELETION} / 3600))h $((${TIME_TEMP_DELETION} / 60))m" 2>/dev/null

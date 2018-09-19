@@ -1,0 +1,215 @@
+M,16,seqblock.asn:EMBL-General
+--$Revision: 96973 $
+--*********************************************************************
+--
+-- 1990 - J.Ostell
+-- Version 3.0 - June 1994
+--
+--*********************************************************************
+--*********************************************************************
+--
+--  EMBL specific data
+--  This block of specifications was developed by Reiner Fuchs of EMBL
+--  Updated by J.Ostell, 1994
+--
+--*********************************************************************
+  T,23,EMBL-General:EMBL-dbname
+  T,45,EMBL-General:EMBL-xref
+  T,49,EMBL-General:EMBL-block
+
+T,23,EMBL-dbname,CHOICE
+  F,24,EMBL-dbname:code,ENUMERATED
+    V,25,EMBL-dbname:code:embl,0
+    V,26,EMBL-dbname:code:genbank,1
+    V,27,EMBL-dbname:code:ddbj,2
+    V,28,EMBL-dbname:code:geninfo,3
+    V,29,EMBL-dbname:code:medline,4
+    V,30,EMBL-dbname:code:swissprot,5
+    V,31,EMBL-dbname:code:pir,6
+    V,32,EMBL-dbname:code:pdb,7
+    V,33,EMBL-dbname:code:epd,8
+    V,34,EMBL-dbname:code:ecd,9
+    V,35,EMBL-dbname:code:tfd,10
+    V,36,EMBL-dbname:code:flybase,11
+    V,37,EMBL-dbname:code:prosite,12
+    V,38,EMBL-dbname:code:enzyme,13
+    V,39,EMBL-dbname:code:mim,14
+    V,40,EMBL-dbname:code:ecoseq,15
+    V,41,EMBL-dbname:code:hiv,16
+    V,42,EMBL-dbname:code:other,255
+  F,43,EMBL-dbname:name,VisibleString
+
+T,45,EMBL-xref,SEQUENCE
+  F,46,EMBL-xref:dbname,/EMBL-dbname
+  F,47,EMBL-xref:id,SEQUENCE /Object-id
+
+T,49,EMBL-block,SEQUENCE
+  F,50,EMBL-block:class,ENUMERATED,DEFAULT,standard
+    V,51,EMBL-block:class:not-set,0
+    V,52,EMBL-block:class:standard,1
+    V,53,EMBL-block:class:unannotated,2
+    V,54,EMBL-block:class:other,255
+  F,55,EMBL-block:div,ENUMERATED,OPTIONAL
+    V,56,EMBL-block:div:fun,0
+    V,57,EMBL-block:div:inv,1
+    V,58,EMBL-block:div:mam,2
+    V,59,EMBL-block:div:org,3
+    V,60,EMBL-block:div:phg,4
+    V,61,EMBL-block:div:pln,5
+    V,62,EMBL-block:div:pri,6
+    V,63,EMBL-block:div:pro,7
+    V,64,EMBL-block:div:rod,8
+    V,65,EMBL-block:div:syn,9
+    V,66,EMBL-block:div:una,10
+    V,67,EMBL-block:div:vrl,11
+    V,68,EMBL-block:div:vrt,12
+    V,69,EMBL-block:div:pat,13
+    V,70,EMBL-block:div:est,14
+    V,71,EMBL-block:div:sts,15
+    V,72,EMBL-block:div:other,255
+  F,73,EMBL-block:creation-date,/Date
+  F,74,EMBL-block:update-date,/Date
+  F,75,EMBL-block:extra-acc,SEQUENCE VisibleString,OPTIONAL
+  F,76,EMBL-block:keywords,SEQUENCE VisibleString,OPTIONAL
+  F,77,EMBL-block:xref,SEQUENCE /EMBL-xref,OPTIONAL
+M,89,seqblock.asn:SP-General
+--*********************************************************************
+--
+--  SWISSPROT specific data
+--  This block of specifications was developed by Mark Cavanaugh of
+--      NCBI working with Amos Bairoch of SWISSPROT
+--
+--*********************************************************************
+  T,97,SP-General:SP-block
+
+T,97,SP-block,SEQUENCE
+-- SWISSPROT specific descriptions
+  F,98,SP-block:class,ENUMERATED
+    V,99,SP-block:class:not-set,0
+    V,100,SP-block:class:standard,1
+    -- conforms to all SWISSPROT checks
+    V,101,SP-block:class:prelim,2
+    -- only seq and biblio checked
+    V,102,SP-block:class:other,255
+  F,103,SP-block:extra-acc,SET VisibleString,OPTIONAL
+  -- old SWISSPROT ids
+  F,104,SP-block:imeth,BOOLEAN,DEFAULT,FALSE
+  -- seq known to start with Met
+  F,105,SP-block:plasnm,SET VisibleString,OPTIONAL
+  -- plasmid names carrying gene
+  F,106,SP-block:seqref,SET /Seq-id,OPTIONAL
+  -- xref to other sequences
+  F,107,SP-block:dbref,SET /Dbtag,OPTIONAL
+  -- xref to non-sequence dbases
+  F,108,SP-block:keywords,SET VisibleString,OPTIONAL
+  -- keywords
+  F,109,SP-block:created,/Date,OPTIONAL
+  -- creation date
+  F,110,SP-block:sequpd,/Date,OPTIONAL
+  -- sequence update
+  F,111,SP-block:annotupd,/Date,OPTIONAL
+  -- annotation update
+M,123,seqblock.asn:PIR-General
+--*********************************************************************
+--
+--  PIR specific data
+--  This block of specifications was developed by Jim Ostell of
+--      NCBI
+--
+--*********************************************************************
+  T,130,PIR-General:PIR-block
+
+T,130,PIR-block,SEQUENCE
+-- PIR specific descriptions
+  F,131,PIR-block:had-punct,BOOLEAN,OPTIONAL
+  -- had punctuation in sequence ?
+  F,132,PIR-block:host,VisibleString,OPTIONAL
+  F,133,PIR-block:source,VisibleString,OPTIONAL
+  -- source line
+  F,134,PIR-block:summary,VisibleString,OPTIONAL
+  F,135,PIR-block:genetic,VisibleString,OPTIONAL
+  F,136,PIR-block:includes,VisibleString,OPTIONAL
+  F,137,PIR-block:placement,VisibleString,OPTIONAL
+  F,138,PIR-block:superfamily,VisibleString,OPTIONAL
+  F,139,PIR-block:keywords,SEQUENCE VisibleString,OPTIONAL
+  F,140,PIR-block:cross-reference,VisibleString,OPTIONAL
+  F,141,PIR-block:date,VisibleString,OPTIONAL
+  F,142,PIR-block:seq-raw,VisibleString,OPTIONAL
+  -- seq with punctuation
+  F,143,PIR-block:seqref,SET /Seq-id,OPTIONAL
+  -- xref to other sequences
+M,155,seqblock.asn:GenBank-General
+--*********************************************************************
+--
+--  GenBank specific data
+--  This block of specifications was developed by Jim Ostell of
+--      NCBI
+--
+--*********************************************************************
+  T,162,GenBank-General:GB-block
+
+T,162,GB-block,SEQUENCE
+-- GenBank specific descriptions
+  F,163,GB-block:extra-accessions,SEQUENCE VisibleString,OPTIONAL
+  F,164,GB-block:source,VisibleString,OPTIONAL
+  -- source line
+  F,165,GB-block:keywords,SEQUENCE VisibleString,OPTIONAL
+  F,166,GB-block:origin,VisibleString,OPTIONAL
+  F,167,GB-block:date,VisibleString,OPTIONAL
+  -- OBSOLETE old form Entry Date
+  F,168,GB-block:entry-date,/Date,OPTIONAL
+  -- replaces date
+  F,169,GB-block:div,VisibleString,OPTIONAL
+  -- GenBank division
+  F,170,GB-block:taxonomy,VisibleString,OPTIONAL
+  -- continuation line of organism
+M,184,seqblock.asn:PRF-General
+--**********************************************************************
+-- PRF specific definition
+--    PRF is a protein sequence database crated and maintained by
+--    Protein Research Foundation, Minoo-city, Osaka, Japan.
+--
+--    Written by A.Ogiwara, Inst.Chem.Res. (Dr.Kanehisa's Lab),
+--            Kyoto Univ., Japan
+--
+--**********************************************************************
+  T,189,PRF-General:PRF-block
+  T,194,PRF-General:PRF-ExtraSrc
+
+T,189,PRF-block,SEQUENCE
+  F,190,PRF-block:extra-src,/PRF-ExtraSrc,OPTIONAL
+  F,191,PRF-block:keywords,SEQUENCE VisibleString,OPTIONAL
+
+T,194,PRF-ExtraSrc,SEQUENCE
+  F,195,PRF-ExtraSrc:host,VisibleString,OPTIONAL
+  F,196,PRF-ExtraSrc:part,VisibleString,OPTIONAL
+  F,197,PRF-ExtraSrc:state,VisibleString,OPTIONAL
+  F,198,PRF-ExtraSrc:strain,VisibleString,OPTIONAL
+  F,199,PRF-ExtraSrc:taxon,VisibleString,OPTIONAL
+M,212,seqblock.asn:PDB-General
+--*********************************************************************
+--
+--  PDB specific data
+--  This block of specifications was developed by Jim Ostell and
+--      Steve Bryant of NCBI
+--
+--*********************************************************************
+  T,219,PDB-General:PDB-block
+  T,227,PDB-General:PDB-replace
+
+T,219,PDB-block,SEQUENCE
+-- PDB specific descriptions
+  F,220,PDB-block:deposition,/Date
+  -- deposition date  month,year
+  F,221,PDB-block:class,VisibleString
+  F,222,PDB-block:compound,SEQUENCE VisibleString
+  F,223,PDB-block:source,SEQUENCE VisibleString
+  F,224,PDB-block:exp-method,VisibleString,OPTIONAL
+  -- present if NOT X-ray diffraction
+  F,225,PDB-block:replace,/PDB-replace,OPTIONAL
+  -- replacement history
+
+T,227,PDB-replace,SEQUENCE
+  F,228,PDB-replace:date,/Date
+  F,229,PDB-replace:ids,SEQUENCE VisibleString
+  -- entry ids replace by this one

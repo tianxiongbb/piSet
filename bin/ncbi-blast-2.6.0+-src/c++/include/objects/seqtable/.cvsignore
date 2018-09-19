@@ -1,0 +1,17 @@
+.cvsignore
+BVector_data_.hpp
+CommonBytes_table_.hpp
+CommonString_table_.hpp
+Scaled_int_multi_data_.hpp
+Scaled_real_multi_data_.hpp
+SeqTable_column_.hpp
+SeqTable_column_info_.hpp
+SeqTable_multi_data_.hpp
+SeqTable_single_data_.hpp
+SeqTable_sparse_index_.hpp
+Seq_table_.hpp
+CommonBytes_table.hpp
+CommonString_table.hpp
+NCBI_SeqTable_module.hpp
+seqtable__.hpp
+seqtable.dump

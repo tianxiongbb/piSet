@@ -1,0 +1,53 @@
+M,9,proj.asn:NCBI-Project
+--$Revision: 96973 $
+--****************************************************************
+--
+--  NCBI Project Definition Module
+--  by Jim Ostell and Jonathan Kans, 1998
+--
+--****************************************************************
+  T,21,NCBI-Project:Project
+  T,25,NCBI-Project:Project-item
+  T,49,NCBI-Project:Project-descr
+  T,54,NCBI-Project:Projdesc
+  T,61,NCBI-Project:Project-id
+
+T,21,Project,SEQUENCE
+  F,22,Project:descr,/Project-descr,OPTIONAL
+  F,23,Project:data,/Project-item
+
+T,25,Project-item,CHOICE
+  F,26,Project-item:pmuid,SET INTEGER
+  F,27,Project-item:protuid,SET INTEGER
+  F,28,Project-item:nucuid,SET INTEGER
+  F,29,Project-item:sequid,SET INTEGER
+  F,30,Project-item:genomeuid,SET INTEGER
+  F,31,Project-item:structuid,SET INTEGER
+  F,32,Project-item:pmid,SET /PubMedId
+  F,33,Project-item:protid,SET /Seq-id
+  F,34,Project-item:nucid,SET /Seq-id
+  F,35,Project-item:seqid,SET /Seq-id
+  F,36,Project-item:genomeid,SET /Seq-id
+  F,37,Project-item:structid,NULL
+  F,38,Project-item:pment,SET /Pubmed-entry
+  F,39,Project-item:protent,SET /Seq-entry
+  F,40,Project-item:nucent,SET /Seq-entry
+  F,41,Project-item:seqent,SET /Seq-entry
+  F,42,Project-item:genomeent,SET /Seq-entry
+  F,43,Project-item:structent,NULL
+  F,44,Project-item:seqannot,SET /Seq-annot
+  F,45,Project-item:loc,SET /Seq-loc
+  F,46,Project-item:proj,SET /Project
+
+T,49,Project-descr,SEQUENCE
+  F,50,Project-descr:id,SET /Project-id
+  F,51,Project-descr:name,VisibleString,OPTIONAL
+  F,52,Project-descr:descr,SET /Projdesc,OPTIONAL
+
+T,54,Projdesc,CHOICE
+  F,55,Projdesc:pub,/Pubdesc
+  F,56,Projdesc:date,/Date
+  F,57,Projdesc:comment,VisibleString
+  F,58,Projdesc:title,VisibleString
+
+T,61,Project-id,VisibleString

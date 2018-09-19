@@ -1,0 +1,26 @@
+#!/bin/bash
+
+if [ $# -lt 1 ];then
+	echo0 1 $0" in.bed2|\"in1.bed2 in2.bed2...\" [normalization_factor]"
+	exit 1
+fi
+if [ $# -gt 1 ];then
+	factor=$2
+else
+	factor=1
+fi
+
+if [ "${1% *}" == "$1" ];then
+	awk -v factor=$factor 'BEGIN{FS=OFS="\t"} {l[length($7)]+=$4/$5} END{for(i=15;i<=35;i++){print i,l[i]/factor}}' $1
+else
+	fn=""
+	for i in $1
+	do
+		awk -v factor=$factor 'BEGIN{FS=OFS="\t"} {l[length($7)]+=$4/$5} END{for(i=15;i<=35;i++){print l[i]/factor}}' $i > temp.${i}
+		fn=$fn" temp."$i
+	done
+	awk 'BEGIN{for(i=15;i<=35;i++){print i}}' > temp.head
+	paste temp.head $fn
+	rm $fn
+fi
+

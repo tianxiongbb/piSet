@@ -1,0 +1,423 @@
+M,6,trackmgr.asn:NCBI-TrackManager
+--- $Id: trackmgr.asn 498762 2016-04-19 15:46:52Z clausen $
+---
+--- Definitions for the TrackManager service
+---
+  T,26,NCBI-TrackManager:TMgr-Request
+  T,40,NCBI-TrackManager:TMgr-Reply
+  T,54,NCBI-TrackManager:TMgr-GenomeContext
+  T,61,NCBI-TrackManager:TMgr-ClientInfo
+  T,69,NCBI-TrackManager:TMgr-TrackACL-Authorization
+  T,74,NCBI-TrackManager:TMgr-DisplayTrackRequest
+  T,87,NCBI-TrackManager:TMgr-DisplayTrackReply
+  T,94,NCBI-TrackManager:TMgr-DTrackId
+  T,96,NCBI-TrackManager:TMgr-SwitchTrackContextRequest
+  T,103,NCBI-TrackManager:TMgr-SwitchTrackContextReply
+  T,108,NCBI-TrackManager:TMgr-TrackAttrValueRequest
+  T,116,NCBI-TrackManager:TMgr-AttrRequest
+  T,122,NCBI-TrackManager:TMgr-ValueRequest
+  T,125,NCBI-TrackManager:TMgr-TrackAttrValueReply
+  T,131,NCBI-TrackManager:TMgr-AttrReply
+  T,136,NCBI-TrackManager:TMgr-TrackAttributes
+  T,141,NCBI-TrackManager:TMgr-AttrValueReply
+  T,146,NCBI-TrackManager:TMgr-SwitchTrackExceptionCode
+  T,151,NCBI-TrackManager:TMgr-SwitchTrackException
+  T,156,NCBI-TrackManager:TMgr-AssemblySpec
+  T,165,NCBI-TrackManager:TMgr-AttrSpec
+  T,170,NCBI-TrackManager:TMgr-Assembly
+  T,178,NCBI-TrackManager:TMgr-Attribute
+  T,183,NCBI-TrackManager:TMgr-DisplayTrack
+  T,191,NCBI-TrackManager:TMgr-DatasetItem
+  T,197,NCBI-TrackManager:TMgr-DatasetItemSeq
+  T,203,NCBI-TrackManager:TMgr-DisplayTrackChoice
+  T,208,NCBI-TrackManager:TMgr-MessageLevel
+  T,215,NCBI-TrackManager:TMgr-Message
+  T,220,NCBI-TrackManager:TMgr-BlastRIDRequest
+  T,224,NCBI-TrackManager:TMgr-BlastQuerySeq
+  T,229,NCBI-TrackManager:TMgr-BlastRIDDetail
+  T,235,NCBI-TrackManager:TMgr-BlastRIDReply
+  T,240,NCBI-TrackManager:TMgr-CreateUserDataItem
+  T,247,NCBI-TrackManager:TMgr-IdentityId
+  T,252,NCBI-TrackManager:TMgr-IdentityIdType
+  T,257,NCBI-TrackManager:TMgr-Identity
+  T,261,NCBI-TrackManager:TMgr-ACL-AccessLevel
+  T,268,NCBI-TrackManager:TMgr-TrackACL-Permission
+  T,273,NCBI-TrackManager:TMgr-CreateUserTrackRequest
+  T,283,NCBI-TrackManager:TMgr-CreateUserTrackReply
+  T,288,NCBI-TrackManager:TMgr-RemoveUserTrackRequest
+  T,293,NCBI-TrackManager:TMgr-Status
+  T,298,NCBI-TrackManager:TMgr-RemoveUserTrackReply
+  T,302,NCBI-TrackManager:TMgr-ItemResolverRequest
+  T,313,NCBI-TrackManager:TMgr-TrackItems
+  T,318,NCBI-TrackManager:TMgr-ItemResolverReply
+  T,323,NCBI-TrackManager:TMgr-AnnotType
+  T,342,NCBI-TrackManager:TMgr-PositionStats
+  T,347,NCBI-TrackManager:TMgr-LengthStats
+  T,353,NCBI-TrackManager:TMgr-TypeStat
+  T,360,NCBI-TrackManager:TMgr-AnnotCounts
+  T,364,NCBI-TrackManager:TMgr-TrackSetType
+  T,369,NCBI-TrackManager:TMgr-TrackSet
+  T,378,NCBI-TrackManager:TMgr-RetrieveTracksetRequest
+  T,383,NCBI-TrackManager:TMgr-RetrieveTracksetReply
+  T,391,NCBI-TrackManager:TMgr-CreateTracksetRequest
+  T,399,NCBI-TrackManager:TMgr-CreateTracksetReply
+  T,405,NCBI-TrackManager:TMgr-RenameMyNCBICollectionRequest
+  T,410,NCBI-TrackManager:TMgr-RenameMyNCBICollectionReply
+  T,415,NCBI-TrackManager:TMgr-SupportedAssembliesRequest
+  T,420,NCBI-TrackManager:TMgr-SupportedAssembliesReply
+
+T,26,TMgr-Request,CHOICE
+---
+--- Top-level request/reply
+---
+  F,27,TMgr-Request:display-tracks,/TMgr-DisplayTrackRequest
+  F,28,TMgr-Request:switch-display-tracks,/TMgr-SwitchTrackContextRequest
+  F,29,TMgr-Request:track-attr-values,/TMgr-TrackAttrValueRequest
+  F,30,TMgr-Request:blast-tracks,/TMgr-BlastRIDRequest
+  F,31,TMgr-Request:create-user-tracks,/TMgr-CreateUserTrackRequest
+  F,32,TMgr-Request:resolve-track-items,/TMgr-ItemResolverRequest
+  F,33,TMgr-Request:remove-user-tracks,/TMgr-RemoveUserTrackRequest
+  F,34,TMgr-Request:retrieve-tracksets,/TMgr-RetrieveTracksetRequest
+  F,35,TMgr-Request:create-trackset,/TMgr-CreateTracksetRequest
+  F,36,TMgr-Request:rename-trackset,/TMgr-RenameMyNCBICollectionRequest
+  F,37,TMgr-Request:supported-assemblies,/TMgr-SupportedAssembliesRequest
+
+T,40,TMgr-Reply,CHOICE
+  F,41,TMgr-Reply:display-tracks,/TMgr-DisplayTrackReply
+  F,42,TMgr-Reply:switch-display-tracks,/TMgr-SwitchTrackContextReply
+  F,43,TMgr-Reply:track-attr-values,/TMgr-TrackAttrValueReply
+  F,44,TMgr-Reply:blast-tracks,/TMgr-BlastRIDReply
+  F,45,TMgr-Reply:create-user-tracks,/TMgr-CreateUserTrackReply
+  F,46,TMgr-Reply:resolve-track-items,/TMgr-ItemResolverReply
+  F,47,TMgr-Reply:remove-user-tracks,/TMgr-RemoveUserTrackReply
+  F,48,TMgr-Reply:retrieve-tracksets,/TMgr-RetrieveTracksetReply
+  F,49,TMgr-Reply:create-trackset,/TMgr-CreateTracksetReply
+  F,50,TMgr-Reply:rename-trackset,/TMgr-RenameMyNCBICollectionReply
+  F,51,TMgr-Reply:supported-assemblies,/TMgr-SupportedAssembliesReply
+
+T,54,TMgr-GenomeContext,CHOICE
+  F,55,TMgr-GenomeContext:assembly,/TMgr-AssemblySpec
+  F,56,TMgr-GenomeContext:sequence,/Seq-id
+  F,57,TMgr-GenomeContext:refseqgene,NULL
+  F,58,TMgr-GenomeContext:all,NULL
+
+T,61,TMgr-ClientInfo,SEQUENCE
+  F,62,TMgr-ClientInfo:client-name,VisibleString
+  F,63,TMgr-ClientInfo:context,VisibleString,OPTIONAL
+  F,64,TMgr-ClientInfo:inhouse,BOOLEAN,DEFAULT,FALSE
+  F,65,TMgr-ClientInfo:context-attrs,SET /TMgr-AttrSpec,OPTIONAL
+  --permission keys etc
+
+T,69,TMgr-TrackACL-Authorization,SEQUENCE
+  F,70,TMgr-TrackACL-Authorization:access-level,/TMgr-ACL-AccessLevel,OPTIONAL
+  F,71,TMgr-TrackACL-Authorization:access-key,VisibleString,OPTIONAL
+
+T,74,TMgr-DisplayTrackRequest,SEQUENCE
+  F,75,TMgr-DisplayTrackRequest:client,/TMgr-ClientInfo
+  F,76,TMgr-DisplayTrackRequest:genome-context,/TMgr-GenomeContext
+  F,77,TMgr-DisplayTrackRequest:attrs,SET /TMgr-AttrSpec,OPTIONAL
+  F,78,TMgr-DisplayTrackRequest:identity,/TMgr-Identity,OPTIONAL
+  F,79,TMgr-DisplayTrackRequest:authorization,/TMgr-TrackACL-Authorization,OPTIONAL
+  F,80,TMgr-DisplayTrackRequest:flags,SEQUENCE,OPTIONAL
+    F,81,TMgr-DisplayTrackRequest:flags:include-stats,BOOLEAN,DEFAULT,FALSE
+    F,82,TMgr-DisplayTrackRequest:flags:include-default-tracks,BOOLEAN,OPTIONAL
+    F,83,TMgr-DisplayTrackRequest:flags:include-track-items,BOOLEAN,DEFAULT,FALSE
+
+T,87,TMgr-DisplayTrackReply,SEQUENCE
+  F,88,TMgr-DisplayTrackReply:messages,SEQUENCE /TMgr-Message,OPTIONAL
+  F,89,TMgr-DisplayTrackReply:display-tracks,SET /TMgr-DisplayTrack,OPTIONAL
+  F,90,TMgr-DisplayTrackReply:blast-tracks,SET /TMgr-BlastRIDDetail,OPTIONAL
+  --tracks TMgr-DisplayTracks OPTIONAL
+
+T,94,TMgr-DTrackId,/Dbtag
+
+T,96,TMgr-SwitchTrackContextRequest,SEQUENCE
+  F,97,TMgr-SwitchTrackContextRequest:client,/TMgr-ClientInfo
+  F,98,TMgr-SwitchTrackContextRequest:new-genome-context,/TMgr-GenomeContext
+  F,99,TMgr-SwitchTrackContextRequest:current-dtrack-ids,SET /TMgr-DTrackId
+  F,100,TMgr-SwitchTrackContextRequest:annotation-release-number,INTEGER,OPTIONAL
+
+T,103,TMgr-SwitchTrackContextReply,SEQUENCE
+  F,104,TMgr-SwitchTrackContextReply:messages,SET /TMgr-Message,OPTIONAL
+  F,105,TMgr-SwitchTrackContextReply:display-tracks,SET /TMgr-DisplayTrackChoice,OPTIONAL
+
+T,108,TMgr-TrackAttrValueRequest,SEQUENCE
+  F,109,TMgr-TrackAttrValueRequest:track-type-list,NULL,OPTIONAL
+  -- request all track type names
+  F,110,TMgr-TrackAttrValueRequest:attr-list,/TMgr-AttrRequest,OPTIONAL
+  -- request attributes associated
+  -- with all or some track types
+  F,112,TMgr-TrackAttrValueRequest:value-list,/TMgr-ValueRequest,OPTIONAL
+  -- request values associated with
+  -- attribute list
+
+T,116,TMgr-AttrRequest,CHOICE
+  F,117,TMgr-AttrRequest:all-attrs,NULL
+  -- request all attributes
+  F,118,TMgr-AttrRequest:track-type-list,SET VisibleString
+  -- request attributes associated
+  -- with track types in list
+
+T,122,TMgr-ValueRequest,SET VisibleString
+-- list of attributes to return
+-- values for
+
+T,125,TMgr-TrackAttrValueReply,SEQUENCE
+  F,126,TMgr-TrackAttrValueReply:track-type-list,SET VisibleString,OPTIONAL
+  -- list of track types
+  F,127,TMgr-TrackAttrValueReply:attr-list,/TMgr-AttrReply,OPTIONAL
+  F,128,TMgr-TrackAttrValueReply:value-list,SET /TMgr-AttrValueReply,OPTIONAL
+
+T,131,TMgr-AttrReply,CHOICE
+  F,132,TMgr-AttrReply:all-attrs,SET VisibleString
+  -- list of attributes
+  F,133,TMgr-AttrReply:track-attr-list,SET /TMgr-TrackAttributes
+
+T,136,TMgr-TrackAttributes,SEQUENCE
+  F,137,TMgr-TrackAttributes:track-name,VisibleString
+  -- track type name
+  F,138,TMgr-TrackAttributes:attributes,SET VisibleString
+  -- list of attributes associated with track type name
+
+T,141,TMgr-AttrValueReply,SEQUENCE
+  F,142,TMgr-AttrValueReply:attr-name,VisibleString
+  F,143,TMgr-AttrValueReply:value-list,SET VisibleString
+
+T,146,TMgr-SwitchTrackExceptionCode,INTEGER
+  V,147,TMgr-SwitchTrackExceptionCode:track-not-found,0
+  -- corresponding track not found in new genome context
+  V,148,TMgr-SwitchTrackExceptionCode:other,255
+
+T,151,TMgr-SwitchTrackException,SEQUENCE
+  F,152,TMgr-SwitchTrackException:dtrack-id,/TMgr-DTrackId
+  F,153,TMgr-SwitchTrackException:code,/TMgr-SwitchTrackExceptionCode,OPTIONAL
+
+T,156,TMgr-AssemblySpec,CHOICE
+  F,157,TMgr-AssemblySpec:name,SEQUENCE
+    F,158,TMgr-AssemblySpec:name:tax-id,INTEGER
+    F,159,TMgr-AssemblySpec:name:name,VisibleString
+  F,161,TMgr-AssemblySpec:accession,VisibleString
+  F,162,TMgr-AssemblySpec:all-assemblies,NULL
+
+T,165,TMgr-AttrSpec,SEQUENCE
+  F,166,TMgr-AttrSpec:key,VisibleString
+  F,167,TMgr-AttrSpec:value,UTF8String
+
+T,170,TMgr-Assembly,SEQUENCE
+  F,171,TMgr-Assembly:accession,VisibleString
+  F,172,TMgr-Assembly:name,UTF8String
+  F,173,TMgr-Assembly:short-name,UTF8String,OPTIONAL
+  F,174,TMgr-Assembly:description,UTF8String,OPTIONAL
+  F,175,TMgr-Assembly:is-complete,BOOLEAN,OPTIONAL
+
+T,178,TMgr-Attribute,SEQUENCE
+  F,179,TMgr-Attribute:key,VisibleString
+  F,180,TMgr-Attribute:value,UTF8String
+
+T,183,TMgr-DisplayTrack,SEQUENCE
+  F,184,TMgr-DisplayTrack:dtrack-id,/TMgr-DTrackId
+  F,185,TMgr-DisplayTrack:name,UTF8String
+  F,186,TMgr-DisplayTrack:attrs,SET /TMgr-Attribute,OPTIONAL
+  F,187,TMgr-DisplayTrack:seqs,SET /TMgr-DatasetItemSeq,OPTIONAL
+  F,188,TMgr-DisplayTrack:items,SET /TMgr-DatasetItem,OPTIONAL
+
+T,191,TMgr-DatasetItem,SEQUENCE
+  F,192,TMgr-DatasetItem:name,UTF8String
+  F,193,TMgr-DatasetItem:attrs,SET /TMgr-Attribute,OPTIONAL
+  F,194,TMgr-DatasetItem:seqs,SET /TMgr-DatasetItemSeq,OPTIONAL
+
+T,197,TMgr-DatasetItemSeq,SEQUENCE
+  F,198,TMgr-DatasetItemSeq:seq-id,/Seq-id
+  F,199,TMgr-DatasetItemSeq:counts,/TMgr-AnnotCounts,OPTIONAL
+  F,200,TMgr-DatasetItemSeq:seq-id2,/Seq-id,OPTIONAL
+
+T,203,TMgr-DisplayTrackChoice,CHOICE
+  F,204,TMgr-DisplayTrackChoice:track,/TMgr-DisplayTrack
+  F,205,TMgr-DisplayTrackChoice:switch-exception,/TMgr-SwitchTrackException
+
+T,208,TMgr-MessageLevel,INTEGER
+  V,209,TMgr-MessageLevel:warning,0
+  V,210,TMgr-MessageLevel:error,1
+  V,211,TMgr-MessageLevel:info,2
+  V,212,TMgr-MessageLevel:diagnostic,3
+
+T,215,TMgr-Message,SEQUENCE
+  F,216,TMgr-Message:level,/TMgr-MessageLevel
+  F,217,TMgr-Message:message,VisibleString
+
+T,220,TMgr-BlastRIDRequest,SEQUENCE
+  F,221,TMgr-BlastRIDRequest:rid,VisibleString
+
+T,224,TMgr-BlastQuerySeq,SEQUENCE
+  F,225,TMgr-BlastQuerySeq:query-number,INTEGER
+  F,226,TMgr-BlastQuerySeq:label,VisibleString
+  -- accession or seq-id string
+
+T,229,TMgr-BlastRIDDetail,SEQUENCE
+  F,230,TMgr-BlastRIDDetail:rid,VisibleString
+  F,231,TMgr-BlastRIDDetail:title,VisibleString,OPTIONAL
+  F,232,TMgr-BlastRIDDetail:query-sequences,SEQUENCE /TMgr-BlastQuerySeq,OPTIONAL
+
+T,235,TMgr-BlastRIDReply,SEQUENCE
+  F,236,TMgr-BlastRIDReply:messages,SEQUENCE /TMgr-Message,OPTIONAL
+  F,237,TMgr-BlastRIDReply:rid-detail,/TMgr-BlastRIDDetail,OPTIONAL
+
+T,240,TMgr-CreateUserDataItem,SEQUENCE
+  F,241,TMgr-CreateUserDataItem:datakey,VisibleString
+  F,242,TMgr-CreateUserDataItem:seqids,SET VisibleString
+  F,243,TMgr-CreateUserDataItem:attrs,SET /TMgr-Attribute,OPTIONAL
+  F,244,TMgr-CreateUserDataItem:seqs,SET /TMgr-DatasetItemSeq,OPTIONAL
+
+T,247,TMgr-IdentityId,SEQUENCE
+  F,248,TMgr-IdentityId:id,VisibleString
+  F,249,TMgr-IdentityId:id-type,/TMgr-IdentityIdType
+
+T,252,TMgr-IdentityIdType,INTEGER
+  V,253,TMgr-IdentityIdType:myncbi-id,0
+  V,254,TMgr-IdentityIdType:ncbi-sid,1
+
+T,257,TMgr-Identity,SEQUENCE
+  F,258,TMgr-Identity:ids,SET /TMgr-IdentityId
+
+T,261,TMgr-ACL-AccessLevel,INTEGER
+  V,262,TMgr-ACL-AccessLevel:public,0
+  V,263,TMgr-ACL-AccessLevel:private,1
+  V,264,TMgr-ACL-AccessLevel:ncbi,2
+  V,265,TMgr-ACL-AccessLevel:nih,3
+
+T,268,TMgr-TrackACL-Permission,SEQUENCE
+  F,269,TMgr-TrackACL-Permission:access-level,/TMgr-ACL-AccessLevel,DEFAULT,public
+  F,270,TMgr-TrackACL-Permission:access-key,VisibleString,OPTIONAL
+
+T,273,TMgr-CreateUserTrackRequest,SEQUENCE
+  F,274,TMgr-CreateUserTrackRequest:identity,/TMgr-Identity
+  F,275,TMgr-CreateUserTrackRequest:track-name,VisibleString,OPTIONAL
+  -- User-provided track name
+  F,276,TMgr-CreateUserTrackRequest:track-descr,VisibleString,OPTIONAL
+  -- User-provided data description
+  F,277,TMgr-CreateUserTrackRequest:assembly-acc,VisibleString,OPTIONAL
+  F,278,TMgr-CreateUserTrackRequest:attrs,SET /TMgr-Attribute,OPTIONAL
+  F,279,TMgr-CreateUserTrackRequest:data-items,SET /TMgr-CreateUserDataItem
+  F,280,TMgr-CreateUserTrackRequest:access-perms,/TMgr-TrackACL-Permission
+
+T,283,TMgr-CreateUserTrackReply,SEQUENCE
+  F,284,TMgr-CreateUserTrackReply:messages,SEQUENCE /TMgr-Message,OPTIONAL
+  F,285,TMgr-CreateUserTrackReply:display-tracks,SET /TMgr-DisplayTrack,OPTIONAL
+
+T,288,TMgr-RemoveUserTrackRequest,SEQUENCE
+  F,289,TMgr-RemoveUserTrackRequest:identity,/TMgr-Identity
+  F,290,TMgr-RemoveUserTrackRequest:dtrack-ids,SET /TMgr-DTrackId
+
+T,293,TMgr-Status,INTEGER
+  V,294,TMgr-Status:success,0
+  V,295,TMgr-Status:failure,1
+
+T,298,TMgr-RemoveUserTrackReply,SEQUENCE
+  F,299,TMgr-RemoveUserTrackReply:messages,SEQUENCE /TMgr-Message,OPTIONAL
+
+T,302,TMgr-ItemResolverRequest,SEQUENCE
+  F,303,TMgr-ItemResolverRequest:dtrack-ids,SET /TMgr-DTrackId
+  F,304,TMgr-ItemResolverRequest:client,/TMgr-ClientInfo
+  F,305,TMgr-ItemResolverRequest:genome-context,/TMgr-GenomeContext
+  F,306,TMgr-ItemResolverRequest:attrs,SET /TMgr-AttrSpec,OPTIONAL
+  F,307,TMgr-ItemResolverRequest:sequence,/Seq-id,OPTIONAL
+  -- resolve specifically for this top-level sequence
+  F,308,TMgr-ItemResolverRequest:flags,SEQUENCE,OPTIONAL
+    F,309,TMgr-ItemResolverRequest:flags:include-stats,BOOLEAN,DEFAULT,FALSE
+
+T,313,TMgr-TrackItems,SEQUENCE
+  F,314,TMgr-TrackItems:dtrack-id,/TMgr-DTrackId
+  F,315,TMgr-TrackItems:data,SET /TMgr-DatasetItem
+
+T,318,TMgr-ItemResolverReply,SEQUENCE
+  F,319,TMgr-ItemResolverReply:messages,SEQUENCE /TMgr-Message,OPTIONAL
+  F,320,TMgr-ItemResolverReply:track-items,SET /TMgr-TrackItems,OPTIONAL
+
+T,323,TMgr-AnnotType,INTEGER
+  V,324,TMgr-AnnotType:total,0
+  V,325,TMgr-AnnotType:feat,1
+  V,326,TMgr-AnnotType:feat-gene,100
+  V,327,TMgr-AnnotType:feat-cdregion,101
+  V,328,TMgr-AnnotType:feat-prot,102
+  V,329,TMgr-AnnotType:feat-rna,103
+  V,330,TMgr-AnnotType:feat-imp,104
+  V,331,TMgr-AnnotType:feat-region,105
+  V,332,TMgr-AnnotType:feat-clone,106
+  V,333,TMgr-AnnotType:feat-variation,107
+  V,334,TMgr-AnnotType:feat-user,108
+  V,335,TMgr-AnnotType:seq-table,2
+  V,336,TMgr-AnnotType:graph,3
+  V,337,TMgr-AnnotType:align,4
+  V,338,TMgr-AnnotType:ids,5
+  V,339,TMgr-AnnotType:locs,6
+
+T,342,TMgr-PositionStats,SEQUENCE
+  F,343,TMgr-PositionStats:min,INTEGER
+  F,344,TMgr-PositionStats:max,INTEGER
+
+T,347,TMgr-LengthStats,SEQUENCE
+  F,348,TMgr-LengthStats:min,INTEGER
+  F,349,TMgr-LengthStats:max,INTEGER
+  F,350,TMgr-LengthStats:mean,INTEGER,OPTIONAL
+
+T,353,TMgr-TypeStat,SEQUENCE
+  F,354,TMgr-TypeStat:type,/TMgr-AnnotType
+  F,355,TMgr-TypeStat:count,INTEGER
+  F,356,TMgr-TypeStat:length-stats,/TMgr-LengthStats,OPTIONAL
+  F,357,TMgr-TypeStat:position-stats,/TMgr-PositionStats,OPTIONAL
+
+T,360,TMgr-AnnotCounts,SEQUENCE
+  F,361,TMgr-AnnotCounts:counts,SET /TMgr-TypeStat
+
+T,364,TMgr-TrackSetType,INTEGER
+  V,365,TMgr-TrackSetType:tms,0
+  V,366,TMgr-TrackSetType:myncbi-collection,1
+
+T,369,TMgr-TrackSet,SEQUENCE
+  F,370,TMgr-TrackSet:type,/TMgr-TrackSetType
+  F,371,TMgr-TrackSet:id,VisibleString
+  -- internal identifier
+  F,372,TMgr-TrackSet:genome-context,/TMgr-GenomeContext
+  F,373,TMgr-TrackSet:name,UTF8String
+  F,374,TMgr-TrackSet:description,UTF8String,OPTIONAL
+  F,375,TMgr-TrackSet:tracks,SEQUENCE /TMgr-DisplayTrack
+
+T,378,TMgr-RetrieveTracksetRequest,SEQUENCE
+  F,379,TMgr-RetrieveTracksetRequest:genome-context,/TMgr-GenomeContext
+  F,380,TMgr-RetrieveTracksetRequest:identity,/TMgr-Identity,OPTIONAL
+
+T,383,TMgr-RetrieveTracksetReply,SEQUENCE
+  F,384,TMgr-RetrieveTracksetReply:messages,SEQUENCE /TMgr-Message,OPTIONAL
+  F,385,TMgr-RetrieveTracksetReply:tracksets,SET /TMgr-TrackSet,OPTIONAL
+  F,386,TMgr-RetrieveTracksetReply:flags,SEQUENCE,OPTIONAL
+    F,387,TMgr-RetrieveTracksetReply:flags:include-track-items,BOOLEAN,DEFAULT,FALSE
+
+T,391,TMgr-CreateTracksetRequest,SEQUENCE
+  F,392,TMgr-CreateTracksetRequest:identity,/TMgr-Identity,OPTIONAL
+  F,393,TMgr-CreateTracksetRequest:genome-context,/TMgr-GenomeContext
+  F,394,TMgr-CreateTracksetRequest:name,UTF8String
+  F,395,TMgr-CreateTracksetRequest:description,UTF8String,OPTIONAL
+  F,396,TMgr-CreateTracksetRequest:tracks,SEQUENCE /TMgr-DTrackId
+
+T,399,TMgr-CreateTracksetReply,SEQUENCE
+  F,400,TMgr-CreateTracksetReply:messages,SEQUENCE /TMgr-Message,OPTIONAL
+  F,401,TMgr-CreateTracksetReply:status,/TMgr-Status
+  F,402,TMgr-CreateTracksetReply:trackset-id,VisibleString,OPTIONAL
+
+T,405,TMgr-RenameMyNCBICollectionRequest,SEQUENCE
+  F,406,TMgr-RenameMyNCBICollectionRequest:collection-id,VisibleString
+  F,407,TMgr-RenameMyNCBICollectionRequest:name,VisibleString
+
+T,410,TMgr-RenameMyNCBICollectionReply,SEQUENCE
+  F,411,TMgr-RenameMyNCBICollectionReply:messages,SEQUENCE /TMgr-Message,OPTIONAL
+  F,412,TMgr-RenameMyNCBICollectionReply:status,/TMgr-Status
+
+T,415,TMgr-SupportedAssembliesRequest,CHOICE
+  F,416,TMgr-SupportedAssembliesRequest:assembly-acc,VisibleString
+  --tax-id INTEGER (0..MAXINT)
+
+T,420,TMgr-SupportedAssembliesReply,SEQUENCE
+  F,421,TMgr-SupportedAssembliesReply:messages,SEQUENCE /TMgr-Message,OPTIONAL
+  F,422,TMgr-SupportedAssembliesReply:reply,CHOICE,OPTIONAL
+    F,423,TMgr-SupportedAssembliesReply:reply:assembly-acc,BOOLEAN
+    --tax-id SET OF VisibleString

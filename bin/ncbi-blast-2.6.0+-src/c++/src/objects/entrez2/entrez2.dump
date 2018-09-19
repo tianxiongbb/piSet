@@ -1,0 +1,427 @@
+M,15,entrez2.asn:NCBI-Entrez2
+--$Revision: 96973 $********************************************
+--
+--  entrez2.asn
+--   Version 1
+--
+--   API to Entrez Engine (1999)
+--   Retrieval of sequence done through ID1 module
+--     Also, SeqId queries
+--   Retrieval of PubMed records through PubMed module
+--   Retrieval of Structures through PubStruct module
+--   Retrieval of Genomes through Genomes module
+--
+--***************************************************************
+  T,22,NCBI-Entrez2:Entrez2-dt
+  T,23,NCBI-Entrez2:Entrez2-db-id
+  T,24,NCBI-Entrez2:Entrez2-field-id
+  T,25,NCBI-Entrez2:Entrez2-link-id
+  T,27,NCBI-Entrez2:Entrez2-id-list
+  T,46,NCBI-Entrez2:Entrez2-boolean-exp
+  T,51,NCBI-Entrez2:Entrez2-boolean-element
+  T,69,NCBI-Entrez2:Entrez2-boolean-term
+  T,76,NCBI-Entrez2:Entrez2-operator
+  T,95,NCBI-Entrez2:Entrez2-request
+  T,102,NCBI-Entrez2:E2Request
+  T,121,NCBI-Entrez2:Entrez2-eval-boolean
+  T,126,NCBI-Entrez2:Entrez2-dt-filter
+  T,131,NCBI-Entrez2:Entrez2-limits
+  T,137,NCBI-Entrez2:Entrez2-id
+  T,141,NCBI-Entrez2:Entrez2-term-query
+  T,146,NCBI-Entrez2:Entrez2-hier-query
+  T,152,NCBI-Entrez2:Entrez2-term-pos
+  T,158,NCBI-Entrez2:Entrez2-get-links
+  T,173,NCBI-Entrez2:Entrez2-reply
+  T,181,NCBI-Entrez2:E2Reply
+  T,195,NCBI-Entrez2:Entrez2-info
+  T,200,NCBI-Entrez2:Entrez2-db-info
+  T,212,NCBI-Entrez2:Entrez2-field-info
+  T,224,NCBI-Entrez2:Entrez2-link-info
+  T,231,NCBI-Entrez2:Entrez2-docsum-field-type
+  T,237,NCBI-Entrez2:Entrez2-docsum-field-info
+  T,242,NCBI-Entrez2:Entrez2-boolean-reply
+  T,247,NCBI-Entrez2:Entrez2-docsum-list
+  T,251,NCBI-Entrez2:Entrez2-docsum
+  T,255,NCBI-Entrez2:Entrez2-docsum-data
+  T,259,NCBI-Entrez2:Entrez2-term-list
+  T,264,NCBI-Entrez2:Entrez2-term
+  T,270,NCBI-Entrez2:Entrez2-hier-node
+  T,285,NCBI-Entrez2:Entrez2-link-set
+  T,290,NCBI-Entrez2:Entrez2-link-count-list
+  T,294,NCBI-Entrez2:Entrez2-link-count
+
+T,22,Entrez2-dt,INTEGER
+--**************************************
+--  Entrez2 common elements
+--**************************************
+-- a date/time stamp
+
+T,23,Entrez2-db-id,VisibleString
+-- database name
+
+T,24,Entrez2-field-id,VisibleString
+-- field name
+
+T,25,Entrez2-link-id,VisibleString
+-- link name
+
+T,27,Entrez2-id-list,SEQUENCE
+-- list of record UIDs
+  F,28,Entrez2-id-list:db,/Entrez2-db-id
+  -- the database
+  F,29,Entrez2-id-list:num,INTEGER
+  -- number of uids
+  F,30,Entrez2-id-list:uids,OCTET STRING,OPTIONAL
+  -- coded uids
+
+T,46,Entrez2-boolean-exp,SEQUENCE
+--****************************************
+-- The structured form of the boolean is the same in a request or
+--    return so that it easy to modify a query. This means some
+--    fields are only considered in a return value, like counts
+--    by term. They are ignored in a request.
+-- The structured boolean supports specific boolean components,
+--    an unparsed string in query syntax, and UID lists as
+--    elements of a boolean. This makes it possible to submit
+--    a single string, a fully structured query, or a mixture.
+--    The UID list feature means one can also perform refinements
+--    on UID lists from links, neighbors, or other operations.
+--    UID list query now returns a history key for subsequent use.
+--*****************************************
+  F,47,Entrez2-boolean-exp:db,/Entrez2-db-id
+  -- database for this query
+  F,48,Entrez2-boolean-exp:exp,SEQUENCE /Entrez2-boolean-element
+  -- the Boolean
+  F,49,Entrez2-boolean-exp:limits,/Entrez2-limits,OPTIONAL
+  -- date bounds
+
+T,51,Entrez2-boolean-element,CHOICE
+  F,52,Entrez2-boolean-element:str,VisibleString
+  -- unparsed query string
+  F,53,Entrez2-boolean-element:op,/Entrez2-operator
+  -- logical operator
+  F,54,Entrez2-boolean-element:term,/Entrez2-boolean-term
+  -- fielded term
+  F,55,Entrez2-boolean-element:ids,/Entrez2-id-list
+  -- list of UIDs - returns history key in reply
+  F,56,Entrez2-boolean-element:key,VisibleString
+  -- history key for uploaded UID list or other query
+
+T,69,Entrez2-boolean-term,SEQUENCE
+--*****************************************
+-- the term is both sent and received as parts of
+--   queries and replies. The attributes can be filled in
+--   by either, but may be ignored by one or the other. Flags are
+--   shown if a real value is only of use in the query (Q), only
+--   in the reply (R), or used in both (B)
+-- do-not-explode and do-not-translate are only active set by
+--   by the query. However, they retain those settings in the
+--   return value so they can be resent with a new query
+--******************************************
+  F,70,Entrez2-boolean-term:field,/Entrez2-field-id
+  -- B
+  F,71,Entrez2-boolean-term:term,VisibleString
+  -- B
+  F,72,Entrez2-boolean-term:term-count,INTEGER,OPTIONAL
+  -- R count of records with term
+  F,73,Entrez2-boolean-term:do-not-explode,BOOLEAN,DEFAULT,FALSE
+  -- Q do not explode term
+  F,74,Entrez2-boolean-term:do-not-translate,BOOLEAN,DEFAULT,FALSE
+  -- Q do not use synonyms
+
+T,76,Entrez2-operator,INTEGER
+  V,77,Entrez2-operator:and,1
+  V,78,Entrez2-operator:or,2
+  V,79,Entrez2-operator:butnot,3
+  V,80,Entrez2-operator:range,4
+  V,81,Entrez2-operator:left-paren,5
+  V,82,Entrez2-operator:right-paren,6
+
+T,95,Entrez2-request,SEQUENCE
+--***************************************
+--  Entrez2 Request types
+--***************************************
+--****************************************
+-- The basic request wrapper leaves space for a version which
+--   allow the server to support older clients
+-- The tool parameter allows us to log the client types for
+--   debugging and tuning
+-- The cookie is a session ID returned by the first Entrez2-reply
+--****************************************
+-- a standard request
+  F,96,Entrez2-request:request,/E2Request
+  -- the actual request
+  F,97,Entrez2-request:version,INTEGER
+  -- ASN1 spec version
+  F,98,Entrez2-request:tool,VisibleString,OPTIONAL
+  -- tool making request
+  F,99,Entrez2-request:cookie,VisibleString,OPTIONAL
+  -- history session cookie
+  F,100,Entrez2-request:use-history,BOOLEAN,DEFAULT,FALSE
+  -- request should use history
+
+T,102,E2Request,CHOICE
+-- request types
+  F,103,E2Request:get-info,NULL
+  -- ask for info block
+  F,104,E2Request:eval-boolean,/Entrez2-eval-boolean
+  -- Boolean lookup
+  F,105,E2Request:get-docsum,/Entrez2-id-list
+  -- get the DocSums
+  F,106,E2Request:get-term-pos,/Entrez2-term-query
+  -- get position in term list
+  F,107,E2Request:get-term-list,/Entrez2-term-pos
+  -- get Term list by position
+  F,108,E2Request:get-term-hierarchy,/Entrez2-hier-query
+  -- get a hierarchy from a term
+  F,109,E2Request:get-links,/Entrez2-get-links
+  -- get specific links from a UID list
+  F,110,E2Request:get-linked,/Entrez2-get-links
+  -- get subset of UID list which has links
+  F,111,E2Request:get-link-counts,/Entrez2-id
+  -- get all links from one UID
+
+T,121,Entrez2-eval-boolean,SEQUENCE
+--****************************************
+-- When evaluating a boolean query the counts of hits is always
+--    returned.
+-- In addition, you can request the UIDs of the hits or the
+--    the parsed query in structured form (with counts by term),
+--    or both.
+--****************************************
+-- evaluate Boolean query
+  F,122,Entrez2-eval-boolean:return-UIDs,BOOLEAN,DEFAULT,FALSE
+  -- return UID list?
+  F,123,Entrez2-eval-boolean:return-parse,BOOLEAN,DEFAULT,FALSE
+  -- return parsed query?
+  F,124,Entrez2-eval-boolean:query,/Entrez2-boolean-exp
+  -- the actual query
+
+T,126,Entrez2-dt-filter,SEQUENCE
+  F,127,Entrez2-dt-filter:begin-date,/Entrez2-dt
+  F,128,Entrez2-dt-filter:end-date,/Entrez2-dt
+  F,129,Entrez2-dt-filter:type-date,/Entrez2-field-id
+
+T,131,Entrez2-limits,SEQUENCE
+-- date limits
+  F,132,Entrez2-limits:filter-date,/Entrez2-dt-filter,OPTIONAL
+  F,133,Entrez2-limits:max-UIDs,INTEGER,OPTIONAL
+  -- max UIDs to return in list
+  F,134,Entrez2-limits:offset-UIDs,INTEGER,OPTIONAL
+  -- start partway into UID list
+
+T,137,Entrez2-id,SEQUENCE
+-- a single UID
+  F,138,Entrez2-id:db,/Entrez2-db-id
+  F,139,Entrez2-id:uid,INTEGER
+
+T,141,Entrez2-term-query,SEQUENCE
+  F,142,Entrez2-term-query:db,/Entrez2-db-id
+  F,143,Entrez2-term-query:field,/Entrez2-field-id
+  F,144,Entrez2-term-query:term,VisibleString
+
+T,146,Entrez2-hier-query,SEQUENCE
+  F,147,Entrez2-hier-query:db,/Entrez2-db-id
+  F,148,Entrez2-hier-query:field,/Entrez2-field-id
+  F,149,Entrez2-hier-query:term,VisibleString,OPTIONAL
+  -- query with either term
+  F,150,Entrez2-hier-query:txid,INTEGER,OPTIONAL
+  -- or Taxonomy ID
+
+T,152,Entrez2-term-pos,SEQUENCE
+-- request portions of term list
+  F,153,Entrez2-term-pos:db,/Entrez2-db-id
+  F,154,Entrez2-term-pos:field,/Entrez2-field-id
+  F,155,Entrez2-term-pos:first-term-pos,INTEGER
+  F,156,Entrez2-term-pos:number-of-terms,INTEGER,OPTIONAL
+  -- optional for hierarchy only
+
+T,158,Entrez2-get-links,SEQUENCE
+-- request links of one type
+  F,159,Entrez2-get-links:uids,/Entrez2-id-list
+  -- docs to link from
+  F,160,Entrez2-get-links:linktype,/Entrez2-link-id
+  -- type of link
+  F,161,Entrez2-get-links:max-UIDS,INTEGER,OPTIONAL
+  -- maximum number of links to return
+  F,162,Entrez2-get-links:count-only,BOOLEAN,OPTIONAL
+  -- return only the counts
+  F,163,Entrez2-get-links:parents-persist,BOOLEAN,OPTIONAL
+  -- allow original uids in list
+
+T,173,Entrez2-reply,SEQUENCE
+--**********************************************************
+-- Replies from the Entrez server
+--  all replies contain the date/time stamp when they were executed
+--  to do reqular date bounded searches use this value+1 to search
+--  again later instead of recording the date/time on the client machine
+--  the cookie allows a simple key string to represent UID lists in the history
+--**********************************************************
+  F,174,Entrez2-reply:reply,/E2Reply
+  -- the actual reply
+  F,175,Entrez2-reply:dt,/Entrez2-dt
+  -- date/time stamp from server
+  F,176,Entrez2-reply:server,VisibleString
+  -- server version info
+  F,177,Entrez2-reply:msg,VisibleString,OPTIONAL
+  -- possibly a message to the user
+  F,178,Entrez2-reply:key,VisibleString,OPTIONAL
+  -- history key for query
+  F,179,Entrez2-reply:cookie,VisibleString,OPTIONAL
+  -- history session cookie
+
+T,181,E2Reply,CHOICE
+  F,182,E2Reply:error,VisibleString
+  -- if nothing can be returned
+  F,183,E2Reply:get-info,/Entrez2-info
+  -- the database info
+  F,184,E2Reply:eval-boolean,/Entrez2-boolean-reply
+  -- result of boolean query
+  F,185,E2Reply:get-docsum,/Entrez2-docsum-list
+  F,186,E2Reply:get-term-pos,INTEGER
+  -- position of the term
+  F,187,E2Reply:get-term-list,/Entrez2-term-list
+  F,188,E2Reply:get-term-hierarchy,/Entrez2-hier-node
+  F,189,E2Reply:get-links,/Entrez2-link-set
+  F,190,E2Reply:get-linked,/Entrez2-id-list
+  F,191,E2Reply:get-link-counts,/Entrez2-link-count-list
+
+T,195,Entrez2-info,SEQUENCE
+-- describes all the databases
+  F,196,Entrez2-info:db-count,INTEGER
+  -- number of databases
+  F,197,Entrez2-info:build-date,/Entrez2-dt
+  -- build date of databases
+  F,198,Entrez2-info:db-info,SEQUENCE /Entrez2-db-info
+  -- info by database
+
+T,200,Entrez2-db-info,SEQUENCE
+-- info for one database
+  F,201,Entrez2-db-info:db-name,/Entrez2-db-id
+  -- internal name
+  F,202,Entrez2-db-info:db-menu,VisibleString
+  -- short name for menu
+  F,203,Entrez2-db-info:db-descr,VisibleString
+  -- longer explanatory name
+  F,204,Entrez2-db-info:doc-count,INTEGER
+  -- total number of records
+  F,205,Entrez2-db-info:field-count,INTEGER
+  -- number of field types
+  F,206,Entrez2-db-info:fields,SEQUENCE /Entrez2-field-info
+  F,207,Entrez2-db-info:link-count,INTEGER
+  -- number of link types
+  F,208,Entrez2-db-info:links,SEQUENCE /Entrez2-link-info
+  F,209,Entrez2-db-info:docsum-field-count,INTEGER
+  F,210,Entrez2-db-info:docsum-fields,SEQUENCE /Entrez2-docsum-field-info
+
+T,212,Entrez2-field-info,SEQUENCE
+-- info about one field
+  F,213,Entrez2-field-info:field-name,/Entrez2-field-id
+  -- the internal name
+  F,214,Entrez2-field-info:field-menu,VisibleString
+  -- short string suitable for menu
+  F,215,Entrez2-field-info:field-descr,VisibleString
+  -- longer, explanatory name
+  F,216,Entrez2-field-info:term-count,INTEGER
+  -- number of terms in field
+  F,217,Entrez2-field-info:is-date,BOOLEAN,OPTIONAL
+  F,218,Entrez2-field-info:is-numerical,BOOLEAN,OPTIONAL
+  F,219,Entrez2-field-info:single-token,BOOLEAN,OPTIONAL
+  F,220,Entrez2-field-info:hierarchy-avail,BOOLEAN,OPTIONAL
+  F,221,Entrez2-field-info:is-rangable,BOOLEAN,OPTIONAL
+  F,222,Entrez2-field-info:is-truncatable,BOOLEAN,OPTIONAL
+
+T,224,Entrez2-link-info,SEQUENCE
+-- info about one link
+  F,225,Entrez2-link-info:link-name,/Entrez2-link-id
+  F,226,Entrez2-link-info:link-menu,VisibleString
+  F,227,Entrez2-link-info:link-descr,VisibleString
+  F,228,Entrez2-link-info:db-to,/Entrez2-db-id
+  -- database it links to
+  F,229,Entrez2-link-info:data-size,INTEGER,OPTIONAL
+  -- size of link data element    
+
+T,231,Entrez2-docsum-field-type,INTEGER
+  V,232,Entrez2-docsum-field-type:string,1
+  V,233,Entrez2-docsum-field-type:int,2
+  V,234,Entrez2-docsum-field-type:float,3
+  V,235,Entrez2-docsum-field-type:date-pubmed,4
+
+T,237,Entrez2-docsum-field-info,SEQUENCE
+  F,238,Entrez2-docsum-field-info:field-name,VisibleString
+  F,239,Entrez2-docsum-field-info:field-description,VisibleString
+  F,240,Entrez2-docsum-field-info:field-type,/Entrez2-docsum-field-type
+
+T,242,Entrez2-boolean-reply,SEQUENCE
+  F,243,Entrez2-boolean-reply:count,INTEGER
+  -- records hit
+  F,244,Entrez2-boolean-reply:uids,/Entrez2-id-list,OPTIONAL
+  -- if uids requested
+  F,245,Entrez2-boolean-reply:query,/Entrez2-boolean-exp,OPTIONAL
+  -- if parsed query requested
+
+T,247,Entrez2-docsum-list,SEQUENCE
+  F,248,Entrez2-docsum-list:count,INTEGER
+  -- number of docsums
+  F,249,Entrez2-docsum-list:list,SEQUENCE /Entrez2-docsum
+
+T,251,Entrez2-docsum,SEQUENCE
+  F,252,Entrez2-docsum:uid,INTEGER
+  -- primary uid (gi, pubmedid)
+  F,253,Entrez2-docsum:docsum-data,SEQUENCE /Entrez2-docsum-data
+
+T,255,Entrez2-docsum-data,SEQUENCE
+  F,256,Entrez2-docsum-data:field-name,VisibleString
+  F,257,Entrez2-docsum-data:field-value,VisibleString
+
+T,259,Entrez2-term-list,SEQUENCE
+  F,260,Entrez2-term-list:pos,INTEGER
+  -- position of first term in list
+  F,261,Entrez2-term-list:num,INTEGER
+  -- number of terms in list
+  F,262,Entrez2-term-list:list,SEQUENCE /Entrez2-term
+
+T,264,Entrez2-term,SEQUENCE
+  F,265,Entrez2-term:term,VisibleString
+  F,266,Entrez2-term:txid,INTEGER,OPTIONAL
+  F,267,Entrez2-term:count,INTEGER
+  -- count of records with this term
+  F,268,Entrez2-term:is-leaf-node,BOOLEAN,OPTIONAL
+  -- used for hierarchy only
+
+T,270,Entrez2-hier-node,SEQUENCE
+-- for hierarchical index
+  F,271,Entrez2-hier-node:cannonical-form,VisibleString
+  -- the official name
+  F,272,Entrez2-hier-node:lineage-count,INTEGER
+  -- number of strings in lineage
+  F,273,Entrez2-hier-node:lineage,SEQUENCE /Entrez2-term,OPTIONAL
+  -- strings up the lineage
+  F,274,Entrez2-hier-node:child-count,INTEGER
+  -- number of children of this node
+  F,275,Entrez2-hier-node:children,SEQUENCE /Entrez2-term
+  -- the children
+  F,276,Entrez2-hier-node:is-ambiguous,BOOLEAN,OPTIONAL
+  -- used for hierarchy only
+
+T,285,Entrez2-link-set,SEQUENCE
+--*******************************************
+-- Links are returned in sets also using OCTET STRINGS
+--*******************************************
+-- set of links
+  F,286,Entrez2-link-set:ids,/Entrez2-id-list
+  F,287,Entrez2-link-set:data-size,INTEGER,OPTIONAL
+  -- size of data elements
+  F,288,Entrez2-link-set:data,OCTET STRING,OPTIONAL
+  -- coded scores
+
+T,290,Entrez2-link-count-list,SEQUENCE
+-- all links from 1 uid
+  F,291,Entrez2-link-count-list:link-type-count,INTEGER
+  -- number of types of links
+  F,292,Entrez2-link-count-list:links,SEQUENCE /Entrez2-link-count
+
+T,294,Entrez2-link-count,SEQUENCE
+-- link count of one type
+  F,295,Entrez2-link-count:link-type,/Entrez2-link-id
+  F,296,Entrez2-link-count:link-count,INTEGER

@@ -1,0 +1,106 @@
+#!/bin/bash
+
+# function
+function checkTools(){
+	if [ `which $1` ];then
+		echo0 3 "$1: `which $1`"
+	else
+		echo0 0 "$1 not found, please install it or add it into your PATH!"
+		exit 1
+	fi
+}
+
+# help infomation
+help_info(){
+	echo0 1 `readlink -f $0`
+	echo0 1 "\t-i <file>\tsmallRNA sequencing fastq file"
+	echo0 1 "\t-r <file>\tgenome reference fasta file"
+	echo0 1 "\t-b <index>\tbowtie index for reference genome"
+	echo0 4 "optional:"
+	echo0 1 "\t-o <directory>\toutput directory, please use a new directory to avoid file confliction. default: ./"
+	echo0 1 "\t-a <string>\tadapter sequence to be removed from smallRNA sequencing file. default: suppose the adapter has been removed."
+	echo0 1 "\t-m <file>\tmature miRNA fasta for this species. default: none"
+	echo0 1 "\t-M <file>\tmature miRNA fasta for 1-5 close species. default: none"
+	echo0 1 "\t-H <file>\thairpin fasta for this species. default: none"
+	echo0 1 "\t-p <directory>\toutput prefix for results. default: ./miRDeep_result"
+	echo0 1 "\t-C <int>\tCPU number used. default: 4"
+}
+
+if [ $# -lt 2 ];then
+	help_info
+	exit 1
+fi
+
+# parameters
+OUTDIR=./
+MIRNA1=none
+MIRNA2=none
+HAIRPIN=none
+CPU=4
+
+while getopts "hi:r:b:m:M:H:C:o:a:" OPTION; do
+	case $OPTION in
+		h)	help_info && exit 1;;
+		i)	SRNA=`readlink -f ${OPTARG}`;;
+		b)	INDEX=`readlink -f ${OPTARG}`;;
+		r)	REF=`readlink -f ${OPTARG}`;;
+		o)	OUTDIR=${OPTARG};;
+		a)	ADAPTER=${OPTARG};;
+		C)	CPU=${OPTARG};;
+		p)	PREFIX=`readlink -f ${OPTARG}`;;
+		m)	MIRNA1=`readlink -f ${OPTARG}`;;
+		M)	MIRNA2=`readlink -f ${OPTARG}`;;
+		H)	HAIRPIN=`readlink -f ${OPTARG}`;;
+		*)	help_info && exit 1;;
+	esac
+done
+
+# check parameters
+echo0 1 "check parameters"
+[ -z ${SRNA} ] && echo0 0 "please provide srna.fa via -i" && exit 1
+[ -z ${REF} ] && echo0 0 "please provide reference.fa via -r" && exit 1
+PREFIX=`basename ${REF}` && PREFIX=${PREFIX%.fa*}
+[ ! -f ${SRNA} ] && echo0 0 "-i specified but no file in ${SRNA}" && exit 1
+[ ! -f ${REF} ] && echo0 0 "-r specified but no file in ${REF}" && exit 1
+! [ ${CPU} -gt 0 ] 2>/dev/null && echo0 0 "-C must be interger" && exit 1
+[ "${MIRNA1}" != "none" ] && [ ! -f ${MIRNA1} ] && echo0 0 "-m specified but no file in ${MIRNA1}" && exit 1
+[ -f ${MIRNA1} ] && NC=(`wc -l ${MIRNA1}`) && [ $NC -eq 0 ] && echo0 4 "${MIRNA1} is empty, set -m to none" && MIRNA1=none
+[ "${MIRNA2}" != "none" ] && [ ! -f ${MIRNA2} ] && echo0 0 "-M specified but no file in ${MIRNA2}" && exit 1
+[ -f ${MIRNA2} ] && NC=(`wc -l ${MIRNA2}`) && [ $NC -eq 0 ] && echo0 4 "${MIRNA2} is empty, set -M to none" && MIRNA2=none
+[ "${HAIRPIN}" != "none" ] && [ ! -f ${HAIRPIN} ] && echo0 0 "-H specified but no file in ${HAIRPIN}" && exit 1
+[ -f ${HAIRPIN} ] && NC=(`wc -l ${HAIRPIN}`) && [ $NC -eq 0 ] && echo0 4 "${HAIRPIN} is empty, set -H to none" && HAIRPIN=none
+echo0 3 "${PREFIX} mature miRNA seuquece: ${MIRNA1}"
+echo0 3 "close species mature miRNA sequence:  ${MIRNA2}"
+echo0 3 "${PREFIX} hairpin sequence: ${HAIRPIN}"
+echo0 1 "OK"
+
+# check tools
+echo0 1 "check tools"
+checkTools mapper.pl
+checkTools miRDeep2.pl
+echo0 1 "OK"
+
+######################
+### program here ###
+######################
+
+[ ! -d ${OUTDIR} ] && mkdir -p ${OUTDIR}
+cd ${OUTDIR} || (echo0 0 "cannot cd into output directory ${OUTDIR}" && exit 1)
+
+# run mapper.pl
+if [ -z ${ADAPTER}];then
+	echo0 2 "adapter removed fastq to collapsed fasta via mapper.pl......"
+	mapper.pl ${SRNA} -e -h -j -l 18 -m -s ${PREFIX}_collapsed.fa
+else
+	echo0 2 "fastq to collapsed fasta via mapper.pl......"
+	mapper.pl ${SRNA} -e -h -j -k ${ADAPTER} -l 18 -m -s ${PREFIX}_collapsed.fa
+fi
+echo0 2 "map collapsed fasta to reference genome via mapper.pl......"
+mapper.pl ${PREFIX}_collapsed.fa -c -p ${INDEX} -o ${CPU} -t ${PREFIX}.arf
+
+# run miRDeep2.pl
+echo0 2 "run miRDeep2.pl to detect miRNAs......"
+miRDeep2.pl ${PREFIX}_collapsed.fa ${REF} ${PREFIX}.arf ${MIRNA1} ${MIRNA2} ${HAIRPIN}
+
+echo0 4 "------finished, congras🍺🍺🍺------"
+

@@ -1,0 +1,9 @@
+#include <ncbi_pch.hpp>
+#include "Taxon1_data_.cpp"
+#include "Taxon1_error_.cpp"
+#include "Taxon1_info_.cpp"
+#include "Taxon1_name_.cpp"
+#include "Taxon1_req_.cpp"
+#include "Taxon1_resp_.cpp"
+#include "Taxon2_data_.cpp"
+#include "NCBI_Taxon1_module.cpp"

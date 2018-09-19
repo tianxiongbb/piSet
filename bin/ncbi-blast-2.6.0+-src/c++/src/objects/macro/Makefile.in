@@ -1,0 +1,7 @@
+# $Id: Makefile.in 449388 2014-10-16 14:55:16Z bollin $
+
+ASN_PROJ = macro
+SUB_PROJ = unit_test
+
+srcdir = @srcdir@
+include @builddir@/Makefile.meta

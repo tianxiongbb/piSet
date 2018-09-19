@@ -1,0 +1,8 @@
+.cvsignore
+HGVS_Coordinate_.hpp
+HGVS_Coordinate_Set_.hpp
+HGVS_Coordinate.hpp
+HGVS_Coordinate_Set.hpp
+NCBI_HGVSCoordinate_module.hpp
+objcoords__.hpp
+objcoords.dump

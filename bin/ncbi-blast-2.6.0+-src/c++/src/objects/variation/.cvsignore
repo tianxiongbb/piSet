@@ -1,0 +1,13 @@
+.cvsignore
+VariantPlacement_.cpp
+Variation_.cpp
+VariationException_.cpp
+VariationMethod_.cpp
+VariantPlacement.cpp
+VariationException.cpp
+VariationMethod.cpp
+NCBI_VariationPackage_module.cpp
+variation___.cpp
+variation__.cpp
+variation.files
+variation.dump

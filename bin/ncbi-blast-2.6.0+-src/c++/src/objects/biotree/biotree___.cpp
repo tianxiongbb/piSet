@@ -1,0 +1,10 @@
+#include <ncbi_pch.hpp>
+#include "BioTreeContainer_.cpp"
+#include "DistanceMatrix_.cpp"
+#include "FeatureDescr_.cpp"
+#include "FeatureDictSet_.cpp"
+#include "Node_.cpp"
+#include "NodeFeature_.cpp"
+#include "NodeFeatureSet_.cpp"
+#include "NodeSet_.cpp"
+#include "NCBI_BioTree_module.cpp"

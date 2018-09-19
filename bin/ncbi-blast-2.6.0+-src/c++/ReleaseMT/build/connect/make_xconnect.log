@@ -1,0 +1,7 @@
+make[3]: Entering directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/build/connect'
+/bin/rm -f libxconnect.a .libxconnect.a.stamp
+ar cr libxconnect.a ncbi_lbsmd_stub.o ncbi_ansi_ext.o ncbi_buffer.o ncbi_types.o ncbi_priv.o ncbi_core.o ncbi_util.o ncbi_socket.o ncbi_connutil.o ncbi_connection.o ncbi_connector.o ncbi_socket_connector.o ncbi_file_connector.o ncbi_http_connector.o ncbi_memory_connector.o ncbi_heapmgr.o ncbi_server_info.o ncbi_service.o ncbi_host_info.o ncbi_dispd.o ncbi_service_connector.o ncbi_sendmail.o ncbi_ftp_connector.o ncbi_lb.o ncbi_local.o ncbi_base64.o ncbi_version.o ncbi_lbos.o parson.o ncbi_socket_cxx.o ncbi_core_cxx.o email_diag_handler.o ncbi_conn_streambuf.o ncbi_conn_stream.o ncbi_conn_test.o ncbi_misc.o ncbi_namedpipe.o ncbi_namedpipe_connector.o ncbi_pipe.o ncbi_pipe_connector.o ncbi_conn_reader_writer.o ncbi_userhost.o ncbi_http_session.o ncbi_lbos_cxx.o ncbi_monkey.o ncbi_gnutls.o  
+/bin/bash /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/scripts/common/impl/if_diff.sh /bin/ln -f libxconnect.a /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib
+/bin/ln -f libxconnect.a /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib/libxconnect.a
+/bin/ln -f .xconnect.dep /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/status/.xconnect.dep
+make[3]: Leaving directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/build/connect'

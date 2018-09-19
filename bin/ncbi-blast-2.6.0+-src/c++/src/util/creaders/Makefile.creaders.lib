@@ -1,0 +1,8 @@
+# $Id: Makefile.creaders.lib 427415 2014-02-20 13:33:40Z gouriano $
+
+LIB = creaders
+SRC = alnread
+
+WATCHERS = bollin
+USES_LIBRARIES =  \
+    $(ORIG_LIBS)

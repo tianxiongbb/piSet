@@ -1,0 +1,11 @@
+.cvsignore
+Contact_info_.cpp
+Seq_submit_.cpp
+Submit_block_.cpp
+Contact_info.cpp
+Submit_block.cpp
+NCBI_Submit_module.cpp
+submit___.cpp
+submit__.cpp
+submit.files
+submit.dump

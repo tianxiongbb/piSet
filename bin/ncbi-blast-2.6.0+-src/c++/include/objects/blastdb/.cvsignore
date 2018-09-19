@@ -1,0 +1,12 @@
+.cvsignore
+Blast_db_mask_info_.hpp
+Blast_def_line_.hpp
+Blast_def_line_set_.hpp
+Blast_filter_program_.hpp
+Blast_mask_list_.hpp
+Blast_db_mask_info.hpp
+Blast_filter_program.hpp
+Blast_mask_list.hpp
+NCBI_BlastDL_module.hpp
+blastdb__.hpp
+blastdb.dump

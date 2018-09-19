@@ -1,0 +1,1656 @@
+M,10,macro.asn:NCBI-Macro
+--$Revision: 488818 $
+--**********************************************************************
+--
+--  NCBI ASN.1 macro editing language specifications
+--
+--  by Colleen Bollin, 2007
+--
+--**********************************************************************
+  T,17,NCBI-Macro:String-location
+  T,24,NCBI-Macro:Word-substitution
+  T,30,NCBI-Macro:Word-substitution-set
+  T,32,NCBI-Macro:String-constraint
+  T,48,NCBI-Macro:String-constraint-set
+  T,50,NCBI-Macro:Strand-constraint
+  T,55,NCBI-Macro:Seqtype-constraint
+  T,60,NCBI-Macro:Partial-constraint
+  T,65,NCBI-Macro:Location-type-constraint
+  T,71,NCBI-Macro:Location-pos-constraint
+  T,76,NCBI-Macro:Location-constraint
+  T,85,NCBI-Macro:Object-type-constraint
+  T,92,NCBI-Macro:Macro-feature-type
+  T,190,NCBI-Macro:Feat-qual-legal
+  T,265,NCBI-Macro:Feat-qual-legal-val
+  T,269,NCBI-Macro:Feat-qual-legal-val-choice
+  T,272,NCBI-Macro:Feat-qual-legal-set
+  T,274,NCBI-Macro:Feat-qual-choice
+  T,278,NCBI-Macro:Feature-field
+  T,282,NCBI-Macro:Feature-field-legal
+  T,286,NCBI-Macro:Feature-field-pair
+  T,291,NCBI-Macro:Rna-feat-type
+  T,301,NCBI-Macro:Rna-field
+  T,316,NCBI-Macro:Rna-qual
+  T,320,NCBI-Macro:Rna-qual-pair
+  T,325,NCBI-Macro:Source-qual
+  T,428,NCBI-Macro:Source-qual-pair
+  T,432,NCBI-Macro:Source-location
+  T,457,NCBI-Macro:Source-origin
+  T,466,NCBI-Macro:Source-qual-choice
+  T,473,NCBI-Macro:Source-qual-text-val
+  T,477,NCBI-Macro:Source-qual-val-choice
+  T,484,NCBI-Macro:Source-qual-val-set
+  T,486,NCBI-Macro:CDSGeneProt-field
+  T,512,NCBI-Macro:CDSGeneProt-field-pair
+  T,516,NCBI-Macro:Molecule-type
+  T,530,NCBI-Macro:Technique-type
+  T,558,NCBI-Macro:Completedness-type
+  T,569,NCBI-Macro:Molecule-class-type
+  T,577,NCBI-Macro:Topology-type
+  T,584,NCBI-Macro:Strand-type
+  T,592,NCBI-Macro:Molinfo-field
+  T,600,NCBI-Macro:Molinfo-molecule-pair
+  T,604,NCBI-Macro:Molinfo-technique-pair
+  T,608,NCBI-Macro:Molinfo-completedness-pair
+  T,612,NCBI-Macro:Molinfo-mol-class-pair
+  T,616,NCBI-Macro:Molinfo-topology-pair
+  T,620,NCBI-Macro:Molinfo-strand-pair
+  T,624,NCBI-Macro:Molinfo-field-pair
+  T,632,NCBI-Macro:Molinfo-field-list
+  T,634,NCBI-Macro:Molinfo-field-constraint
+  T,640,NCBI-Macro:Publication-field
+  T,667,NCBI-Macro:Structured-comment-field
+  T,673,NCBI-Macro:Structured-comment-field-pair
+  T,680,NCBI-Macro:Misc-field
+  T,688,NCBI-Macro:DBLink-field-type
+  T,696,NCBI-Macro:DBLink-field-pair
+  T,703,NCBI-Macro:Pub-type
+  T,710,NCBI-Macro:Pub-field-constraint
+  T,714,NCBI-Macro:Pub-field-special-constraint-type
+  T,721,NCBI-Macro:Pub-field-special-constraint
+  T,725,NCBI-Macro:Publication-constraint
+  T,730,NCBI-Macro:Source-constraint
+  T,736,NCBI-Macro:CDSGeneProt-feature-type-constraint
+  T,744,NCBI-Macro:CDSGeneProt-pseudo-constraint
+  T,748,NCBI-Macro:CDSGeneProt-constraint-field
+  T,751,NCBI-Macro:CDSGeneProt-qual-constraint
+  T,756,NCBI-Macro:Field-constraint
+  T,760,NCBI-Macro:Sequence-constraint-rnamol
+  T,773,NCBI-Macro:Sequence-constraint-mol-type-constraint
+  T,780,NCBI-Macro:Quantity-constraint
+  T,785,NCBI-Macro:Feature-strandedness-constraint
+  T,794,NCBI-Macro:Sequence-constraint
+  T,803,NCBI-Macro:Match-type-constraint
+  T,808,NCBI-Macro:Translation-constraint
+  T,814,NCBI-Macro:Constraint-choice
+  T,827,NCBI-Macro:Constraint-choice-set
+  T,829,NCBI-Macro:Text-marker
+  T,834,NCBI-Macro:Text-portion
+  T,843,NCBI-Macro:Field-edit-location
+  T,848,NCBI-Macro:Field-edit
+  T,854,NCBI-Macro:Field-type
+  T,865,NCBI-Macro:Field-pair-type
+  T,874,NCBI-Macro:ExistingTextOption
+  T,889,NCBI-Macro:Apply-action
+  T,894,NCBI-Macro:Edit-action
+  T,898,NCBI-Macro:Cap-change
+  T,909,NCBI-Macro:Text-transform
+  T,914,NCBI-Macro:Text-transform-set
+  T,916,NCBI-Macro:Convert-action
+  T,923,NCBI-Macro:Copy-action
+  T,927,NCBI-Macro:Swap-action
+  T,930,NCBI-Macro:AECRParse-action
+  T,939,NCBI-Macro:Remove-action
+  T,942,NCBI-Macro:Remove-outside-action
+  T,947,NCBI-Macro:Action-choice
+  T,957,NCBI-Macro:AECR-action
+  T,962,NCBI-Macro:Parse-src-org-choice
+  T,966,NCBI-Macro:Parse-src-org
+  T,972,NCBI-Macro:Parse-src-general-id
+  T,977,NCBI-Macro:Parse-src
+  T,988,NCBI-Macro:Parse-dst-org
+  T,992,NCBI-Macro:Parse-dest
+  T,999,NCBI-Macro:Parse-action
+  T,1008,NCBI-Macro:Location-interval
+  T,1012,NCBI-Macro:Location-choice
+  T,1017,NCBI-Macro:Sequence-list
+  T,1018,NCBI-Macro:Sequence-list-choice
+  T,1022,NCBI-Macro:Apply-feature-action
+  T,1036,NCBI-Macro:Remove-feature-action
+  T,1041,NCBI-Macro:Convert-from-CDS-options
+  T,1046,NCBI-Macro:Convert-feature-src-options
+  T,1049,NCBI-Macro:Bond-type
+  T,1056,NCBI-Macro:Site-type
+  T,1086,NCBI-Macro:Region-type
+  T,1089,NCBI-Macro:Convert-feature-dst-options
+  T,1096,NCBI-Macro:Convert-feature-action
+  T,1104,NCBI-Macro:Feature-location-strand-from
+  T,1111,NCBI-Macro:Feature-location-strand-to
+  T,1118,NCBI-Macro:Edit-location-strand
+  T,1122,NCBI-Macro:Partial-5-set-constraint
+  T,1128,NCBI-Macro:Partial-5-set-action
+  T,1132,NCBI-Macro:Partial-5-clear-constraint
+  T,1137,NCBI-Macro:Partial-3-set-constraint
+  T,1142,NCBI-Macro:Partial-3-set-action
+  T,1146,NCBI-Macro:Partial-3-clear-constraint
+  T,1151,NCBI-Macro:Partial-both-set-constraint
+  T,1155,NCBI-Macro:Partial-both-set-action
+  T,1159,NCBI-Macro:Partial-both-clear-constraint
+  T,1163,NCBI-Macro:Convert-location-type
+  T,1168,NCBI-Macro:Extend-to-feature
+  T,1173,NCBI-Macro:Location-edit-type
+  T,1187,NCBI-Macro:Edit-feature-location-action
+  T,1194,NCBI-Macro:Molinfo-block
+  T,1199,NCBI-Macro:Descriptor-type
+  T,1213,NCBI-Macro:Remove-descriptor-action
+  T,1217,NCBI-Macro:Autodef-list-type
+  T,1223,NCBI-Macro:Autodef-misc-feat-parse-rule
+  T,1227,NCBI-Macro:Autodef-action
+  T,1232,NCBI-Macro:Fix-pub-caps-action
+  T,1240,NCBI-Macro:Sort-order
+  T,1245,NCBI-Macro:Sort-fields-action
+  T,1250,NCBI-Macro:Fix-author-caps
+  T,1253,NCBI-Macro:Fix-caps-action
+  T,1260,NCBI-Macro:Fix-format-action
+  T,1266,NCBI-Macro:Remove-duplicate-feature-action
+  T,1273,NCBI-Macro:Gene-xref-suppression-type
+  T,1278,NCBI-Macro:Gene-xref-necessary-type
+  T,1283,NCBI-Macro:Gene-xref-type
+  T,1288,NCBI-Macro:Xref-type
+  T,1291,NCBI-Macro:Remove-xrefs-action
+  T,1295,NCBI-Macro:Make-gene-xref-action
+  T,1299,NCBI-Macro:Author-fix-type
+  T,1304,NCBI-Macro:Author-fix-action
+  T,1308,NCBI-Macro:Update-sequences-action
+  T,1312,NCBI-Macro:Create-TSA-ids-src
+  T,1317,NCBI-Macro:Create-TSA-ids-action
+  T,1322,NCBI-Macro:Autofix-action
+  T,1325,NCBI-Macro:Fix-sets-action
+  T,1331,NCBI-Macro:Table-match-type
+  T,1343,NCBI-Macro:Table-match
+  T,1348,NCBI-Macro:Apply-table-extra-data
+  T,1351,NCBI-Macro:Apply-table-action
+  T,1359,NCBI-Macro:Add-file-action
+  T,1364,NCBI-Macro:Add-descriptor-list-action
+  T,1369,NCBI-Macro:Remove-sequences-action
+  T,1373,NCBI-Macro:Update-replaced-ec-numbers-action
+  T,1379,NCBI-Macro:Retranslate-cds-action
+  T,1383,NCBI-Macro:Truncated-ends-partial-type
+  T,1388,NCBI-Macro:Adjust-features-for-gaps-action
+  T,1398,NCBI-Macro:Macro-action-choice
+  T,1450,NCBI-Macro:Macro-action-list
+  T,1452,NCBI-Macro:Search-func
+  T,1464,NCBI-Macro:Simple-replace
+  T,1469,NCBI-Macro:Replace-func
+  T,1473,NCBI-Macro:Replace-rule
+  T,1477,NCBI-Macro:Fix-type
+  T,1494,NCBI-Macro:Suspect-rule
+  T,1503,NCBI-Macro:Suspect-rule-set
+
+T,17,String-location,ENUMERATED
+-- simple constraints 
+  V,18,String-location:contains,1
+  V,19,String-location:equals,2
+  V,20,String-location:starts,3
+  V,21,String-location:ends,4
+  V,22,String-location:inlist,5
+
+T,24,Word-substitution,SEQUENCE
+  F,25,Word-substitution:word,VisibleString,OPTIONAL
+  F,26,Word-substitution:synonyms,SET VisibleString,OPTIONAL
+  F,27,Word-substitution:case-sensitive,BOOLEAN,DEFAULT,FALSE
+  F,28,Word-substitution:whole-word,BOOLEAN,DEFAULT,FALSE
+
+T,30,Word-substitution-set,SET /Word-substitution
+
+T,32,String-constraint,SEQUENCE
+  F,33,String-constraint:match-text,VisibleString,OPTIONAL
+  F,34,String-constraint:match-location,/String-location,DEFAULT,contains
+  F,35,String-constraint:case-sensitive,BOOLEAN,DEFAULT,FALSE
+  F,36,String-constraint:ignore-space,BOOLEAN,DEFAULT,FALSE
+  F,37,String-constraint:ignore-punct,BOOLEAN,DEFAULT,FALSE
+  F,38,String-constraint:ignore-words,/Word-substitution-set,OPTIONAL
+  F,39,String-constraint:whole-word,BOOLEAN,DEFAULT,FALSE
+  F,40,String-constraint:not-present,BOOLEAN,DEFAULT,FALSE
+  F,41,String-constraint:is-all-caps,BOOLEAN,DEFAULT,FALSE
+  F,42,String-constraint:is-all-lower,BOOLEAN,DEFAULT,FALSE
+  F,43,String-constraint:is-all-punct,BOOLEAN,DEFAULT,FALSE
+  F,44,String-constraint:ignore-weasel,BOOLEAN,DEFAULT,FALSE
+  F,45,String-constraint:is-first-cap,BOOLEAN,DEFAULT,FALSE
+  F,46,String-constraint:is-first-each-cap,BOOLEAN,DEFAULT,FALSE
+
+T,48,String-constraint-set,SET /String-constraint
+
+T,50,Strand-constraint,ENUMERATED
+  V,51,Strand-constraint:any,0
+  V,52,Strand-constraint:plus,1
+  V,53,Strand-constraint:minus,2
+
+T,55,Seqtype-constraint,ENUMERATED
+  V,56,Seqtype-constraint:any,0
+  V,57,Seqtype-constraint:nuc,1
+  V,58,Seqtype-constraint:prot,2
+
+T,60,Partial-constraint,ENUMERATED
+  V,61,Partial-constraint:either,0
+  V,62,Partial-constraint:partial,1
+  V,63,Partial-constraint:complete,2
+
+T,65,Location-type-constraint,ENUMERATED
+  V,66,Location-type-constraint:any,0
+  V,67,Location-type-constraint:single-interval,1
+  V,68,Location-type-constraint:joined,2
+  V,69,Location-type-constraint:ordered,3
+
+T,71,Location-pos-constraint,CHOICE
+  F,72,Location-pos-constraint:dist-from-end,INTEGER
+  F,73,Location-pos-constraint:max-dist-from-end,INTEGER
+  F,74,Location-pos-constraint:min-dist-from-end,INTEGER
+
+T,76,Location-constraint,SEQUENCE
+  F,77,Location-constraint:strand,/Strand-constraint,DEFAULT,any
+  F,78,Location-constraint:seq-type,/Seqtype-constraint,DEFAULT,any
+  F,79,Location-constraint:partial5,/Partial-constraint,DEFAULT,either
+  F,80,Location-constraint:partial3,/Partial-constraint,DEFAULT,either
+  F,81,Location-constraint:location-type,/Location-type-constraint,DEFAULT,any
+  F,82,Location-constraint:end5,/Location-pos-constraint,OPTIONAL
+  F,83,Location-constraint:end3,/Location-pos-constraint,OPTIONAL
+
+T,85,Object-type-constraint,ENUMERATED
+  V,86,Object-type-constraint:any,0
+  V,87,Object-type-constraint:feature,1
+  V,88,Object-type-constraint:descriptor,2
+
+T,92,Macro-feature-type,ENUMERATED
+-- feature values 
+  V,93,Macro-feature-type:any,0
+  V,94,Macro-feature-type:gene,1
+  V,95,Macro-feature-type:org,2
+  V,96,Macro-feature-type:cds,3
+  V,97,Macro-feature-type:prot,4
+  V,98,Macro-feature-type:preRNA,5
+  V,99,Macro-feature-type:mRNA,6
+  V,100,Macro-feature-type:tRNA,7
+  V,101,Macro-feature-type:rRNA,8
+  V,102,Macro-feature-type:snRNA,9
+  V,103,Macro-feature-type:scRNA,10
+  V,104,Macro-feature-type:otherRNA,11
+  V,105,Macro-feature-type:pub,12
+  V,106,Macro-feature-type:seq,13
+  V,107,Macro-feature-type:imp,14
+  V,108,Macro-feature-type:allele,15
+  V,109,Macro-feature-type:attenuator,16
+  V,110,Macro-feature-type:c-region,17
+  V,111,Macro-feature-type:caat-signal,18
+  V,112,Macro-feature-type:imp-CDS,19
+  V,113,Macro-feature-type:conflict,20
+  V,114,Macro-feature-type:d-loop,21
+  V,115,Macro-feature-type:d-segment,22
+  V,116,Macro-feature-type:enhancer,23
+  V,117,Macro-feature-type:exon,24
+  V,118,Macro-feature-type:gC-signal,25
+  V,119,Macro-feature-type:iDNA,26
+  V,120,Macro-feature-type:intron,27
+  V,121,Macro-feature-type:j-segment,28
+  V,122,Macro-feature-type:ltr,29
+  V,123,Macro-feature-type:mat-peptide,30
+  V,124,Macro-feature-type:misc-binding,31
+  V,125,Macro-feature-type:misc-difference,32
+  V,126,Macro-feature-type:misc-feature,33
+  V,127,Macro-feature-type:misc-recomb,34
+  V,128,Macro-feature-type:misc-RNA,35
+  V,129,Macro-feature-type:misc-signal,36
+  V,130,Macro-feature-type:misc-structure,37
+  V,131,Macro-feature-type:modified-base,38
+  V,132,Macro-feature-type:mutation,39
+  V,133,Macro-feature-type:n-region,40
+  V,134,Macro-feature-type:old-sequence,41
+  V,135,Macro-feature-type:polyA-signal,42
+  V,136,Macro-feature-type:polyA-site,43
+  V,137,Macro-feature-type:precursor-RNA,44
+  V,138,Macro-feature-type:prim-transcript,45
+  V,139,Macro-feature-type:primer-bind,46
+  V,140,Macro-feature-type:promoter,47
+  V,141,Macro-feature-type:protein-bind,48
+  V,142,Macro-feature-type:rbs,49
+  V,143,Macro-feature-type:repeat-region,50
+  V,144,Macro-feature-type:rep-origin,51
+  V,145,Macro-feature-type:s-region,52
+  V,146,Macro-feature-type:sig-peptide,53
+  V,147,Macro-feature-type:source,54
+  V,148,Macro-feature-type:stem-loop,55
+  V,149,Macro-feature-type:sts,56
+  V,150,Macro-feature-type:tata-signal,57
+  V,151,Macro-feature-type:terminator,58
+  V,152,Macro-feature-type:transit-peptide,59
+  V,153,Macro-feature-type:unsure,60
+  V,154,Macro-feature-type:v-region,61
+  V,155,Macro-feature-type:v-segment,62
+  V,156,Macro-feature-type:variation,63
+  V,157,Macro-feature-type:virion,64
+  V,158,Macro-feature-type:n3clip,65
+  V,159,Macro-feature-type:n3UTR,66
+  V,160,Macro-feature-type:n5clip,67
+  V,161,Macro-feature-type:n5UTR,68
+  V,162,Macro-feature-type:n10-signal,69
+  V,163,Macro-feature-type:n35-signal,70
+  V,164,Macro-feature-type:site-ref,71
+  V,165,Macro-feature-type:region,72
+  V,166,Macro-feature-type:comment,73
+  V,167,Macro-feature-type:bond,74
+  V,168,Macro-feature-type:site,75
+  V,169,Macro-feature-type:rsite,76
+  V,170,Macro-feature-type:user,77
+  V,171,Macro-feature-type:txinit,78
+  V,172,Macro-feature-type:num,79
+  V,173,Macro-feature-type:psec-str,80
+  V,174,Macro-feature-type:non-std-residue,81
+  V,175,Macro-feature-type:het,82
+  V,176,Macro-feature-type:biosrc,83
+  V,177,Macro-feature-type:preprotein,84
+  V,178,Macro-feature-type:mat-peptide-aa,85
+  V,179,Macro-feature-type:sig-peptide-aa,86
+  V,180,Macro-feature-type:transit-peptide-aa,87
+  V,181,Macro-feature-type:snoRNA,88
+  V,182,Macro-feature-type:gap,89
+  V,183,Macro-feature-type:operon,90
+  V,184,Macro-feature-type:oriT,91
+  V,185,Macro-feature-type:ncRNA,92
+  V,186,Macro-feature-type:tmRNA,93
+  V,187,Macro-feature-type:mobile-element,94
+  V,188,Macro-feature-type:regulatory,95
+
+T,190,Feat-qual-legal,ENUMERATED
+  V,191,Feat-qual-legal:allele,1
+  V,192,Feat-qual-legal:activity,2
+  V,193,Feat-qual-legal:anticodon,3
+  V,194,Feat-qual-legal:bound-moiety,4
+  V,195,Feat-qual-legal:chromosome,5
+  V,196,Feat-qual-legal:citation,6
+  V,197,Feat-qual-legal:codon,7
+  V,198,Feat-qual-legal:codon-start,8
+  V,199,Feat-qual-legal:codons-recognized,9
+  V,200,Feat-qual-legal:compare,10
+  V,201,Feat-qual-legal:cons-splice,11
+  V,202,Feat-qual-legal:db-xref,12
+  V,203,Feat-qual-legal:description,13
+  V,204,Feat-qual-legal:direction,14
+  V,205,Feat-qual-legal:ec-number,15
+  V,206,Feat-qual-legal:environmental-sample,16
+  V,207,Feat-qual-legal:evidence,17
+  V,208,Feat-qual-legal:exception,18
+  V,209,Feat-qual-legal:experiment,19
+  V,210,Feat-qual-legal:focus,20
+  V,211,Feat-qual-legal:frequency,21
+  V,212,Feat-qual-legal:function,22
+  V,213,Feat-qual-legal:gene,23
+  V,214,Feat-qual-legal:gene-description,24
+  V,215,Feat-qual-legal:inference,25
+  V,216,Feat-qual-legal:label,26
+  V,217,Feat-qual-legal:locus-tag,27
+  V,218,Feat-qual-legal:map,28
+  V,219,Feat-qual-legal:mobile-element,29
+  V,220,Feat-qual-legal:mod-base,30
+  V,221,Feat-qual-legal:mol-type,31
+  V,222,Feat-qual-legal:ncRNA-class,32
+  V,223,Feat-qual-legal:note,33
+  V,224,Feat-qual-legal:number,34
+  V,225,Feat-qual-legal:old-locus-tag,35
+  V,226,Feat-qual-legal:operon,36
+  V,227,Feat-qual-legal:organism,37
+  V,228,Feat-qual-legal:organelle,38
+  V,229,Feat-qual-legal:partial,39
+  V,230,Feat-qual-legal:phenotype,40
+  V,231,Feat-qual-legal:plasmid,41
+  V,232,Feat-qual-legal:product,42
+  V,233,Feat-qual-legal:protein-id,43
+  V,234,Feat-qual-legal:pseudo,44
+  V,235,Feat-qual-legal:rearranged,45
+  V,236,Feat-qual-legal:replace,46
+  V,237,Feat-qual-legal:rpt-family,47
+  V,238,Feat-qual-legal:rpt-type,48
+  V,239,Feat-qual-legal:rpt-unit,49
+  V,240,Feat-qual-legal:rpt-unit-seq,50
+  V,241,Feat-qual-legal:rpt-unit-range,51
+  V,242,Feat-qual-legal:segment,52
+  V,243,Feat-qual-legal:sequenced-mol,53
+  V,244,Feat-qual-legal:standard-name,54
+  V,245,Feat-qual-legal:synonym,55
+  V,246,Feat-qual-legal:transcript-id,56
+  V,247,Feat-qual-legal:transgenic,57
+  V,248,Feat-qual-legal:translation,58
+  V,249,Feat-qual-legal:transl-except,59
+  V,250,Feat-qual-legal:transl-table,60
+  V,251,Feat-qual-legal:usedin,61
+  V,252,Feat-qual-legal:mobile-element-type,62
+  V,253,Feat-qual-legal:mobile-element-name,63
+  V,254,Feat-qual-legal:gene-comment,64
+  V,255,Feat-qual-legal:satellite,65
+  V,256,Feat-qual-legal:satellite-type,66
+  V,257,Feat-qual-legal:satellite-name,67
+  V,258,Feat-qual-legal:location,68
+  V,259,Feat-qual-legal:tag-peptide,69
+  V,260,Feat-qual-legal:mobile-element-type-type,70
+  V,261,Feat-qual-legal:name,71
+  V,262,Feat-qual-legal:pcr-conditions,72
+  V,263,Feat-qual-legal:regulatory-class,73
+
+T,265,Feat-qual-legal-val,SEQUENCE
+  F,266,Feat-qual-legal-val:qual,/Feat-qual-legal
+  F,267,Feat-qual-legal-val:val,VisibleString
+
+T,269,Feat-qual-legal-val-choice,CHOICE
+  F,270,Feat-qual-legal-val-choice:qual,/Feat-qual-legal-val
+
+T,272,Feat-qual-legal-set,SET /Feat-qual-legal-val-choice
+
+T,274,Feat-qual-choice,CHOICE
+  F,275,Feat-qual-choice:legal-qual,/Feat-qual-legal
+  F,276,Feat-qual-choice:illegal-qual,/String-constraint
+
+T,278,Feature-field,SEQUENCE
+  F,279,Feature-field:type,/Macro-feature-type
+  F,280,Feature-field:field,/Feat-qual-choice
+
+T,282,Feature-field-legal,SEQUENCE
+  F,283,Feature-field-legal:type,/Macro-feature-type
+  F,284,Feature-field-legal:field,/Feat-qual-legal
+
+T,286,Feature-field-pair,SEQUENCE
+  F,287,Feature-field-pair:type,/Macro-feature-type
+  F,288,Feature-field-pair:field-from,/Feat-qual-choice
+  F,289,Feature-field-pair:field-to,/Feat-qual-choice
+
+T,291,Rna-feat-type,CHOICE
+  F,292,Rna-feat-type:any,NULL
+  F,293,Rna-feat-type:preRNA,NULL
+  F,294,Rna-feat-type:mRNA,NULL
+  F,295,Rna-feat-type:tRNA,NULL
+  F,296,Rna-feat-type:rRNA,NULL
+  F,297,Rna-feat-type:ncRNA,VisibleString
+  F,298,Rna-feat-type:tmRNA,NULL
+  F,299,Rna-feat-type:miscRNA,NULL
+
+T,301,Rna-field,ENUMERATED
+  V,302,Rna-field:product,1
+  V,303,Rna-field:comment,2
+  V,304,Rna-field:codons-recognized,3
+  V,305,Rna-field:ncrna-class,4
+  V,306,Rna-field:anticodon,5
+  V,307,Rna-field:transcript-id,6
+  V,308,Rna-field:gene-locus,7
+  V,309,Rna-field:gene-description,8
+  V,310,Rna-field:gene-maploc,9
+  V,311,Rna-field:gene-locus-tag,10
+  V,312,Rna-field:gene-synonym,11
+  V,313,Rna-field:gene-comment,12
+  V,314,Rna-field:tag-peptide,13
+
+T,316,Rna-qual,SEQUENCE
+  F,317,Rna-qual:type,/Rna-feat-type
+  F,318,Rna-qual:field,/Rna-field
+
+T,320,Rna-qual-pair,SEQUENCE
+  F,321,Rna-qual-pair:type,/Rna-feat-type
+  F,322,Rna-qual-pair:field-from,/Rna-field
+  F,323,Rna-qual-pair:field-to,/Rna-field
+
+T,325,Source-qual,ENUMERATED
+  V,326,Source-qual:acronym,1
+  V,327,Source-qual:anamorph,2
+  V,328,Source-qual:authority,3
+  V,329,Source-qual:bio-material,4
+  V,330,Source-qual:biotype,5
+  V,331,Source-qual:biovar,6
+  V,332,Source-qual:breed,7
+  V,333,Source-qual:cell-line,8
+  V,334,Source-qual:cell-type,9
+  V,335,Source-qual:chemovar,10
+  V,336,Source-qual:chromosome,11
+  V,337,Source-qual:clone,12
+  V,338,Source-qual:clone-lib,13
+  V,339,Source-qual:collected-by,14
+  V,340,Source-qual:collection-date,15
+  V,341,Source-qual:common,16
+  V,342,Source-qual:common-name,17
+  V,343,Source-qual:country,18
+  V,344,Source-qual:cultivar,19
+  V,345,Source-qual:culture-collection,20
+  V,346,Source-qual:dev-stage,21
+  V,347,Source-qual:division,22
+  V,348,Source-qual:dosage,23
+  V,349,Source-qual:ecotype,24
+  V,350,Source-qual:endogenous-virus-name,25
+  V,351,Source-qual:environmental-sample,26
+  V,352,Source-qual:forma,27
+  V,353,Source-qual:forma-specialis,28
+  V,354,Source-qual:frequency,29
+  V,355,Source-qual:fwd-primer-name,30
+  V,356,Source-qual:fwd-primer-seq,31
+  V,357,Source-qual:gb-acronym,32
+  V,358,Source-qual:gb-anamorph,33
+  V,359,Source-qual:gb-synonym,34
+  V,360,Source-qual:genotype,35
+  V,361,Source-qual:germline,36
+  V,362,Source-qual:group,37
+  V,363,Source-qual:haplotype,38
+  V,364,Source-qual:identified-by,39
+  V,365,Source-qual:insertion-seq-name,40
+  V,366,Source-qual:isolate,41
+  V,367,Source-qual:isolation-source,42
+  V,368,Source-qual:lab-host,43
+  V,369,Source-qual:lat-lon,44
+  V,370,Source-qual:lineage,45
+  V,371,Source-qual:map,46
+  V,372,Source-qual:metagenome-source,47
+  V,373,Source-qual:metagenomic,48
+  V,374,Source-qual:old-lineage,49
+  V,375,Source-qual:old-name,50
+  V,376,Source-qual:orgmod-note,51
+  V,377,Source-qual:nat-host,52
+  V,378,Source-qual:pathovar,53
+  V,379,Source-qual:plasmid-name,54
+  V,380,Source-qual:plastid-name,55
+  V,381,Source-qual:pop-variant,56
+  V,382,Source-qual:rearranged,57
+  V,383,Source-qual:rev-primer-name,58
+  V,384,Source-qual:rev-primer-seq,59
+  V,385,Source-qual:segment,60
+  V,386,Source-qual:serogroup,61
+  V,387,Source-qual:serotype,62
+  V,388,Source-qual:serovar,63
+  V,389,Source-qual:sex,64
+  V,390,Source-qual:specimen-voucher,65
+  V,391,Source-qual:strain,66
+  V,392,Source-qual:subclone,67
+  V,393,Source-qual:subgroup,68
+  V,394,Source-qual:subsource-note,69
+  V,395,Source-qual:sub-species,70
+  V,396,Source-qual:substrain,71
+  V,397,Source-qual:subtype,72
+  V,398,Source-qual:synonym,73
+  V,399,Source-qual:taxname,74
+  V,400,Source-qual:teleomorph,75
+  V,401,Source-qual:tissue-lib,76
+  V,402,Source-qual:tissue-type,77
+  V,403,Source-qual:transgenic,78
+  V,404,Source-qual:transposon-name,79
+  V,405,Source-qual:type,80
+  V,406,Source-qual:variety,81
+  V,407,Source-qual:specimen-voucher-INST,82
+  V,408,Source-qual:specimen-voucher-COLL,83
+  V,409,Source-qual:specimen-voucher-SpecID,84
+  V,410,Source-qual:culture-collection-INST,85
+  V,411,Source-qual:culture-collection-COLL,86
+  V,412,Source-qual:culture-collection-SpecID,87
+  V,413,Source-qual:bio-material-INST,88
+  V,414,Source-qual:bio-material-COLL,89
+  V,415,Source-qual:bio-material-SpecID,90
+  V,416,Source-qual:all-notes,91
+  V,417,Source-qual:mating-type,92
+  V,418,Source-qual:linkage-group,93
+  V,419,Source-qual:haplogroup,94
+  V,420,Source-qual:all-quals,95
+  V,421,Source-qual:dbxref,96
+  V,422,Source-qual:taxid,97
+  V,423,Source-qual:all-primers,98
+  V,424,Source-qual:altitude,99
+  V,425,Source-qual:type-material,100
+
+T,428,Source-qual-pair,SEQUENCE
+  F,429,Source-qual-pair:field-from,/Source-qual
+  F,430,Source-qual-pair:field-to,/Source-qual
+
+T,432,Source-location,ENUMERATED
+  V,433,Source-location:unknown,0
+  V,434,Source-location:genomic,1
+  V,435,Source-location:chloroplast,2
+  V,436,Source-location:chromoplast,3
+  V,437,Source-location:kinetoplast,4
+  V,438,Source-location:mitochondrion,5
+  V,439,Source-location:plastid,6
+  V,440,Source-location:macronuclear,7
+  V,441,Source-location:extrachrom,8
+  V,442,Source-location:plasmid,9
+  V,443,Source-location:transposon,10
+  V,444,Source-location:insertion-seq,11
+  V,445,Source-location:cyanelle,12
+  V,446,Source-location:proviral,13
+  V,447,Source-location:virion,14
+  V,448,Source-location:nucleomorph,15
+  V,449,Source-location:apicoplast,16
+  V,450,Source-location:leucoplast,17
+  V,451,Source-location:proplastid,18
+  V,452,Source-location:endogenous-virus,19
+  V,453,Source-location:hydrogenosome,20
+  V,454,Source-location:chromosome,21
+  V,455,Source-location:chromatophore,22
+
+T,457,Source-origin,ENUMERATED
+  V,458,Source-origin:unknown,0
+  V,459,Source-origin:natural,1
+  V,460,Source-origin:natmut,2
+  V,461,Source-origin:mut,3
+  V,462,Source-origin:artificial,4
+  V,463,Source-origin:synthetic,5
+  V,464,Source-origin:other,255
+
+T,466,Source-qual-choice,CHOICE
+  F,467,Source-qual-choice:textqual,/Source-qual
+  F,468,Source-qual-choice:location,/Source-location
+  F,469,Source-qual-choice:origin,/Source-origin
+  F,470,Source-qual-choice:gcode,INTEGER
+  F,471,Source-qual-choice:mgcode,INTEGER
+
+T,473,Source-qual-text-val,SEQUENCE
+  F,474,Source-qual-text-val:srcqual,/Source-qual
+  F,475,Source-qual-text-val:val,VisibleString
+
+T,477,Source-qual-val-choice,CHOICE
+  F,478,Source-qual-val-choice:textqual,/Source-qual-text-val
+  F,479,Source-qual-val-choice:location,/Source-location
+  F,480,Source-qual-val-choice:origin,/Source-origin
+  F,481,Source-qual-val-choice:gcode,INTEGER
+  F,482,Source-qual-val-choice:mgcode,INTEGER
+
+T,484,Source-qual-val-set,SET /Source-qual-val-choice
+
+T,486,CDSGeneProt-field,ENUMERATED
+  V,487,CDSGeneProt-field:cds-comment,1
+  V,488,CDSGeneProt-field:gene-locus,2
+  V,489,CDSGeneProt-field:gene-description,3
+  V,490,CDSGeneProt-field:gene-comment,4
+  V,491,CDSGeneProt-field:gene-allele,5
+  V,492,CDSGeneProt-field:gene-maploc,6
+  V,493,CDSGeneProt-field:gene-locus-tag,7
+  V,494,CDSGeneProt-field:gene-synonym,8
+  V,495,CDSGeneProt-field:gene-old-locus-tag,9
+  V,496,CDSGeneProt-field:mrna-product,10
+  V,497,CDSGeneProt-field:mrna-comment,11
+  V,498,CDSGeneProt-field:prot-name,12
+  V,499,CDSGeneProt-field:prot-description,13
+  V,500,CDSGeneProt-field:prot-ec-number,14
+  V,501,CDSGeneProt-field:prot-activity,15
+  V,502,CDSGeneProt-field:prot-comment,16
+  V,503,CDSGeneProt-field:mat-peptide-name,17
+  V,504,CDSGeneProt-field:mat-peptide-description,18
+  V,505,CDSGeneProt-field:mat-peptide-ec-number,19
+  V,506,CDSGeneProt-field:mat-peptide-activity,20
+  V,507,CDSGeneProt-field:mat-peptide-comment,21
+  V,508,CDSGeneProt-field:cds-inference,22
+  V,509,CDSGeneProt-field:gene-inference,23
+  V,510,CDSGeneProt-field:codon-start,24
+
+T,512,CDSGeneProt-field-pair,SEQUENCE
+  F,513,CDSGeneProt-field-pair:field-from,/CDSGeneProt-field
+  F,514,CDSGeneProt-field-pair:field-to,/CDSGeneProt-field
+
+T,516,Molecule-type,ENUMERATED
+  V,517,Molecule-type:unknown,0
+  V,518,Molecule-type:genomic,1
+  V,519,Molecule-type:precursor-RNA,2
+  V,520,Molecule-type:mRNA,3
+  V,521,Molecule-type:rRNA,4
+  V,522,Molecule-type:tRNA,5
+  V,523,Molecule-type:genomic-mRNA,6
+  V,524,Molecule-type:cRNA,7
+  V,525,Molecule-type:transcribed-RNA,8
+  V,526,Molecule-type:ncRNA,9
+  V,527,Molecule-type:transfer-messenger-RNA,10
+  V,528,Molecule-type:macro-other,11
+
+T,530,Technique-type,ENUMERATED
+  V,531,Technique-type:unknown,0
+  V,532,Technique-type:standard,1
+  V,533,Technique-type:est,2
+  V,534,Technique-type:sts,3
+  V,535,Technique-type:survey,4
+  V,536,Technique-type:genetic-map,5
+  V,537,Technique-type:physical-map,6
+  V,538,Technique-type:derived,7
+  V,539,Technique-type:concept-trans,8
+  V,540,Technique-type:seq-pept,9
+  V,541,Technique-type:both,10
+  V,542,Technique-type:seq-pept-overlap,11
+  V,543,Technique-type:seq-pept-homol,12
+  V,544,Technique-type:concept-trans-a,13
+  V,545,Technique-type:htgs-1,14
+  V,546,Technique-type:htgs-2,15
+  V,547,Technique-type:htgs-3,16
+  V,548,Technique-type:fli-cDNA,17
+  V,549,Technique-type:htgs-0,18
+  V,550,Technique-type:htc,19
+  V,551,Technique-type:wgs,20
+  V,552,Technique-type:barcode,21
+  V,553,Technique-type:composite-wgs-htgs,22
+  V,554,Technique-type:tsa,23
+  V,555,Technique-type:targeted,24
+  V,556,Technique-type:other,25
+
+T,558,Completedness-type,ENUMERATED
+  V,559,Completedness-type:unknown,0
+  V,560,Completedness-type:complete,1
+  V,561,Completedness-type:partial,2
+  V,562,Completedness-type:no-left,3
+  V,563,Completedness-type:no-right,4
+  V,564,Completedness-type:no-ends,5
+  V,565,Completedness-type:has-left,6
+  V,566,Completedness-type:has-right,7
+  V,567,Completedness-type:other,6
+
+T,569,Molecule-class-type,ENUMERATED
+  V,570,Molecule-class-type:unknown,0
+  V,571,Molecule-class-type:dna,1
+  V,572,Molecule-class-type:rna,2
+  V,573,Molecule-class-type:protein,3
+  V,574,Molecule-class-type:nucleotide,4
+  V,575,Molecule-class-type:other,5
+
+T,577,Topology-type,ENUMERATED
+  V,578,Topology-type:unknown,0
+  V,579,Topology-type:linear,1
+  V,580,Topology-type:circular,2
+  V,581,Topology-type:tandem,3
+  V,582,Topology-type:other,4
+
+T,584,Strand-type,ENUMERATED
+  V,585,Strand-type:unknown,0
+  V,586,Strand-type:single,1
+  V,587,Strand-type:double,2
+  V,588,Strand-type:mixed,3
+  V,589,Strand-type:mixed-rev,4
+  V,590,Strand-type:other,5
+
+T,592,Molinfo-field,CHOICE
+  F,593,Molinfo-field:molecule,/Molecule-type
+  F,594,Molinfo-field:technique,/Technique-type
+  F,595,Molinfo-field:completedness,/Completedness-type
+  F,596,Molinfo-field:mol-class,/Molecule-class-type
+  F,597,Molinfo-field:topology,/Topology-type
+  F,598,Molinfo-field:strand,/Strand-type
+
+T,600,Molinfo-molecule-pair,SEQUENCE
+  F,601,Molinfo-molecule-pair:from,/Molecule-type
+  F,602,Molinfo-molecule-pair:to,/Molecule-type
+
+T,604,Molinfo-technique-pair,SEQUENCE
+  F,605,Molinfo-technique-pair:from,/Technique-type
+  F,606,Molinfo-technique-pair:to,/Technique-type
+
+T,608,Molinfo-completedness-pair,SEQUENCE
+  F,609,Molinfo-completedness-pair:from,/Completedness-type
+  F,610,Molinfo-completedness-pair:to,/Completedness-type
+
+T,612,Molinfo-mol-class-pair,SEQUENCE
+  F,613,Molinfo-mol-class-pair:from,/Molecule-class-type
+  F,614,Molinfo-mol-class-pair:to,/Molecule-class-type
+
+T,616,Molinfo-topology-pair,SEQUENCE
+  F,617,Molinfo-topology-pair:from,/Topology-type
+  F,618,Molinfo-topology-pair:to,/Topology-type
+
+T,620,Molinfo-strand-pair,SEQUENCE
+  F,621,Molinfo-strand-pair:from,/Strand-type
+  F,622,Molinfo-strand-pair:to,/Strand-type
+
+T,624,Molinfo-field-pair,CHOICE
+  F,625,Molinfo-field-pair:molecule,/Molinfo-molecule-pair
+  F,626,Molinfo-field-pair:technique,/Molinfo-technique-pair
+  F,627,Molinfo-field-pair:completedness,/Molinfo-completedness-pair
+  F,628,Molinfo-field-pair:mol-class,/Molinfo-mol-class-pair
+  F,629,Molinfo-field-pair:topology,/Molinfo-topology-pair
+  F,630,Molinfo-field-pair:strand,/Molinfo-strand-pair
+
+T,632,Molinfo-field-list,SET /Molinfo-field
+
+T,634,Molinfo-field-constraint,SEQUENCE
+  F,635,Molinfo-field-constraint:field,/Molinfo-field
+  F,636,Molinfo-field-constraint:is-not,BOOLEAN,DEFAULT,FALSE
+
+T,640,Publication-field,ENUMERATED
+-- publication fields 
+  V,641,Publication-field:cit,1
+  V,642,Publication-field:authors,2
+  V,643,Publication-field:journal,3
+  V,644,Publication-field:volume,4
+  V,645,Publication-field:issue,5
+  V,646,Publication-field:pages,6
+  V,647,Publication-field:date,7
+  V,648,Publication-field:serial-number,8
+  V,649,Publication-field:title,9
+  V,650,Publication-field:affiliation,10
+  V,651,Publication-field:affil-div,11
+  V,652,Publication-field:affil-city,12
+  V,653,Publication-field:affil-sub,13
+  V,654,Publication-field:affil-country,14
+  V,655,Publication-field:affil-street,15
+  V,656,Publication-field:affil-email,16
+  V,657,Publication-field:affil-fax,17
+  V,658,Publication-field:affil-phone,18
+  V,659,Publication-field:affil-zipcode,19
+  V,660,Publication-field:authors-initials,20
+  V,661,Publication-field:pmid,21
+  V,662,Publication-field:pub-class,22
+
+T,667,Structured-comment-field,CHOICE
+-- structured comment fields 
+  F,668,Structured-comment-field:database,NULL
+  F,669,Structured-comment-field:named,VisibleString
+  F,670,Structured-comment-field:field-name,NULL
+
+T,673,Structured-comment-field-pair,SEQUENCE
+  F,674,Structured-comment-field-pair:from,/Structured-comment-field
+  F,675,Structured-comment-field-pair:to,/Structured-comment-field
+
+T,680,Misc-field,ENUMERATED
+-- misc fields 
+-- these would not appear in pairs 
+  V,681,Misc-field:genome-project-id,1
+  V,682,Misc-field:comment-descriptor,2
+  V,683,Misc-field:defline,3
+  V,684,Misc-field:keyword,4
+
+T,688,DBLink-field-type,ENUMERATED
+-- dblink fields 
+  V,689,DBLink-field-type:trace-assembly,1
+  V,690,DBLink-field-type:bio-sample,2
+  V,691,DBLink-field-type:probe-db,3
+  V,692,DBLink-field-type:sequence-read-archve,4
+  V,693,DBLink-field-type:bio-project,5
+  V,694,DBLink-field-type:assembly,6
+
+T,696,DBLink-field-pair,SEQUENCE
+  F,697,DBLink-field-pair:from,/DBLink-field-type
+  F,698,DBLink-field-pair:to,/DBLink-field-type
+
+T,703,Pub-type,ENUMERATED
+-- complex constraints 
+  V,704,Pub-type:any,0
+  V,705,Pub-type:published,1
+  V,706,Pub-type:unpublished,2
+  V,707,Pub-type:in-press,3
+  V,708,Pub-type:submitter-block,4
+
+T,710,Pub-field-constraint,SEQUENCE
+  F,711,Pub-field-constraint:field,/Publication-field
+  F,712,Pub-field-constraint:constraint,/String-constraint
+
+T,714,Pub-field-special-constraint-type,CHOICE
+  F,715,Pub-field-special-constraint-type:is-present,NULL
+  F,716,Pub-field-special-constraint-type:is-not-present,NULL
+  F,717,Pub-field-special-constraint-type:is-all-caps,NULL
+  F,718,Pub-field-special-constraint-type:is-all-lower,NULL
+  F,719,Pub-field-special-constraint-type:is-all-punct,NULL
+
+T,721,Pub-field-special-constraint,SEQUENCE
+  F,722,Pub-field-special-constraint:field,/Publication-field
+  F,723,Pub-field-special-constraint:constraint,/Pub-field-special-constraint-type
+
+T,725,Publication-constraint,SEQUENCE
+  F,726,Publication-constraint:type,/Pub-type
+  F,727,Publication-constraint:field,/Pub-field-constraint,OPTIONAL
+  F,728,Publication-constraint:special-field,/Pub-field-special-constraint,OPTIONAL
+
+T,730,Source-constraint,SEQUENCE
+  F,731,Source-constraint:field1,/Source-qual-choice,OPTIONAL
+  F,732,Source-constraint:field2,/Source-qual-choice,OPTIONAL
+  F,733,Source-constraint:constraint,/String-constraint,OPTIONAL
+  F,734,Source-constraint:type-constraint,/Object-type-constraint,OPTIONAL
+
+T,736,CDSGeneProt-feature-type-constraint,ENUMERATED
+  V,737,CDSGeneProt-feature-type-constraint:gene,1
+  V,738,CDSGeneProt-feature-type-constraint:mRNA,2
+  V,739,CDSGeneProt-feature-type-constraint:cds,3
+  V,740,CDSGeneProt-feature-type-constraint:prot,4
+  V,741,CDSGeneProt-feature-type-constraint:exon,5
+  V,742,CDSGeneProt-feature-type-constraint:mat-peptide,6
+
+T,744,CDSGeneProt-pseudo-constraint,SEQUENCE
+  F,745,CDSGeneProt-pseudo-constraint:feature,/CDSGeneProt-feature-type-constraint
+  F,746,CDSGeneProt-pseudo-constraint:is-pseudo,BOOLEAN,DEFAULT,TRUE
+
+T,748,CDSGeneProt-constraint-field,CHOICE
+  F,749,CDSGeneProt-constraint-field:field,/CDSGeneProt-field
+
+T,751,CDSGeneProt-qual-constraint,SEQUENCE
+  F,752,CDSGeneProt-qual-constraint:field1,/CDSGeneProt-constraint-field,OPTIONAL
+  F,753,CDSGeneProt-qual-constraint:field2,/CDSGeneProt-constraint-field,OPTIONAL
+  F,754,CDSGeneProt-qual-constraint:constraint,/String-constraint,OPTIONAL
+
+T,756,Field-constraint,SEQUENCE
+  F,757,Field-constraint:field,/Field-type
+  F,758,Field-constraint:string-constraint,/String-constraint
+
+T,760,Sequence-constraint-rnamol,ENUMERATED
+  V,761,Sequence-constraint-rnamol:any,0
+  V,762,Sequence-constraint-rnamol:genomic,1
+  V,763,Sequence-constraint-rnamol:precursor-RNA,2
+  V,764,Sequence-constraint-rnamol:mRNA,3
+  V,765,Sequence-constraint-rnamol:rRNA,4
+  V,766,Sequence-constraint-rnamol:tRNA,5
+  V,767,Sequence-constraint-rnamol:genomic-mRNA,6
+  V,768,Sequence-constraint-rnamol:cRNA,7
+  V,769,Sequence-constraint-rnamol:transcribed-RNA,8
+  V,770,Sequence-constraint-rnamol:ncRNA,9
+  V,771,Sequence-constraint-rnamol:transfer-messenger-RNA,10
+
+T,773,Sequence-constraint-mol-type-constraint,CHOICE
+  F,774,Sequence-constraint-mol-type-constraint:any,NULL
+  F,775,Sequence-constraint-mol-type-constraint:nucleotide,NULL
+  F,776,Sequence-constraint-mol-type-constraint:dna,NULL
+  F,777,Sequence-constraint-mol-type-constraint:rna,/Sequence-constraint-rnamol
+  F,778,Sequence-constraint-mol-type-constraint:protein,NULL
+
+T,780,Quantity-constraint,CHOICE
+  F,781,Quantity-constraint:equals,INTEGER
+  F,782,Quantity-constraint:greater-than,INTEGER
+  F,783,Quantity-constraint:less-than,INTEGER
+
+T,785,Feature-strandedness-constraint,ENUMERATED
+  V,786,Feature-strandedness-constraint:any,0
+  V,787,Feature-strandedness-constraint:minus-only,1
+  V,788,Feature-strandedness-constraint:plus-only,2
+  V,789,Feature-strandedness-constraint:at-least-one-minus,3
+  V,790,Feature-strandedness-constraint:at-least-one-plus,4
+  V,791,Feature-strandedness-constraint:no-minus,5
+  V,792,Feature-strandedness-constraint:no-plus,6
+
+T,794,Sequence-constraint,SEQUENCE
+  F,795,Sequence-constraint:seqtype,/Sequence-constraint-mol-type-constraint,OPTIONAL
+  F,796,Sequence-constraint:id,/String-constraint,OPTIONAL
+  F,797,Sequence-constraint:feature,/Macro-feature-type
+  F,798,Sequence-constraint:num-type-features,/Quantity-constraint,OPTIONAL
+  F,799,Sequence-constraint:num-features,/Quantity-constraint,OPTIONAL
+  F,800,Sequence-constraint:length,/Quantity-constraint,OPTIONAL
+  F,801,Sequence-constraint:strandedness,/Feature-strandedness-constraint,DEFAULT,any
+
+T,803,Match-type-constraint,ENUMERATED
+  V,804,Match-type-constraint:dont-care,0
+  V,805,Match-type-constraint:yes,1
+  V,806,Match-type-constraint:no,2
+
+T,808,Translation-constraint,SEQUENCE
+  F,809,Translation-constraint:actual-strings,/String-constraint-set
+  F,810,Translation-constraint:transl-strings,/String-constraint-set
+  F,811,Translation-constraint:internal-stops,/Match-type-constraint,DEFAULT,dont-care
+  F,812,Translation-constraint:num-mismatches,/Quantity-constraint,OPTIONAL
+
+T,814,Constraint-choice,CHOICE
+  F,815,Constraint-choice:string,/String-constraint
+  F,816,Constraint-choice:location,/Location-constraint
+  F,817,Constraint-choice:field,/Field-constraint
+  F,818,Constraint-choice:source,/Source-constraint
+  F,819,Constraint-choice:cdsgeneprot-qual,/CDSGeneProt-qual-constraint
+  F,820,Constraint-choice:cdsgeneprot-pseudo,/CDSGeneProt-pseudo-constraint
+  F,821,Constraint-choice:sequence,/Sequence-constraint
+  F,822,Constraint-choice:pub,/Publication-constraint
+  F,823,Constraint-choice:molinfo,/Molinfo-field-constraint
+  F,824,Constraint-choice:field-missing,/Field-type
+  F,825,Constraint-choice:translation,/Translation-constraint
+
+T,827,Constraint-choice-set,SET /Constraint-choice
+
+T,829,Text-marker,CHOICE
+  F,830,Text-marker:free-text,VisibleString
+  F,831,Text-marker:digits,NULL
+  F,832,Text-marker:letters,NULL
+
+T,834,Text-portion,SEQUENCE
+  F,835,Text-portion:left-marker,/Text-marker,OPTIONAL
+  F,836,Text-portion:include-left,BOOLEAN
+  F,837,Text-portion:right-marker,/Text-marker,OPTIONAL
+  F,838,Text-portion:include-right,BOOLEAN
+  F,839,Text-portion:inside,BOOLEAN
+  F,840,Text-portion:case-sensitive,BOOLEAN,DEFAULT,FALSE
+  F,841,Text-portion:whole-word,BOOLEAN,DEFAULT,FALSE
+
+T,843,Field-edit-location,ENUMERATED
+  V,844,Field-edit-location:anywhere,0
+  V,845,Field-edit-location:beginning,1
+  V,846,Field-edit-location:end,2
+
+T,848,Field-edit,SEQUENCE
+  F,849,Field-edit:find-txt,VisibleString
+  F,850,Field-edit:repl-txt,VisibleString,OPTIONAL
+  F,851,Field-edit:location,/Field-edit-location,DEFAULT,anywhere
+  F,852,Field-edit:case-insensitive,BOOLEAN,DEFAULT,FALSE
+
+T,854,Field-type,CHOICE
+  F,855,Field-type:source-qual,/Source-qual-choice
+  F,856,Field-type:feature-field,/Feature-field
+  F,857,Field-type:rna-field,/Rna-qual
+  F,858,Field-type:cds-gene-prot,/CDSGeneProt-field
+  F,859,Field-type:molinfo-field,/Molinfo-field
+  F,860,Field-type:pub,/Publication-field
+  F,861,Field-type:struc-comment-field,/Structured-comment-field
+  F,862,Field-type:misc,/Misc-field
+  F,863,Field-type:dblink,/DBLink-field-type
+
+T,865,Field-pair-type,CHOICE
+  F,866,Field-pair-type:source-qual,/Source-qual-pair
+  F,867,Field-pair-type:feature-field,/Feature-field-pair
+  F,868,Field-pair-type:rna-field,/Rna-qual-pair
+  F,869,Field-pair-type:cds-gene-prot,/CDSGeneProt-field-pair
+  F,870,Field-pair-type:molinfo-field,/Molinfo-field-pair
+  F,871,Field-pair-type:struc-comment-field,/Structured-comment-field-pair
+  F,872,Field-pair-type:dblink,/DBLink-field-pair
+
+T,874,ExistingTextOption,ENUMERATED
+  V,875,ExistingTextOption:replace-old,1
+  V,876,ExistingTextOption:append-semi,2
+  V,877,ExistingTextOption:append-space,3
+  V,878,ExistingTextOption:append-colon,4
+  V,879,ExistingTextOption:append-comma,5
+  V,880,ExistingTextOption:append-none,6
+  V,881,ExistingTextOption:prefix-semi,7
+  V,882,ExistingTextOption:prefix-space,8
+  V,883,ExistingTextOption:prefix-colon,9
+  V,884,ExistingTextOption:prefix-comma,10
+  V,885,ExistingTextOption:prefix-none,11
+  V,886,ExistingTextOption:leave-old,12
+  V,887,ExistingTextOption:add-qual,13
+
+T,889,Apply-action,SEQUENCE
+  F,890,Apply-action:field,/Field-type
+  F,891,Apply-action:value,VisibleString
+  F,892,Apply-action:existing-text,/ExistingTextOption
+
+T,894,Edit-action,SEQUENCE
+  F,895,Edit-action:edit,/Field-edit
+  F,896,Edit-action:field,/Field-type
+
+T,898,Cap-change,ENUMERATED
+  V,899,Cap-change:none,0
+  V,900,Cap-change:tolower,1
+  V,901,Cap-change:toupper,2
+  V,902,Cap-change:firstcap,3
+  V,903,Cap-change:firstcaprestnochange,4
+  V,904,Cap-change:firstlower-restnochange,5
+  V,905,Cap-change:cap-word-space,6
+  V,906,Cap-change:cap-word-space-punc,7
+
+T,909,Text-transform,CHOICE
+  F,910,Text-transform:edit,/Field-edit
+  F,911,Text-transform:caps,/Cap-change
+  F,912,Text-transform:remove,/Text-portion
+
+T,914,Text-transform-set,SET /Text-transform
+
+T,916,Convert-action,SEQUENCE
+  F,917,Convert-action:fields,/Field-pair-type
+  F,918,Convert-action:strip-name,BOOLEAN,DEFAULT,FALSE
+  F,919,Convert-action:keep-original,BOOLEAN,DEFAULT,FALSE
+  F,920,Convert-action:capitalization,/Cap-change,DEFAULT,none
+  F,921,Convert-action:existing-text,/ExistingTextOption
+
+T,923,Copy-action,SEQUENCE
+  F,924,Copy-action:fields,/Field-pair-type
+  F,925,Copy-action:existing-text,/ExistingTextOption
+
+T,927,Swap-action,SEQUENCE
+  F,928,Swap-action:fields,/Field-pair-type
+
+T,930,AECRParse-action,SEQUENCE
+  F,931,AECRParse-action:portion,/Text-portion
+  F,932,AECRParse-action:fields,/Field-pair-type
+  F,933,AECRParse-action:remove-from-parsed,BOOLEAN,DEFAULT,FALSE
+  F,934,AECRParse-action:remove-left,BOOLEAN,DEFAULT,FALSE
+  F,935,AECRParse-action:remove-right,BOOLEAN,DEFAULT,FALSE
+  F,936,AECRParse-action:transform,/Text-transform-set,OPTIONAL
+  F,937,AECRParse-action:existing-text,/ExistingTextOption
+
+T,939,Remove-action,SEQUENCE
+  F,940,Remove-action:field,/Field-type
+
+T,942,Remove-outside-action,SEQUENCE
+  F,943,Remove-outside-action:portion,/Text-portion
+  F,944,Remove-outside-action:field,/Field-type
+  F,945,Remove-outside-action:remove-if-not-found,BOOLEAN,DEFAULT,FALSE
+
+T,947,Action-choice,CHOICE
+  F,948,Action-choice:apply,/Apply-action
+  F,949,Action-choice:edit,/Edit-action
+  F,950,Action-choice:convert,/Convert-action
+  F,951,Action-choice:copy,/Copy-action
+  F,952,Action-choice:swap,/Swap-action
+  F,953,Action-choice:remove,/Remove-action
+  F,954,Action-choice:parse,/AECRParse-action
+  F,955,Action-choice:remove-outside,/Remove-outside-action
+
+T,957,AECR-action,SEQUENCE
+  F,958,AECR-action:action,/Action-choice
+  F,959,AECR-action:also-change-mrna,BOOLEAN,DEFAULT,FALSE
+  F,960,AECR-action:constraint,/Constraint-choice-set,OPTIONAL
+
+T,962,Parse-src-org-choice,CHOICE
+  F,963,Parse-src-org-choice:source-qual,/Source-qual
+  F,964,Parse-src-org-choice:taxname-after-binomial,NULL
+
+T,966,Parse-src-org,SEQUENCE
+  F,967,Parse-src-org:field,/Parse-src-org-choice
+  F,968,Parse-src-org:type,/Object-type-constraint,DEFAULT,any
+
+T,972,Parse-src-general-id,CHOICE
+-- For Parse-src-general-id tag, specify the db of the id from which you
+-- want to retrieve the tag.  If empty or null, any db will do.
+  F,973,Parse-src-general-id:whole-text,NULL
+  F,974,Parse-src-general-id:db,NULL
+  F,975,Parse-src-general-id:tag,VisibleString
+
+T,977,Parse-src,CHOICE
+  F,978,Parse-src:defline,NULL
+  F,979,Parse-src:flatfile,NULL
+  F,980,Parse-src:local-id,NULL
+  F,981,Parse-src:org,/Parse-src-org
+  F,982,Parse-src:comment,NULL
+  F,983,Parse-src:bankit-comment,NULL
+  F,984,Parse-src:structured-comment,VisibleString
+  F,985,Parse-src:file-id,NULL
+  F,986,Parse-src:general-id,/Parse-src-general-id
+
+T,988,Parse-dst-org,SEQUENCE
+  F,989,Parse-dst-org:field,/Source-qual-choice
+  F,990,Parse-dst-org:type,/Object-type-constraint,DEFAULT,any
+
+T,992,Parse-dest,CHOICE
+  F,993,Parse-dest:defline,NULL
+  F,994,Parse-dest:org,/Parse-dst-org
+  F,995,Parse-dest:featqual,/Feature-field-legal
+  F,996,Parse-dest:comment-descriptor,NULL
+  F,997,Parse-dest:dbxref,VisibleString
+
+T,999,Parse-action,SEQUENCE
+  F,1000,Parse-action:portion,/Text-portion
+  F,1001,Parse-action:src,/Parse-src
+  F,1002,Parse-action:dest,/Parse-dest
+  F,1003,Parse-action:capitalization,/Cap-change,DEFAULT,none
+  F,1004,Parse-action:remove-from-parsed,BOOLEAN,DEFAULT,FALSE
+  F,1005,Parse-action:transform,/Text-transform-set,OPTIONAL
+  F,1006,Parse-action:existing-text,/ExistingTextOption
+
+T,1008,Location-interval,SEQUENCE
+  F,1009,Location-interval:from,INTEGER
+  F,1010,Location-interval:to,INTEGER
+
+T,1012,Location-choice,CHOICE
+  F,1013,Location-choice:interval,/Location-interval
+  F,1014,Location-choice:whole-sequence,NULL
+  F,1015,Location-choice:point,INTEGER
+
+T,1017,Sequence-list,SET VisibleString
+
+T,1018,Sequence-list-choice,CHOICE
+  F,1019,Sequence-list-choice:list,/Sequence-list
+  F,1020,Sequence-list-choice:all,NULL
+
+T,1022,Apply-feature-action,SEQUENCE
+  F,1023,Apply-feature-action:type,/Macro-feature-type
+  F,1024,Apply-feature-action:partial5,BOOLEAN,DEFAULT,FALSE
+  F,1025,Apply-feature-action:partial3,BOOLEAN,DEFAULT,FALSE
+  F,1026,Apply-feature-action:plus-strand,BOOLEAN,DEFAULT,TRUE
+  F,1027,Apply-feature-action:location,/Location-choice
+  F,1028,Apply-feature-action:seq-list,/Sequence-list-choice
+  F,1029,Apply-feature-action:add-redundant,BOOLEAN,DEFAULT,TRUE
+  F,1030,Apply-feature-action:add-mrna,BOOLEAN,DEFAULT,FALSE
+  F,1031,Apply-feature-action:apply-to-parts,BOOLEAN,DEFAULT,FALSE
+  F,1032,Apply-feature-action:only-seg-num,INTEGER,DEFAULT,-1
+  F,1033,Apply-feature-action:fields,/Feat-qual-legal-set,OPTIONAL
+  F,1034,Apply-feature-action:src-fields,/Source-qual-val-set,OPTIONAL
+
+T,1036,Remove-feature-action,SEQUENCE
+  F,1037,Remove-feature-action:type,/Macro-feature-type
+  F,1038,Remove-feature-action:constraint,/Constraint-choice-set,OPTIONAL
+
+T,1041,Convert-from-CDS-options,SEQUENCE
+-- for convert features 
+  F,1042,Convert-from-CDS-options:remove-mRNA,BOOLEAN
+  F,1043,Convert-from-CDS-options:remove-gene,BOOLEAN
+  F,1044,Convert-from-CDS-options:remove-transcript-id,BOOLEAN
+
+T,1046,Convert-feature-src-options,CHOICE
+  F,1047,Convert-feature-src-options:cds,/Convert-from-CDS-options
+
+T,1049,Bond-type,ENUMERATED
+  V,1050,Bond-type:disulfide,1
+  V,1051,Bond-type:thioester,2
+  V,1052,Bond-type:crosslink,3
+  V,1053,Bond-type:thioether,4
+  V,1054,Bond-type:other,5
+
+T,1056,Site-type,ENUMERATED
+  V,1057,Site-type:active,1
+  V,1058,Site-type:binding,2
+  V,1059,Site-type:cleavage,3
+  V,1060,Site-type:inhibit,4
+  V,1061,Site-type:modified,5
+  V,1062,Site-type:glycosylation,6
+  V,1063,Site-type:myristoylation,7
+  V,1064,Site-type:mutagenized,8
+  V,1065,Site-type:metal-binding,9
+  V,1066,Site-type:phosphorylation,10
+  V,1067,Site-type:acetylation,11
+  V,1068,Site-type:amidation,12
+  V,1069,Site-type:methylation,13
+  V,1070,Site-type:hydroxylation,14
+  V,1071,Site-type:sulfatation,15
+  V,1072,Site-type:oxidative-deamination,16
+  V,1073,Site-type:pyrrolidone-carboxylic-acid,17
+  V,1074,Site-type:gamma-carboxyglutamic-acid,18
+  V,1075,Site-type:blocked,19
+  V,1076,Site-type:lipid-binding,20
+  V,1077,Site-type:np-binding,21
+  V,1078,Site-type:dna-binding,22
+  V,1079,Site-type:signal-peptide,23
+  V,1080,Site-type:transit-peptide,24
+  V,1081,Site-type:transmembrane-region,25
+  V,1082,Site-type:nitrosylation,26
+  V,1083,Site-type:other,27
+
+T,1086,Region-type,SEQUENCE
+-- other choice is to create protein sequences, skipping bad 
+  F,1087,Region-type:create-nucleotide,BOOLEAN
+
+T,1089,Convert-feature-dst-options,CHOICE
+  F,1090,Convert-feature-dst-options:bond,/Bond-type
+  F,1091,Convert-feature-dst-options:site,/Site-type
+  F,1092,Convert-feature-dst-options:region,/Region-type
+  F,1093,Convert-feature-dst-options:ncrna-class,VisibleString
+  F,1094,Convert-feature-dst-options:remove-original,BOOLEAN
+
+T,1096,Convert-feature-action,SEQUENCE
+  F,1097,Convert-feature-action:type-from,/Macro-feature-type
+  F,1098,Convert-feature-action:type-to,/Macro-feature-type
+  F,1099,Convert-feature-action:src-options,/Convert-feature-src-options,OPTIONAL
+  F,1100,Convert-feature-action:dst-options,/Convert-feature-dst-options,OPTIONAL
+  F,1101,Convert-feature-action:leave-original,BOOLEAN
+  F,1102,Convert-feature-action:src-feat-constraint,/Constraint-choice-set,OPTIONAL
+
+T,1104,Feature-location-strand-from,ENUMERATED
+  V,1105,Feature-location-strand-from:any,0
+  V,1106,Feature-location-strand-from:plus,1
+  V,1107,Feature-location-strand-from:minus,2
+  V,1108,Feature-location-strand-from:unknown,3
+  V,1109,Feature-location-strand-from:both,4
+
+T,1111,Feature-location-strand-to,ENUMERATED
+  V,1112,Feature-location-strand-to:plus,1
+  V,1113,Feature-location-strand-to:minus,2
+  V,1114,Feature-location-strand-to:unknown,3
+  V,1115,Feature-location-strand-to:both,4
+  V,1116,Feature-location-strand-to:reverse,5
+
+T,1118,Edit-location-strand,SEQUENCE
+  F,1119,Edit-location-strand:strand-from,/Feature-location-strand-from
+  F,1120,Edit-location-strand:strand-to,/Feature-location-strand-to
+
+T,1122,Partial-5-set-constraint,ENUMERATED
+  V,1123,Partial-5-set-constraint:all,0
+  V,1124,Partial-5-set-constraint:at-end,1
+  V,1125,Partial-5-set-constraint:bad-start,2
+  V,1126,Partial-5-set-constraint:frame-not-one,3
+
+T,1128,Partial-5-set-action,SEQUENCE
+  F,1129,Partial-5-set-action:constraint,/Partial-5-set-constraint
+  F,1130,Partial-5-set-action:extend,BOOLEAN
+
+T,1132,Partial-5-clear-constraint,ENUMERATED
+  V,1133,Partial-5-clear-constraint:all,0
+  V,1134,Partial-5-clear-constraint:not-at-end,1
+  V,1135,Partial-5-clear-constraint:good-start,2
+
+T,1137,Partial-3-set-constraint,ENUMERATED
+  V,1138,Partial-3-set-constraint:all,0
+  V,1139,Partial-3-set-constraint:at-end,1
+  V,1140,Partial-3-set-constraint:bad-end,2
+
+T,1142,Partial-3-set-action,SEQUENCE
+  F,1143,Partial-3-set-action:constraint,/Partial-3-set-constraint
+  F,1144,Partial-3-set-action:extend,BOOLEAN
+
+T,1146,Partial-3-clear-constraint,ENUMERATED
+  V,1147,Partial-3-clear-constraint:all,0
+  V,1148,Partial-3-clear-constraint:not-at-end,1
+  V,1149,Partial-3-clear-constraint:good-end,2
+
+T,1151,Partial-both-set-constraint,ENUMERATED
+  V,1152,Partial-both-set-constraint:all,0
+  V,1153,Partial-both-set-constraint:at-end,1
+
+T,1155,Partial-both-set-action,SEQUENCE
+  F,1156,Partial-both-set-action:constraint,/Partial-both-set-constraint
+  F,1157,Partial-both-set-action:extend,BOOLEAN
+
+T,1159,Partial-both-clear-constraint,ENUMERATED
+  V,1160,Partial-both-clear-constraint:all,0
+  V,1161,Partial-both-clear-constraint:not-at-end,1
+
+T,1163,Convert-location-type,ENUMERATED
+  V,1164,Convert-location-type:join,1
+  V,1165,Convert-location-type:order,2
+  V,1166,Convert-location-type:merge,3
+
+T,1168,Extend-to-feature,SEQUENCE
+  F,1169,Extend-to-feature:type,/Macro-feature-type
+  F,1170,Extend-to-feature:include-feat,BOOLEAN
+  F,1171,Extend-to-feature:distance,/Quantity-constraint,OPTIONAL
+
+T,1173,Location-edit-type,CHOICE
+  F,1174,Location-edit-type:strand,/Edit-location-strand
+  F,1175,Location-edit-type:set-5-partial,/Partial-5-set-action
+  F,1176,Location-edit-type:clear-5-partial,/Partial-5-clear-constraint
+  F,1177,Location-edit-type:set-3-partial,/Partial-3-set-action
+  F,1178,Location-edit-type:clear-3-partial,/Partial-3-clear-constraint
+  F,1179,Location-edit-type:set-both-partial,/Partial-both-set-action
+  F,1180,Location-edit-type:clear-both-partial,/Partial-both-clear-constraint
+  F,1181,Location-edit-type:convert,/Convert-location-type
+  F,1182,Location-edit-type:extend-5,NULL
+  F,1183,Location-edit-type:extend-3,NULL
+  F,1184,Location-edit-type:extend-5-to-feat,/Extend-to-feature
+  F,1185,Location-edit-type:extend-3-to-feat,/Extend-to-feature
+
+T,1187,Edit-feature-location-action,SEQUENCE
+  F,1188,Edit-feature-location-action:type,/Macro-feature-type
+  F,1189,Edit-feature-location-action:action,/Location-edit-type
+  F,1190,Edit-feature-location-action:retranslate-cds,BOOLEAN,OPTIONAL
+  F,1191,Edit-feature-location-action:also-edit-gene,BOOLEAN,OPTIONAL
+  F,1192,Edit-feature-location-action:constraint,/Constraint-choice-set,OPTIONAL
+
+T,1194,Molinfo-block,SEQUENCE
+  F,1195,Molinfo-block:to-list,/Molinfo-field-list
+  F,1196,Molinfo-block:from-list,/Molinfo-field-list,OPTIONAL
+  F,1197,Molinfo-block:constraint,/Constraint-choice-set,OPTIONAL
+
+T,1199,Descriptor-type,ENUMERATED
+  V,1200,Descriptor-type:all,0
+  V,1201,Descriptor-type:title,1
+  V,1202,Descriptor-type:source,2
+  V,1203,Descriptor-type:publication,3
+  V,1204,Descriptor-type:comment,4
+  V,1205,Descriptor-type:genbank,5
+  V,1206,Descriptor-type:user,6
+  V,1207,Descriptor-type:create-date,7
+  V,1208,Descriptor-type:update-date,8
+  V,1209,Descriptor-type:mol-info,9
+  V,1210,Descriptor-type:structured-comment,10
+  V,1211,Descriptor-type:genome-project-id,11
+
+T,1213,Remove-descriptor-action,SEQUENCE
+  F,1214,Remove-descriptor-action:type,/Descriptor-type
+  F,1215,Remove-descriptor-action:constraint,/Constraint-choice-set,OPTIONAL
+
+T,1217,Autodef-list-type,ENUMERATED
+  V,1218,Autodef-list-type:feature-list,1
+  V,1219,Autodef-list-type:complete-sequence,2
+  V,1220,Autodef-list-type:complete-genome,3
+  V,1221,Autodef-list-type:sequence,4
+
+T,1223,Autodef-misc-feat-parse-rule,ENUMERATED
+  V,1224,Autodef-misc-feat-parse-rule:use-comment-before-first-semicolon,1
+  V,1225,Autodef-misc-feat-parse-rule:look-for-noncoding-products,2
+
+T,1227,Autodef-action,SEQUENCE
+  F,1228,Autodef-action:modifiers,SET /Source-qual,OPTIONAL
+  F,1229,Autodef-action:clause-list-type,/Autodef-list-type
+  F,1230,Autodef-action:misc-feat-parse-rule,/Autodef-misc-feat-parse-rule,DEFAULT,look-for-noncoding-products
+
+T,1232,Fix-pub-caps-action,SEQUENCE
+  F,1233,Fix-pub-caps-action:title,BOOLEAN,OPTIONAL
+  F,1234,Fix-pub-caps-action:authors,BOOLEAN,OPTIONAL
+  F,1235,Fix-pub-caps-action:affiliation,BOOLEAN,OPTIONAL
+  F,1236,Fix-pub-caps-action:affil-country,BOOLEAN,OPTIONAL
+  F,1237,Fix-pub-caps-action:punct-only,BOOLEAN,DEFAULT,FALSE
+  F,1238,Fix-pub-caps-action:constraint,/Constraint-choice-set,OPTIONAL
+
+T,1240,Sort-order,ENUMERATED
+  V,1241,Sort-order:short-to-long,1
+  V,1242,Sort-order:long-to-short,2
+  V,1243,Sort-order:alphabetical,3
+
+T,1245,Sort-fields-action,SEQUENCE
+  F,1246,Sort-fields-action:field,/Field-type
+  F,1247,Sort-fields-action:order,/Sort-order
+  F,1248,Sort-fields-action:constraint,/Constraint-choice-set,OPTIONAL
+
+T,1250,Fix-author-caps,SEQUENCE
+  F,1251,Fix-author-caps:last-name-only,BOOLEAN
+
+T,1253,Fix-caps-action,CHOICE
+  F,1254,Fix-caps-action:pub,/Fix-pub-caps-action
+  F,1255,Fix-caps-action:src-country,NULL
+  F,1256,Fix-caps-action:mouse-strain,NULL
+  F,1257,Fix-caps-action:src-qual,/Source-qual
+  F,1258,Fix-caps-action:author,/Fix-author-caps
+
+T,1260,Fix-format-action,CHOICE
+  F,1261,Fix-format-action:collection-date,NULL
+  F,1262,Fix-format-action:lat-lon,NULL
+  F,1263,Fix-format-action:primers,NULL
+  F,1264,Fix-format-action:protein-name,NULL
+
+T,1266,Remove-duplicate-feature-action,SEQUENCE
+  F,1267,Remove-duplicate-feature-action:type,/Macro-feature-type
+  F,1268,Remove-duplicate-feature-action:ignore-partials,BOOLEAN
+  F,1269,Remove-duplicate-feature-action:case-sensitive,BOOLEAN
+  F,1270,Remove-duplicate-feature-action:remove-proteins,BOOLEAN
+  F,1271,Remove-duplicate-feature-action:rd-constraint,/Constraint-choice-set,OPTIONAL
+
+T,1273,Gene-xref-suppression-type,ENUMERATED
+  V,1274,Gene-xref-suppression-type:any,0
+  V,1275,Gene-xref-suppression-type:suppressing,1
+  V,1276,Gene-xref-suppression-type:non-suppressing,2
+
+T,1278,Gene-xref-necessary-type,ENUMERATED
+  V,1279,Gene-xref-necessary-type:any,0
+  V,1280,Gene-xref-necessary-type:necessary,1
+  V,1281,Gene-xref-necessary-type:unnecessary,2
+
+T,1283,Gene-xref-type,SEQUENCE
+  F,1284,Gene-xref-type:feature,/Macro-feature-type
+  F,1285,Gene-xref-type:suppression,/Gene-xref-suppression-type
+  F,1286,Gene-xref-type:necessary,/Gene-xref-necessary-type
+
+T,1288,Xref-type,CHOICE
+  F,1289,Xref-type:gene,/Gene-xref-type
+
+T,1291,Remove-xrefs-action,SEQUENCE
+  F,1292,Remove-xrefs-action:xref-type,/Xref-type
+  F,1293,Remove-xrefs-action:constraint,/Constraint-choice-set,OPTIONAL
+
+T,1295,Make-gene-xref-action,SEQUENCE
+  F,1296,Make-gene-xref-action:feature,/Macro-feature-type
+  F,1297,Make-gene-xref-action:constraint,/Constraint-choice-set,OPTIONAL
+
+T,1299,Author-fix-type,ENUMERATED
+  V,1300,Author-fix-type:truncate-middle-initials,1
+  V,1301,Author-fix-type:strip-suffix,2
+  V,1302,Author-fix-type:move-middle-to-first,3
+
+T,1304,Author-fix-action,SEQUENCE
+  F,1305,Author-fix-action:fix-type,/Author-fix-type
+  F,1306,Author-fix-action:constraint,/Constraint-choice-set,OPTIONAL
+
+T,1308,Update-sequences-action,SEQUENCE
+  F,1309,Update-sequences-action:filename,VisibleString
+  F,1310,Update-sequences-action:add-cit-subs,BOOLEAN,DEFAULT,FALSE
+
+T,1312,Create-TSA-ids-src,CHOICE
+  F,1313,Create-TSA-ids-src:local-id,NULL
+  F,1314,Create-TSA-ids-src:defline,/Text-portion
+
+T,1317,Create-TSA-ids-action,SEQUENCE
+  F,1318,Create-TSA-ids-action:src,/Create-TSA-ids-src
+  F,1319,Create-TSA-ids-action:suffix,VisibleString,OPTIONAL
+  F,1320,Create-TSA-ids-action:id-text-portion,/Text-portion,OPTIONAL
+
+T,1322,Autofix-action,SEQUENCE
+  F,1323,Autofix-action:test-name,VisibleString
+
+T,1325,Fix-sets-action,CHOICE
+  F,1326,Fix-sets-action:remove-single-item-set,NULL
+  F,1327,Fix-sets-action:renormalize-nuc-prot-sets,NULL
+  F,1328,Fix-sets-action:fix-pop-to-phy,NULL
+
+T,1331,Table-match-type,CHOICE
+  F,1332,Table-match-type:feature-id,NULL
+  F,1333,Table-match-type:gene-locus-tag,NULL
+  F,1334,Table-match-type:protein-id,NULL
+  F,1335,Table-match-type:dbxref,NULL
+  F,1336,Table-match-type:nuc-id,NULL
+  F,1337,Table-match-type:src-qual,/Source-qual-choice
+  F,1338,Table-match-type:protein-name,NULL
+  F,1339,Table-match-type:bioproject,NULL
+  F,1340,Table-match-type:any,NULL
+
+T,1343,Table-match,SEQUENCE
+  F,1344,Table-match:match-type,/Table-match-type
+  F,1345,Table-match:match-location,/String-location,DEFAULT,equals
+
+T,1348,Apply-table-extra-data,CHOICE
+  F,1349,Apply-table-extra-data:table,NULL
+
+T,1351,Apply-table-action,SEQUENCE
+  F,1352,Apply-table-action:filename,VisibleString
+  F,1353,Apply-table-action:match-type,/Table-match
+  F,1354,Apply-table-action:in-memory-table,/Apply-table-extra-data,OPTIONAL
+  F,1355,Apply-table-action:also-change-mrna,BOOLEAN,DEFAULT,FALSE
+  F,1356,Apply-table-action:skip-blanks,BOOLEAN,DEFAULT,TRUE
+
+T,1359,Add-file-action,SEQUENCE
+  F,1360,Add-file-action:filename,VisibleString
+  F,1361,Add-file-action:in-memory-table,/Apply-table-extra-data,OPTIONAL
+
+T,1364,Add-descriptor-list-action,SEQUENCE
+  F,1365,Add-descriptor-list-action:descriptor-list,/Add-file-action
+  F,1366,Add-descriptor-list-action:constraint,/Constraint-choice-set,OPTIONAL
+
+T,1369,Remove-sequences-action,SEQUENCE
+  F,1370,Remove-sequences-action:constraint,/Constraint-choice-set
+
+T,1373,Update-replaced-ec-numbers-action,SEQUENCE
+  F,1374,Update-replaced-ec-numbers-action:delete-improper-format,BOOLEAN
+  F,1375,Update-replaced-ec-numbers-action:delete-unrecognized,BOOLEAN
+  F,1376,Update-replaced-ec-numbers-action:delete-multiple-replacement,BOOLEAN
+
+T,1379,Retranslate-cds-action,SEQUENCE
+  F,1380,Retranslate-cds-action:obey-stop-codon,BOOLEAN
+
+T,1383,Truncated-ends-partial-type,ENUMERATED
+  V,1384,Truncated-ends-partial-type:always,1
+  V,1385,Truncated-ends-partial-type:unless-pseudo,2
+  V,1386,Truncated-ends-partial-type:never,3
+
+T,1388,Adjust-features-for-gaps-action,SEQUENCE
+  F,1389,Adjust-features-for-gaps-action:type,/Macro-feature-type
+  F,1390,Adjust-features-for-gaps-action:adjust-for-unknown-length-gaps,BOOLEAN
+  F,1391,Adjust-features-for-gaps-action:adjust-for-known-length-gaps,BOOLEAN
+  F,1392,Adjust-features-for-gaps-action:make-truncated-ends-partial,/Truncated-ends-partial-type
+  F,1393,Adjust-features-for-gaps-action:trim-ends-in-gaps,BOOLEAN
+  F,1394,Adjust-features-for-gaps-action:split-for-internal-gaps,BOOLEAN
+  F,1395,Adjust-features-for-gaps-action:even-when-gaps-are-in-introns,BOOLEAN
+
+T,1398,Macro-action-choice,CHOICE
+  F,1399,Macro-action-choice:aecr,/AECR-action
+  F,1400,Macro-action-choice:parse,/Parse-action
+  F,1401,Macro-action-choice:add-feature,/Apply-feature-action
+  F,1402,Macro-action-choice:remove-feature,/Remove-feature-action
+  F,1403,Macro-action-choice:convert-feature,/Convert-feature-action
+  F,1404,Macro-action-choice:edit-location,/Edit-feature-location-action
+  F,1405,Macro-action-choice:remove-descriptor,/Remove-descriptor-action
+  F,1406,Macro-action-choice:autodef,/Autodef-action
+  F,1407,Macro-action-choice:removesets,NULL
+  F,1408,Macro-action-choice:trim-junk-from-primer-seq,NULL
+  F,1409,Macro-action-choice:trim-stop-from-complete-cds,NULL
+  F,1410,Macro-action-choice:fix-usa-and-states,NULL
+  F,1411,Macro-action-choice:synchronize-cds-partials,NULL
+  F,1412,Macro-action-choice:adjust-for-consensus-splice,NULL
+  F,1413,Macro-action-choice:fix-pub-caps,/Fix-pub-caps-action
+  F,1414,Macro-action-choice:remove-seg-gaps,NULL
+  F,1415,Macro-action-choice:sort-fields,/Sort-fields-action
+  F,1416,Macro-action-choice:apply-molinfo-block,/Molinfo-block
+  F,1417,Macro-action-choice:fix-caps,/Fix-caps-action
+  F,1418,Macro-action-choice:fix-format,/Fix-format-action
+  F,1419,Macro-action-choice:fix-spell,NULL
+  F,1420,Macro-action-choice:remove-duplicate-features,/Remove-duplicate-feature-action
+  F,1421,Macro-action-choice:remove-lineage-notes,NULL
+  F,1422,Macro-action-choice:remove-xrefs,/Remove-xrefs-action
+  F,1423,Macro-action-choice:make-gene-xrefs,/Make-gene-xref-action
+  F,1424,Macro-action-choice:make-bold-xrefs,NULL
+  F,1425,Macro-action-choice:fix-author,/Author-fix-action
+  F,1426,Macro-action-choice:update-sequences,/Update-sequences-action
+  F,1427,Macro-action-choice:add-trans-splicing,NULL
+  F,1428,Macro-action-choice:remove-invalid-ecnumbers,NULL
+  F,1429,Macro-action-choice:create-tsa-ids,/Create-TSA-ids-action
+  F,1430,Macro-action-choice:perform-autofix,/Autofix-action
+  F,1431,Macro-action-choice:fix-sets,/Fix-sets-action
+  F,1432,Macro-action-choice:apply-table,/Apply-table-action
+  F,1433,Macro-action-choice:remove-sequences,/Remove-sequences-action
+  F,1434,Macro-action-choice:propagate-sequence-technology,NULL
+  F,1435,Macro-action-choice:add-file-descriptors,/Add-descriptor-list-action
+  F,1436,Macro-action-choice:propagate-missing-old-name,NULL
+  F,1437,Macro-action-choice:autoapply-structured-comments,NULL
+  F,1438,Macro-action-choice:reorder-structured-comments,NULL
+  F,1439,Macro-action-choice:remove-duplicate-structured-comments,NULL
+  F,1440,Macro-action-choice:lookup-taxonomy,NULL
+  F,1441,Macro-action-choice:lookup-pubs,NULL
+  F,1442,Macro-action-choice:trim-terminal-ns,NULL
+  F,1443,Macro-action-choice:update-replaced-ecnumbers,/Update-replaced-ec-numbers-action
+  F,1444,Macro-action-choice:instantiate-protein-titles,NULL
+  F,1445,Macro-action-choice:retranslate-cds,/Retranslate-cds-action
+  F,1446,Macro-action-choice:add-selenocysteine-except,NULL
+  F,1447,Macro-action-choice:join-short-trnas,NULL
+  F,1448,Macro-action-choice:adjust-features-for-gaps,/Adjust-features-for-gaps-action
+
+T,1450,Macro-action-list,SET /Macro-action-choice
+
+T,1452,Search-func,CHOICE
+  F,1453,Search-func:string-constraint,/String-constraint
+  F,1454,Search-func:contains-plural,NULL
+  F,1455,Search-func:n-or-more-brackets-or-parentheses,INTEGER
+  F,1456,Search-func:three-numbers,NULL
+  F,1457,Search-func:underscore,NULL
+  F,1458,Search-func:prefix-and-numbers,VisibleString
+  F,1459,Search-func:all-caps,NULL
+  F,1460,Search-func:unbalanced-paren,NULL
+  F,1461,Search-func:too-long,INTEGER
+  F,1462,Search-func:has-term,VisibleString
+
+T,1464,Simple-replace,SEQUENCE
+  F,1465,Simple-replace:replace,VisibleString,OPTIONAL
+  F,1466,Simple-replace:whole-string,BOOLEAN,DEFAULT,FALSE
+  F,1467,Simple-replace:weasel-to-putative,BOOLEAN,DEFAULT,FALSE
+
+T,1469,Replace-func,CHOICE
+  F,1470,Replace-func:simple-replace,/Simple-replace
+  F,1471,Replace-func:haem-replace,VisibleString
+
+T,1473,Replace-rule,SEQUENCE
+  F,1474,Replace-rule:replace-func,/Replace-func
+  F,1475,Replace-rule:move-to-note,BOOLEAN,DEFAULT,FALSE
+
+T,1477,Fix-type,ENUMERATED
+  V,1478,Fix-type:none,0
+  V,1479,Fix-type:typo,1
+  V,1480,Fix-type:putative-typo,2
+  V,1481,Fix-type:quickfix,3
+  V,1482,Fix-type:no-organelle-for-prokaryote,4
+  V,1483,Fix-type:might-be-nonfunctional,5
+  V,1484,Fix-type:database,6
+  V,1485,Fix-type:remove-organism-name,7
+  V,1486,Fix-type:inappropriate-symbol,8
+  V,1487,Fix-type:evolutionary-relationship,9
+  V,1488,Fix-type:use-protein,10
+  V,1489,Fix-type:hypothetical,11
+  V,1490,Fix-type:british,12
+  V,1491,Fix-type:description,13
+  V,1492,Fix-type:gene,14
+
+T,1494,Suspect-rule,SEQUENCE
+  F,1495,Suspect-rule:find,/Search-func
+  F,1496,Suspect-rule:except,/Search-func,OPTIONAL
+  F,1497,Suspect-rule:feat-constraint,/Constraint-choice-set,OPTIONAL
+  F,1498,Suspect-rule:rule-type,/Fix-type,DEFAULT,none
+  F,1499,Suspect-rule:replace,/Replace-rule,OPTIONAL
+  F,1500,Suspect-rule:description,VisibleString,OPTIONAL
+  F,1501,Suspect-rule:fatal,BOOLEAN,DEFAULT,FALSE
+
+T,1503,Suspect-rule-set,SET /Suspect-rule

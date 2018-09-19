@@ -1,0 +1,10 @@
+#include <ncbi_pch.hpp>
+#include "Entry_complexities_.cpp"
+#include "ID1SeqEntry_info_.cpp"
+#include "ID1Seq_hist_.cpp"
+#include "ID1blob_info_.cpp"
+#include "ID1server_back_.cpp"
+#include "ID1server_debug_.cpp"
+#include "ID1server_maxcomplex_.cpp"
+#include "ID1server_request_.cpp"
+#include "NCBI_ID1Access_module.cpp"

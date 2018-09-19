@@ -1,0 +1,10 @@
+.cvsignore
+Pubmed_entry_.cpp
+Pubmed_url_.cpp
+Pubmed_entry.cpp
+Pubmed_url.cpp
+NCBI_PubMed_module.cpp
+pubmed___.cpp
+pubmed__.cpp
+pubmed.files
+pubmed.dump

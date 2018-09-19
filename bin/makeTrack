@@ -1,0 +1,123 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+import subprocess
+import sys
+import re
+import argparse
+import os
+import bb_basic as bb
+
+
+def main():
+    if len(sys.argv)<2:
+        argparse.ArgumentParser().parse_args(["-h"])
+    args = get_args()
+    if args.work_dir == "no_dir":
+        work_dir = open(sys.argv[0] + ".configure", "r").readline().strip().split("\t")[1]
+    else:
+        work_dir = args.work_dir
+    # show trackDB groups
+    if args.show:
+        show_trackDB("%s/trackDb.txt"%work_dir)
+    # check parameters
+    if args.in_file == "required": bb.fun_print_error("please provide dataFile via -i")
+    if args.name == "file_name":
+        bb.fun_print("no -n set, name set to %s"%args.in_file)
+        args.name=args.in_file
+    # make track
+    make_track("%s/trackDb.txt"%work_dir, args.in_file, args.name, args.group, args.subGroup, args.negateValue, args.color)
+
+
+# --------functions--------
+def make_track(fi1, fi2, name, group, subGroup, negateValue, color):
+    record = [] # make a list to store all records
+    contents = open(fi1, "r").read()
+    for k in contents.strip().split("\n\n"):
+        record.append(k)
+        if group != "no_group":
+            if re.search("track %s"%group, k):
+                pre = ""
+                for subrd in k.split("\n"):
+                    if subrd.strip().split(" ")[0] == "parent":
+                        pre = "\t"
+    if re.search(".bam$", fi2): # type bam
+        typ = "bam"
+        addition = ""
+    elif re.search(".bw$", fi2): # type bigWig
+        typ = "bigWig"
+        if negateValue:
+            if color == "red_or_blue": color="55,126,184"
+            addition = "\nnegateValues on\ncolor {0}\naltColor {0}".format(color)
+        else:
+            if color == "red_or_blue": color="228,26,28"
+            addition = "\nnegateValues off\ncolor {0}\naltColor {0}".format(color)
+    elif re.search(".bb$", fi2): # type bigBed
+        col_num = subprocess.check_output("bigBedToBed %s stdout | awk '{if(NR>=2){exit};print NF}'"%fi2, shell=True).strip()
+        typ = "bigBed " + col_num
+        addition = ""
+    if group == "no_group":
+        record.append("track {0}\nshortLabel {0}\nlongLabel {0}\nvisibility hide\ntype {1}\nbigDataUrl {2}{3}".format(name, typ, fi2, addition))
+    else:
+        for i in range(len(record)):
+            if re.search("track %s"%group, record[i]):
+                insert_posi = i
+        if subGroup == "no_subGroup":
+            record.insert(insert_posi+1, "{4}\ttrack {0}\n{4}\tparent {3}\n{4}\tshortLabel {0}\n{4}\tlongLabel {0}\n{4}\tvisibility hide\n{4}\ttype {1}\n{4}\tbigDataUrl {2}{5}".format(name, typ, fi2, group, pre, addition))
+        else:
+            record.insert(insert_posi+1, "{5}\ttrack {0}\n{5}\tparent {3}\n{5}\tsubGroups {4}\n{5}\tshortLabel {0}\n{5}\tlongLabel {0}\n{5}\tvisibility hide\n{5}\ttype {1}\n{5}\tbigDataUrl {2}{6}".format(name, typ, fi2, group, subGroup, pre, addition))
+    subprocess.check_call("mv %s %s.backup"%(fi1, fi1), shell=True)
+    fo = open(fi1, "w")
+    fo.write("\n\n".join(record))
+    fo.close()
+
+
+def show_trackDB(fi):
+    contents = open(fi, "r").read()
+    for record in contents.split("\n\n"):
+        if re.search("superTrack on show", record):
+            for subrd in record.split("\n"):
+                if subrd.strip().split(" ")[0] == "track":
+                    print >>sys.stdout, "superTrack: " + subrd.strip().split()[1]
+        elif re.search("container multiWig", record):
+            pre = ""
+            for subrd in record.split("\n"):
+                if subrd.strip().split(" ")[0] == "parent":
+                    pre = "\t"
+            for subrd in record.split("\n"):
+                if subrd.strip().split(" ")[0] == "track":
+                    print >>sys.stdout, pre + "multiWig: " + subrd.strip().split(" ")[1]
+        elif re.search("compositeTrack on", record):
+            pre = ""
+            for subrd in record.split("\n"):
+                if subrd.strip().split(" ")[0] == "parent":
+                    pre = "\t"
+            for subrd in record.split("\n"):
+                if subrd.strip().split(" ")[0] == "track":
+                    print >>sys.stdout, pre + "composite: " + subrd.strip().split(" ")[1]
+                if re.search("subGroup", subrd.split(" ")[0]):
+                    print >>sys.stdout, pre + "\t" + subrd.strip().strip()
+    sys.exit(0)
+
+
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--version", action="version", version="%(prog)s 1.0")
+    parser.add_argument("-s", "--show", help="show all composite, superTrack and multiWig in trackDb.txt", action="store_true", default=False)
+    parser.add_argument("-i", "--in_file", help="file used for track making. Please use relative path to workdir", default="required")
+    parser.add_argument("-n", "--name", help="track name used for track making", default="file_name")
+    parser.add_argument("-g", "--group", help="which group should this track be", default="no_group")
+    parser.add_argument("-S", "--subGroup", help="which subgGoup should this track be, please use like this\"-S cell=CD14 ab=H3K04ME3 view=PK\"", default="no_subGroup")
+    parser.add_argument("-N", "--negateValue", help="set negateValue=on (default: off), use only for bigWig tracks", action="store_true", default=False)
+    parser.add_argument("-c", "--color", help="rgb color for track, useful for lable different samples. use pnly for bigWig tracks", default="red_or_blue")
+    parser.add_argument("-d", "--work_dir", help="track directory, not set to use directory in makeTrack.configure", default="no_dir")
+    args = parser.parse_args()
+    return args
+
+
+# --------process--------
+if __name__ == '__main__':
+    try:
+        main()
+    except KeyboardInterrupt:
+        bb.fun_print_error("user interrupted, abort!")
+        sys.exit(0)

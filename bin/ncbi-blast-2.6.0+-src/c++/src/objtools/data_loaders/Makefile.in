@@ -1,0 +1,6 @@
+# $Id: Makefile.in 501731 2016-05-18 15:58:33Z gouriano $
+
+SUB_PROJ = genbank lds2 blastdb patcher asn_cache
+
+srcdir = @srcdir@
+include @builddir@/Makefile.meta

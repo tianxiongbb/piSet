@@ -1,0 +1,10 @@
+#################################
+# $Id: Makefile.homologene.lib 427424 2014-02-20 13:38:50Z gouriano $
+#################################
+
+LIB = homologene
+SRC = homologene__ homologene___
+
+
+USES_LIBRARIES =  \
+    $(SEQ_LIBS) pub

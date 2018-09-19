@@ -1,0 +1,6 @@
+.cvsignore
+ValidErrItem_.hpp
+ValidError_.hpp
+NCBI_ValErrors_module.hpp
+valerr__.hpp
+valerr.dump

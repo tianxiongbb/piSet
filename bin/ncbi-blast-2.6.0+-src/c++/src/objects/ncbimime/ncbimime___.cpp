@@ -1,0 +1,11 @@
+#include <ncbi_pch.hpp>
+#include "Biostruc_align_.cpp"
+#include "Biostruc_align_seq_.cpp"
+#include "Biostruc_seq_.cpp"
+#include "Biostruc_seqs_.cpp"
+#include "Biostruc_seqs_aligns_cdd_.cpp"
+#include "Bundle_seqs_aligns_.cpp"
+#include "Entrez_general_.cpp"
+#include "Entrez_style_.cpp"
+#include "Ncbi_mime_asn1_.cpp"
+#include "NCBI_Mime_module.cpp"

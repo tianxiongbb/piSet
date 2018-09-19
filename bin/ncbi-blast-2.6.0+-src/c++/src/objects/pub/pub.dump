@@ -1,0 +1,50 @@
+M,12,pub.asn:NCBI-Pub
+--$Revision: 96973 $
+--********************************************************************
+--
+--  Publication common set
+--  James Ostell, 1990
+--
+--  This is the base class definitions for Publications of all sorts
+--
+--  support for PubMedId added in 1996
+--********************************************************************
+  T,21,NCBI-Pub:Pub
+  T,36,NCBI-Pub:Pub-equiv
+  T,38,NCBI-Pub:Pub-set
+
+T,21,Pub,CHOICE
+  F,22,Pub:gen,/Cit-gen
+  -- general or generic unparsed
+  F,23,Pub:sub,/Cit-sub
+  -- submission
+  F,24,Pub:medline,/Medline-entry
+  F,25,Pub:muid,INTEGER
+  -- medline uid
+  F,26,Pub:article,/Cit-art
+  F,27,Pub:journal,/Cit-jour
+  F,28,Pub:book,/Cit-book
+  F,29,Pub:proc,/Cit-proc
+  -- proceedings of a meeting
+  F,30,Pub:patent,/Cit-pat
+  F,31,Pub:pat-id,/Id-pat
+  -- identify a patent
+  F,32,Pub:man,/Cit-let
+  -- manuscript, thesis, or letter
+  F,33,Pub:equiv,/Pub-equiv
+  -- to cite a variety of ways
+  F,34,Pub:pmid,/PubMedId
+  -- PubMedId
+
+T,36,Pub-equiv,SET /Pub
+-- equivalent identifiers for same citation
+
+T,38,Pub-set,CHOICE
+  F,39,Pub-set:pub,SET /Pub
+  F,40,Pub-set:medline,SET /Medline-entry
+  F,41,Pub-set:article,SET /Cit-art
+  F,42,Pub-set:journal,SET /Cit-jour
+  F,43,Pub-set:book,SET /Cit-book
+  F,44,Pub-set:proc,SET /Cit-proc
+  -- proceedings of a meeting
+  F,45,Pub-set:patent,SET /Cit-pat

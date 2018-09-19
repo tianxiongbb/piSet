@@ -1,0 +1,33 @@
+#!/bin/bash
+
+###########
+# prepare #
+###########
+
+# function
+function checkTools(){
+	if [ `which $1` ];then
+		echo0 3 "$1: `which $1`"
+	else
+		echo0 0 "$1 not found, please install it or add it into your PATH!"
+		exit 1
+	fi
+}
+
+# help information
+help_info(){
+	echo0 1 "$0 in.insert index mismatch"
+}
+
+if [ $# -lt 1 ];then
+	help_info && exit 1
+fi
+###########
+# process #
+###########
+
+bowtie -r -S -v $3 -a --best --strata -p 4 $2 $1 2>${PREFIX}.rRNA.log | \
+	samtools view -bhSF 0x4 - 2>/dev/null | \
+	bedtools bamtobed -i - > $1.temp.bed && \
+	insertBed_to_bed2 $1 $1.temp.bed > ${1%.insert}.bed2 && \
+	rm -rf $1.temp.bed

@@ -1,0 +1,264 @@
+M,18,cn3d.asn:NCBI-Cn3d
+--$Revision: 96973 $
+--**********************************************************************
+--
+--  Definitions for Cn3D-specific data (rendering settings,
+--    user annotations, etc.)
+--
+--  by Paul Thiessen
+--
+--  National Center for Biotechnology Information
+--  National Institutes of Health
+--  Bethesda, MD 20894 USA
+--
+-- asntool -m cn3d.asn -w 100 -o cn3d.h
+-- asntool -B objcn3d -m cn3d.asn -G -w 100 -K cn3d.h -I mapcn3d.h \
+--   -M ../mmdb1.asn,../mmdb2.asn,../mmdb3.asn
+--**********************************************************************
+-- Cn3D-specific information
+  T,31,NCBI-Cn3d:Cn3d-backbone-type
+  T,38,NCBI-Cn3d:Cn3d-drawing-style
+  T,51,NCBI-Cn3d:Cn3d-color-scheme
+  T,82,NCBI-Cn3d:Cn3d-color
+  T,90,NCBI-Cn3d:Cn3d-backbone-style
+  T,97,NCBI-Cn3d:Cn3d-general-style
+  T,104,NCBI-Cn3d:Cn3d-backbone-label-style
+  T,120,NCBI-Cn3d:Cn3d-style-settings
+  T,152,NCBI-Cn3d:Cn3d-style-settings-set
+  T,154,NCBI-Cn3d:Cn3d-style-table-id
+  T,156,NCBI-Cn3d:Cn3d-style-table-item
+  T,162,NCBI-Cn3d:Cn3d-style-dictionary
+  T,169,NCBI-Cn3d:Cn3d-residue-range
+  T,175,NCBI-Cn3d:Cn3d-molecule-location
+  T,184,NCBI-Cn3d:Cn3d-object-location
+  T,190,NCBI-Cn3d:Cn3d-user-annotation
+  T,199,NCBI-Cn3d:Cn3d-GL-matrix
+  T,207,NCBI-Cn3d:Cn3d-vector
+  T,214,NCBI-Cn3d:Cn3d-view-settings
+  T,231,NCBI-Cn3d:Cn3d-user-annotations
+
+T,31,Cn3d-backbone-type,ENUMERATED
+-- values of enumerations must match those in cn3d/style_manager.hpp!
+-- for different types of backbones
+  V,32,Cn3d-backbone-type:off,1
+  V,33,Cn3d-backbone-type:trace,2
+  V,34,Cn3d-backbone-type:partial,3
+  V,35,Cn3d-backbone-type:complete,4
+
+T,38,Cn3d-drawing-style,ENUMERATED
+-- atom/bond/object rendering styles
+-- for atoms and bonds
+  V,40,Cn3d-drawing-style:wire,1
+  V,41,Cn3d-drawing-style:tubes,2
+  V,42,Cn3d-drawing-style:ball-and-stick,3
+  V,43,Cn3d-drawing-style:space-fill,4
+  V,44,Cn3d-drawing-style:wire-worm,5
+  V,45,Cn3d-drawing-style:tube-worm,6
+  V,47,Cn3d-drawing-style:with-arrows,7
+  -- for 3d-objects
+  V,48,Cn3d-drawing-style:without-arrows,8
+
+T,51,Cn3d-color-scheme,ENUMERATED
+-- available color schemes (not all
+-- necessarily applicable to all objects)
+  V,53,Cn3d-color-scheme:element,1
+  V,54,Cn3d-color-scheme:object,2
+  V,55,Cn3d-color-scheme:molecule,3
+  V,56,Cn3d-color-scheme:domain,4
+  V,57,Cn3d-color-scheme:residue,20
+  V,58,Cn3d-color-scheme:secondary-structure,5
+  V,59,Cn3d-color-scheme:user-select,6
+  V,61,Cn3d-color-scheme:aligned,7
+  -- different alignment conservation coloring (currently only for proteins)
+  V,62,Cn3d-color-scheme:identity,8
+  V,63,Cn3d-color-scheme:variety,9
+  V,64,Cn3d-color-scheme:weighted-variety,10
+  V,65,Cn3d-color-scheme:information-content,11
+  V,66,Cn3d-color-scheme:fit,12
+  V,67,Cn3d-color-scheme:block-fit,17
+  V,68,Cn3d-color-scheme:block-z-fit,18
+  V,69,Cn3d-color-scheme:block-row-fit,19
+  V,71,Cn3d-color-scheme:temperature,13
+  -- other schemes
+  V,72,Cn3d-color-scheme:hydrophobicity,14
+  V,73,Cn3d-color-scheme:charge,15
+  V,74,Cn3d-color-scheme:rainbow,16
+
+T,82,Cn3d-color,SEQUENCE
+-- RGB triplet, interpreted (after division by the scale-factor) as floating
+-- point values which should range from [0..1]. The default scale-factor is
+-- 255, so that one can conveniently set integer byte values [0..255] for
+-- colors with the scale-factor already set appropriately to map to [0..1].
+--    An alpha value is allowed, but is currently ignored by Cn3D.
+  F,83,Cn3d-color:scale-factor,INTEGER,DEFAULT,255
+  F,84,Cn3d-color:red,INTEGER
+  F,85,Cn3d-color:green,INTEGER
+  F,86,Cn3d-color:blue,INTEGER
+  F,87,Cn3d-color:alpha,INTEGER,DEFAULT,255
+
+T,90,Cn3d-backbone-style,SEQUENCE
+-- style blob for backbones only
+  F,91,Cn3d-backbone-style:type,/Cn3d-backbone-type
+  F,92,Cn3d-backbone-style:style,/Cn3d-drawing-style
+  F,93,Cn3d-backbone-style:color-scheme,/Cn3d-color-scheme
+  F,94,Cn3d-backbone-style:user-color,/Cn3d-color
+
+T,97,Cn3d-general-style,SEQUENCE
+-- style blob for other objects
+  F,98,Cn3d-general-style:is-on,BOOLEAN
+  F,99,Cn3d-general-style:style,/Cn3d-drawing-style
+  F,100,Cn3d-general-style:color-scheme,/Cn3d-color-scheme
+  F,101,Cn3d-general-style:user-color,/Cn3d-color
+
+T,104,Cn3d-backbone-label-style,SEQUENCE
+-- style blob for backbone labels
+  F,105,Cn3d-backbone-label-style:spacing,INTEGER
+  -- zero means none
+  F,106,Cn3d-backbone-label-style:type,ENUMERATED
+    V,107,Cn3d-backbone-label-style:type:one-letter,1
+    V,108,Cn3d-backbone-label-style:type:three-letter,2
+  F,110,Cn3d-backbone-label-style:number,ENUMERATED
+    V,111,Cn3d-backbone-label-style:number:none,0
+    V,112,Cn3d-backbone-label-style:number:sequential,1
+    -- from 1, by residues present, to match sequence
+    V,113,Cn3d-backbone-label-style:number:pdb,2
+    -- use number assigned by PDB
+  F,115,Cn3d-backbone-label-style:termini,BOOLEAN
+  F,116,Cn3d-backbone-label-style:white,BOOLEAN
+  -- all white, or (if false) color of alpha carbon
+
+T,120,Cn3d-style-settings,SEQUENCE
+-- rendering settings for Cn3D (mirrors StyleSettings class)
+  F,121,Cn3d-style-settings:name,VisibleString,OPTIONAL
+  -- a name (for favorites)
+  F,122,Cn3d-style-settings:protein-backbone,/Cn3d-backbone-style
+  -- backbone styles
+  F,123,Cn3d-style-settings:nucleotide-backbone,/Cn3d-backbone-style
+  F,124,Cn3d-style-settings:protein-sidechains,/Cn3d-general-style
+  -- styles for other stuff
+  F,125,Cn3d-style-settings:nucleotide-sidechains,/Cn3d-general-style
+  F,126,Cn3d-style-settings:heterogens,/Cn3d-general-style
+  F,127,Cn3d-style-settings:solvents,/Cn3d-general-style
+  F,128,Cn3d-style-settings:connections,/Cn3d-general-style
+  F,129,Cn3d-style-settings:helix-objects,/Cn3d-general-style
+  F,130,Cn3d-style-settings:strand-objects,/Cn3d-general-style
+  F,131,Cn3d-style-settings:virtual-disulfides-on,BOOLEAN
+  -- virtual disulfides
+  F,132,Cn3d-style-settings:virtual-disulfide-color,/Cn3d-color
+  F,133,Cn3d-style-settings:hydrogens-on,BOOLEAN
+  -- hydrogens
+  F,134,Cn3d-style-settings:background-color,/Cn3d-color
+  -- background
+  -- floating point parameters - scale-factor applies to all the following:
+  F,136,Cn3d-style-settings:scale-factor,INTEGER
+  F,137,Cn3d-style-settings:space-fill-proportion,INTEGER
+  F,138,Cn3d-style-settings:ball-radius,INTEGER
+  F,139,Cn3d-style-settings:stick-radius,INTEGER
+  F,140,Cn3d-style-settings:tube-radius,INTEGER
+  F,141,Cn3d-style-settings:tube-worm-radius,INTEGER
+  F,142,Cn3d-style-settings:helix-radius,INTEGER
+  F,143,Cn3d-style-settings:strand-width,INTEGER
+  F,144,Cn3d-style-settings:strand-thickness,INTEGER
+  F,146,Cn3d-style-settings:protein-labels,/Cn3d-backbone-label-style,OPTIONAL
+  -- backbone labels (no labels if not present)
+  F,147,Cn3d-style-settings:nucleotide-labels,/Cn3d-backbone-label-style,OPTIONAL
+  F,149,Cn3d-style-settings:ion-labels,BOOLEAN,OPTIONAL
+  -- ion labels
+
+T,152,Cn3d-style-settings-set,SET /Cn3d-style-settings
+
+T,154,Cn3d-style-table-id,INTEGER
+
+T,156,Cn3d-style-table-item,SEQUENCE
+  F,157,Cn3d-style-table-item:id,/Cn3d-style-table-id
+  F,158,Cn3d-style-table-item:style,/Cn3d-style-settings
+
+T,162,Cn3d-style-dictionary,SEQUENCE
+-- the global settings, and a lookup table of styles for user annotations.
+  F,163,Cn3d-style-dictionary:global-style,/Cn3d-style-settings
+  F,164,Cn3d-style-dictionary:style-table,SEQUENCE /Cn3d-style-table-item,OPTIONAL
+
+T,169,Cn3d-residue-range,SEQUENCE
+-- a range of residues in a chain, identified by MMDB residue-id
+-- (e.g., numbered from 1)
+  F,170,Cn3d-residue-range:from,/Residue-id
+  F,171,Cn3d-residue-range:to,/Residue-id
+
+T,175,Cn3d-molecule-location,SEQUENCE
+-- set of locations on a particular chain
+  F,176,Cn3d-molecule-location:molecule-id,/Molecule-id
+  -- MMDB molecule id
+  -- which residues; whole molecule implied if absent
+  F,178,Cn3d-molecule-location:residues,SEQUENCE /Cn3d-residue-range,OPTIONAL
+
+T,184,Cn3d-object-location,SEQUENCE
+-- set of locations on a particular structure object (e.g., a PDB/MMDB
+-- structure), which may include multiple ranges of residues each on
+-- multiple chains.
+  F,185,Cn3d-object-location:structure-id,/Biostruc-id
+  F,186,Cn3d-object-location:residues,SEQUENCE /Cn3d-molecule-location
+
+T,190,Cn3d-user-annotation,SEQUENCE
+-- information for an individual user annotation
+  F,191,Cn3d-user-annotation:name,VisibleString
+  -- a (short) name for this annotation
+  F,192,Cn3d-user-annotation:description,VisibleString,OPTIONAL
+  -- an optional longer description
+  F,193,Cn3d-user-annotation:style-id,/Cn3d-style-table-id
+  -- how to draw this annotation
+  F,194,Cn3d-user-annotation:residues,SEQUENCE /Cn3d-object-location
+  -- which residues to cover
+  F,195,Cn3d-user-annotation:is-on,BOOLEAN
+  -- whether this annotation is to be turned on in Cn3D
+
+T,199,Cn3d-GL-matrix,SEQUENCE
+-- a GL-ordered transformation matrix
+  F,200,Cn3d-GL-matrix:m0,REAL
+  F,200,Cn3d-GL-matrix:m1,REAL
+  F,200,Cn3d-GL-matrix:m2,REAL
+  F,200,Cn3d-GL-matrix:m3,REAL
+  F,201,Cn3d-GL-matrix:m4,REAL
+  F,201,Cn3d-GL-matrix:m5,REAL
+  F,201,Cn3d-GL-matrix:m6,REAL
+  F,201,Cn3d-GL-matrix:m7,REAL
+  F,202,Cn3d-GL-matrix:m8,REAL
+  F,202,Cn3d-GL-matrix:m9,REAL
+  F,202,Cn3d-GL-matrix:m10,REAL
+  F,202,Cn3d-GL-matrix:m11,REAL
+  F,203,Cn3d-GL-matrix:m12,REAL
+  F,203,Cn3d-GL-matrix:m13,REAL
+  F,203,Cn3d-GL-matrix:m14,REAL
+  F,203,Cn3d-GL-matrix:m15,REAL
+
+T,207,Cn3d-vector,SEQUENCE
+-- a floating point 3d vector
+  F,208,Cn3d-vector:x,REAL
+  F,209,Cn3d-vector:y,REAL
+  F,210,Cn3d-vector:z,REAL
+
+T,214,Cn3d-view-settings,SEQUENCE
+-- parameters used to set up the camera in Cn3D
+  F,215,Cn3d-view-settings:camera-distance,REAL
+  -- camera on +Z axis this distance from origin
+  F,216,Cn3d-view-settings:camera-angle-rad,REAL
+  -- camera angle
+  F,217,Cn3d-view-settings:camera-look-at-X,REAL
+  -- X,Y of point in Z=0 plane camera points at
+  F,218,Cn3d-view-settings:camera-look-at-Y,REAL
+  F,219,Cn3d-view-settings:camera-clip-near,REAL
+  -- distance of clipping planes from camera
+  F,220,Cn3d-view-settings:camera-clip-far,REAL
+  F,221,Cn3d-view-settings:matrix,/Cn3d-GL-matrix
+  -- transformation of objects in the scene
+  F,222,Cn3d-view-settings:rotation-center,/Cn3d-vector
+  -- center of rotation of whole scene
+
+T,231,Cn3d-user-annotations,SEQUENCE
+-- The list of annotations for a given CDD/mime. If residue regions overlap
+-- between annotations that are turned on, the last annotation in this list
+-- that contains these residues will be used as the display style for these
+-- residues.
+--   Also contains the current viewpoint, so that user's camera angle
+-- can be stored and reproduced, for illustrations, on-line figures, etc.
+  F,232,Cn3d-user-annotations:annotations,SEQUENCE /Cn3d-user-annotation,OPTIONAL
+  F,233,Cn3d-user-annotations:view,/Cn3d-view-settings,OPTIONAL

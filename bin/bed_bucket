@@ -1,0 +1,45 @@
+#!/bin/bash
+
+if [ $# -lt 2 ];then
+	echo0 1 $0" in.bed in.size out.sum factor"
+	exit 1
+fi
+
+awk -v fac=$4 '
+BEGIN{FS=OFS="\t"}
+{if(FNR==NR){
+	l[$1]=$2
+}else{
+	if(l[$1]<400){
+		step=1
+	}else{
+		step=int(l[$1]/200)
+	}
+	if($6=="+"){
+		s=int(($2+1)/step)*step
+		as[$1"+"s]+=($4/$5)
+		if($5==1){
+			bs[$1"+"s]+=$4
+		}
+	}else{
+		s=int(($3+1)/step)*step
+		aa[$1"+"s]+=($4/$5)
+		if($5==1){
+			ba[$1"+"s]+=$4
+		}
+	}
+}}
+END{
+for(i in l){
+	if(l[i]<400){
+		step=1
+	}else{
+		step=int(l[i]/200)
+	}
+	for(p=0;p<=l[i];p=p+step){
+		print i,p,as[i"+"p]/fac,-aa[i"+"p]/fac,bs[i"+"p]/fac,-ba[i"+"p]/fac
+	}
+}
+}' $2 $1 > $3
+
+

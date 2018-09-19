@@ -1,0 +1,33 @@
+#!/bin/bash
+
+if [ $# -lt 2 ];then
+	echo0 5 "$0 in.bed traced1.bed7 [traced2.bed7...]"
+	exit 1
+fi
+
+# start trace generation by generation
+CT_D=50
+PREFIX=$1
+k=0
+for i in $*
+do
+	k=$((k + 1))
+	if [ "$i" != "$1" ];then
+		NUM_FIELD=`awk 'BEGIN{FS=OFS="\t"} {if(NR==1){print NF}else{exit}}' ${PREFIX}`
+		if [ "$k" == "$(($#))" ];then
+			bedtools window -w ${CT_D} -a ${PREFIX} -b $i | awk -v num_f=${NUM_FIELD} 'BEGIN{FS=OFS="\t"} {if(NR==FNR){if($4==$(num_f+4)){a[$1","$2","$3","$4]=$(num_f+7);b[$1","$2","$3","$4]=$(num_f+5)}}else{print $0,b[$1","$2","$3","$4]?b[$1","$2","$3","$4]:"none",a[$1","$2","$3","$4]/1}}' - ${PREFIX}
+		else
+			bedtools window -w ${CT_D} -a ${PREFIX} -b $i | awk -v num_f=${NUM_FIELD} 'BEGIN{FS=OFS="\t"} {if(NR==FNR){if($4==$(num_f+4)){a[$1","$2","$3","$4]=$(num_f+7);b[$1","$2","$3","$4]=$(num_f+5)}}else{print $0,b[$1","$2","$3","$4]?b[$1","$2","$3","$4]:"none",a[$1","$2","$3","$4]/1}}' - ${PREFIX} > $i.temp
+			PREFIX=$i.temp
+		fi
+	fi
+done
+# remove tmp files
+k=0
+for i in $*
+do
+	k=$((k + 1))
+	if [ "$i" != "$1" -a "$k" != "$(($#))" ];then
+		rm $i.temp
+	fi
+done

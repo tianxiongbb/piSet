@@ -1,0 +1,44 @@
+M,9,valerr.asn:NCBI-ValErrors
+--$Revision: 340608 $
+--**********************************************************************
+--
+--  NCBI Validator Errors
+--  by Robert Smith
+--
+--**********************************************************************
+  T,14,NCBI-ValErrors:ValidErrItem
+  T,49,NCBI-ValErrors:ValidError
+
+T,14,ValidErrItem,SEQUENCE
+  F,15,ValidErrItem:sev,INTEGER
+    V,16,ValidErrItem:sev:info,0
+    V,17,ValidErrItem:sev:warning,1
+    V,18,ValidErrItem:sev:error,2
+    V,19,ValidErrItem:sev:critical,3
+    V,20,ValidErrItem:sev:fatal,4
+    V,21,ValidErrItem:sev:trace,5
+  F,23,ValidErrItem:errIndex,INTEGER
+  F,24,ValidErrItem:msg,VisibleString
+  F,25,ValidErrItem:objDesc,VisibleString
+  F,26,ValidErrItem:accession,VisibleString
+  F,27,ValidErrItem:featureId,VisibleString,OPTIONAL
+  F,28,ValidErrItem:seqOffset,INTEGER,OPTIONAL
+  F,29,ValidErrItem:objectType,INTEGER,OPTIONAL
+    V,30,ValidErrItem:objectType:seqentry,1
+    V,31,ValidErrItem:objectType:bioseq,2
+    V,32,ValidErrItem:objectType:bioseqset,3
+    V,33,ValidErrItem:objectType:seqdesc,4
+    V,34,ValidErrItem:objectType:seqannot,5
+    V,35,ValidErrItem:objectType:annotdesc,6
+    V,36,ValidErrItem:objectType:seqfeat,7
+    V,37,ValidErrItem:objectType:seqalign,8
+    V,38,ValidErrItem:objectType:seqgraph,9
+    V,39,ValidErrItem:objectType:seqsub,10
+    V,40,ValidErrItem:objectType:submitblock,11
+  F,42,ValidErrItem:errorName,VisibleString,OPTIONAL
+  F,43,ValidErrItem:errorGroup,VisibleString,OPTIONAL
+  F,44,ValidErrItem:accnver,VisibleString,OPTIONAL
+  F,45,ValidErrItem:version,INTEGER,OPTIONAL
+
+T,49,ValidError,SEQUENCE
+  F,50,ValidError:errs,SET /ValidErrItem

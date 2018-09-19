@@ -1,0 +1,11 @@
+#include <ncbi_pch.hpp>
+#include "SequenceOfInt_.cpp"
+#include "T3Data_.cpp"
+#include "T3Error_.cpp"
+#include "T3RefreshFlags_.cpp"
+#include "T3Reply_.cpp"
+#include "T3Request_.cpp"
+#include "T3StatusFlags_.cpp"
+#include "Taxon3_reply_.cpp"
+#include "Taxon3_request_.cpp"
+#include "NCBI_Taxon3_module.cpp"

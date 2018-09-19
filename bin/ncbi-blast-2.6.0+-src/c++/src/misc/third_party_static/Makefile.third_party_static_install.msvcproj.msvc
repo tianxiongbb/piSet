@@ -1,0 +1,4 @@
+# $Id: Makefile.third_party_static_install.msvcproj.msvc 107885 2007-07-30 15:34:21Z kazimird $
+
+[Common]
+ProjectGUID = {9E4B5381-9B6C-4867-BF8A-F1AAA1FD580E}

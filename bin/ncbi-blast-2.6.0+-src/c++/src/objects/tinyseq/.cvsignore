@@ -1,0 +1,10 @@
+.cvsignore
+TSeq_.cpp
+TSeqSet_.cpp
+TSeq.cpp
+TSeqSet.cpp
+NCBI_TSeq_module.cpp
+tinyseq___.cpp
+tinyseq__.cpp
+tinyseq.files
+tinyseq.dump

@@ -1,0 +1,316 @@
+#!/bin/bash
+
+###########
+# prepare #
+###########
+
+# function
+function checkTools(){
+	if [ `which $1` ];then
+		echo0 3 "$1: `which $1`"
+	else
+		echo0 0 "$1 not found, please install it or add it into your PATH!"
+		exit 1
+	fi
+}
+
+# help information
+help_info(){
+	echo0 1 `basename $0`
+	echo0 1 "\t-i <file>\tsequence file of srna, can be fastq file or insert file"
+	echo0 1 "\t-g <text>\tgenome"
+	echo0 1 "\t-p <path/text>\toutput prefix. eg: /home/piSet_results/mouse_testis_rep1"
+	echo0 1 "optional:"
+	echo0 1 "\t-N <miRNA|uniq|uniqS}uniqSM|all|allS|allSM>\tnormalize to miRNA: miRNA reads; uniq: unique genome reads; uniqS: unique genome and sncRNA reads; uniqSM: unique genome, sncRNA and miRNA reads; all: all genome reads; allS: all genome and sncRNA reads; allSM: all genome, sncRNA and miRNA reads. default: miRNA"
+	echo0 1 "\t-E\tset to use EM algorithm for multiMappers assignment. default: not used"
+	echo0 1 "\t-R <int>\tmismatch allowed when mapping to rRNA. default: 1"
+	echo0 1 "\t-H <int>\tmismatch allowed when mapping to hairpin. default: 1"
+	echo0 1 "\t-S <int>\tmismatch allowed when mapping to sncRNA. default: 1"
+	echo0 1 "\t-G <int>\tmismatch allowed when mapping to genome. default: 1"
+	echo0 1 "\t-V <int>\tmismatch allowed when mapping to virus. default: 1"
+	echo0 1 "\t-a <seq|0>\tadapter to be remove from srna file. Set to 0 if you don't know the adapter sequence. Please set only if input file is fastq. default: not remove adapter"
+	echo0 1 "\t-O <int>\tparameters passed to cutadapt. default: 7"
+	echo0 1 "\t-m <int>\tparameters passed to cutadapt. default: 15"
+	echo0 1 "\t-e <float>\tparameters passed to cutadapt. default: 0.15"
+	echo0 1 "\t-c <int>\tnumber of CPUs used. default: 1"
+}
+
+if [ $# -lt 1 ];then
+	help_info && exit 1
+fi
+
+# parameters
+NORM_METHOD=miRNA
+MM_RRNA=1
+MM_HAIRPIN=1
+MM_SNCRNA=1
+MM_GENOME=1
+MM_PICLUSTER=1
+MM_TRANSPOSON=1
+MM_VIRUS=1
+CPU=1
+CUTADAPT_O=7
+CUTADAPT_m=15
+CUTADAPT_e=0.15
+
+while getopts "hi:g:p:EN:R:H:G:a:O:e:m:c:S:P:T:" OPTION; do
+	case $OPTION in
+		h)	help_info && exit 0;;
+		i)	SRNA=`readlink -f ${OPTARG}`;;
+		g)	GENOME=${OPTARG} && PATH_ANNO=${0%/bin*}/annotation/${GENOME};;
+		p)	PREFIX=${OPTARG};;
+		E)	SWITCH_EM=1;;
+		N)	NORM_METHOD=${OPTARG};;
+		R)	MM_RRNA=${OPTARG};;
+		H)	MM_HAIRPIN=${OPTARG};;
+		S)	MM_SNCRNA=${OPTARG};;
+		G)	MM_GENOME=${OPTARG};;
+		V)	MM_VIRUS=${OPTARG};;
+		P)	MM_PICLUSTER=${OPTARG};;
+		T)	MM_TRANSPOSON=${OPTARG};;
+		a)	ADAPTER=${OPTARG};;
+		O)	CUTADAPT_O=${OPTARG};;
+		e)	CUTADAPT_e=${OPTARG};;
+		m)	CUTADAPT_m=${OPTARG};;
+		c)	CPU=${OPTARG};;
+		*)	help_info && exit 1
+	esac
+done
+
+# check parameters
+echo0 4 "------ preparation ------"
+echo0 1 "check parameters......"
+[ -z ${SRNA} ] && echo0 0 "please provide srna file via -i" && exit 1
+[ -z ${GENOME} ] && echo0 0 "please provide genome via -g" && exit 1
+[ -z ${PREFIX} ] && echo0 0 "please provide prefix via -p" && exit 1
+[ ! -f ${SRNA} ] && echo0 0 "srna file error, no file in ${SRNA}" && exit 1
+[ ! -d ${PATH_ANNO} ] && echo0 0 "no genome ${GENOME} in `dirname ${PATH_ANNO}`. please install it use piSet_install -g genome" && exit 1
+[ ! -d `dirname ${PREFIX}` ] && (mkdir -p `dirname ${PREFIX}` || (echo0 0 "`dirname ${PREFIX}` not found and cann't be make" && exit 1))
+! [ ${NORM_METHOD} == "miRNA" -o ${NORM_METHOD} == "uniq" -o ${NORM_METHOD} == "all" -o ${NORM_METHOD} == "uniqS" -o ${NORM_METHOD} == "uniqSM" -o ${NORM_METHOD} == "allS" -o ${NORM_METHOD} == "allSM" ] && echo0 0 "-N can only be set to miRNA or uniq" && exit 1
+! [ "${CPU}" -ge 0 ] 2>/dev/null && echo0 0 "threads need to be integer bigger than 0"
+echo0 1 "OK"
+
+# check dependencies
+echo0 1 "check dependencies......"
+checkTools bowtie
+checkTools bedtools
+checkTools assign_multiMappers_EM.py
+checkTools fastq_to_insert
+checkTools insertBed_to_bed2
+checkTools cutadapt
+echo0 1 "OK"
+
+###########
+# process #
+###########
+
+echo0 4 "------ processing ------"
+# cutadapt
+if [ ! -z ${ADAPTER} ];then
+	[ "${SRNA%insert}" != "${SRNA}" ] && echo0 0 "cutadapt don't accept insert file. Please use fastq file as input." && exit 1
+	if [ "${SRNA%gz}" == "${SRNA}" ];then
+		[ "${ADAPTER}" == "0" ] && echo0 4 "-a set to 0, guess adapter sequence is:" && ADAPTER=(`guess_adapter ${SRNA}`) && echo0 3 ${ADAPTER}
+		[ -z ADAPTER ] && echo0 0 "-a set to 0 but cannot find adapter sequence from piSet_folder/annotation/common/adapters, please give adapter sequence to -a" && exit 1
+		echo0 2 "Remove adapter ${ADAPTER} from fastq file......"
+		cutadapt -a ${ADAPTER} -e ${CUTADAPT_e} -O ${CUTADAPT_O} \
+			-m ${CUTADAPT_m} -o ${SRNA%.f*q*}.cutadapt.fastq \
+			${SRNA} > ${PREFIX}.cutadapt.log 2>&1
+	else
+		[ "${ADAPTER}" == "0" ] && echo0 4 "-a set to 0, guess adapter sequence is:" && ADAPTER=(`cat ${SRNA} | guess_adapter -`) && echo0 3 ${ADAPTER}
+		[ -z ADAPTER ] && echo0 0 "-a set to 0 but cannot find adapter sequence from piSet_folder/annotation/common/adapters, please give adapter sequence to -a" && exit 1
+		echo0 2 "Remove adapter ${ADAPTER} from fastq.gz file......"
+		zcat ${SRNA} | cutadapt -a ${ADAPTER} -e ${CUTADAPT_e} \
+			-O ${CUTADAPT_O} -m ${CUTADAPT_m} \
+			-o ${SRNA%.f*q*}.cutadapt.fastq - \
+			> ${PREFIX}.cutadapt.log 2>&1
+	fi
+	SRNA=${SRNA%.f*q*}.cutadapt.fastq 
+fi
+TIME_CUTADAPT=$SECONDS # calculate time
+SECONDS=0
+
+# fastq to insert
+if [ "${SRNA%insert}" == "${SRNA}" ];then
+	echo0 2 "Convert fastq to insert......"
+	fastq_to_insert ${SRNA} ${SRNA%.f*q*}.insert && SRNA=${SRNA%.f*q*}.insert
+fi
+
+# map to rRNA
+if [ -s ${PREFIX}.rRNA.bed2 -a -s ${PREFIX}.x_rRNA.insert ];then
+	echo0 4 "rRNA mapping file exists. Skip mapping to rRNA."
+	SRNA=${PREFIX}.x_rRNA.insert 
+	PREFIX=${PREFIX}.x_rRNA
+elif [ -f ${PATH_ANNO}/BowtieIndex/rRNA.1.ebwt ];then
+	echo0 2 "Mapping to rRNA, with $MM_RRNA mismatch(es) allowed......"
+	bowtie -r -S -v $MM_RRNA -k 1 -p ${CPU} \
+		--un ${PREFIX}.x_rRNA.insert \
+		${PATH_ANNO}/BowtieIndex/rRNA ${SRNA} \
+		2>${PREFIX}.rRNA.log | \
+		samtools view -bhSF 0x4 - 2>/dev/null | \
+		bedtools bamtobed -i - > ${PREFIX}.rRNA.bed && \
+		insertBed_to_bed2 ${SRNA} ${PREFIX}.rRNA.bed > ${PREFIX}.rRNA.bed2 && \
+		rm -rf ${PREFIX}.rRNA.bed
+	SRNA=${PREFIX}.x_rRNA.insert 
+	PREFIX=${PREFIX}.x_rRNA
+else
+	echo0 4 "rRNA index not found. Skip mapping to rRNA."
+fi
+
+# map to hairpin
+if [ -s ${PREFIX}.hairpin.bed2 -a -s ${PREFIX}.x_hairpin.insert ];then
+	echo0 4 "Hairpin mapping file exists. Skip mapping to hairpin."
+	HAIRPIN=${PREFIX}.hairpin.bed2 
+	SRNA=${PREFIX}.x_hairpin.insert 
+	PREFIX=${PREFIX}.x_hairpin
+elif [ -f ${PATH_ANNO}/BowtieIndex/hairpin.1.ebwt ];then
+	echo0 2 "Mapping to hairpin, with $MM_HAIRPIN mismatch(es) allowed......"
+	bowtie -r -S -v $MM_HAIRPIN -a --best --strata -p ${CPU} \
+		--un ${PREFIX}.x_hairpin.insert \
+		${PATH_ANNO}/BowtieIndex/hairpin ${SRNA} \
+		2>${PREFIX}.hairpin.log | \
+		samtools view -bhSF 0x4 - 2>/dev/null | \
+		bedtools bamtobed -i - > ${PREFIX}.hairpin.bed && \
+		insertBed_to_bed2 ${SRNA} ${PREFIX}.hairpin.bed > ${PREFIX}.hairpin.bed2 && \
+		rm -rf ${PREFIX}.hairpin.bed
+	[ "${NORM_METHOD}" == "miRNA" ] && FACTOR=`awk '{sum+=$4/$5} END{print sum/1000000}' ${PREFIX}.hairpin.bed2` && echo0 1 "Using miRNA reads to do normalization." && echo0 3 "factor: ${FACTOR}"
+	HAIRPIN=${PREFIX}.hairpin.bed2 
+	SRNA=${PREFIX}.x_hairpin.insert 
+	PREFIX=${PREFIX}.x_hairpin
+else
+	echo0 4 "Hairpin index not found. Skip mapping to hairpin."
+fi
+
+# map to sncRNA(small noncoding RNA)
+if [ -s ${PREFIX}.sncRNA.bed2 -a -s ${PREFIX}.x_sncRNA.insert ];then
+	echo0 4 "sncRNA mapping file exists. Skip mapping to sncRNA."
+	SNCRNA=${PREFIX}.sncRNA.bed2 
+	SRNA=${PREFIX}.x_sncRNA.insert 
+	PREFIX=${PREFIX}.x_sncRNA
+elif [ -f ${PATH_ANNO}/BowtieIndex/sncRNA.1.ebwt ];then
+	echo0 2 "Mapping to sncRNA(small noncoding RNA), with $MM_SNCRNA mismatch(es) allowed......"
+	bowtie -r -S -v $MM_SNCRNA -a --best --strata -p ${CPU} \
+		--un ${PREFIX}.x_sncRNA.insert \
+		${PATH_ANNO}/BowtieIndex/sncRNA ${SRNA} \
+		2>${PREFIX}.sncRNA.log | \
+		samtools view -bhSF 0x4 - 2>/dev/null | \
+		bedtools bamtobed -i - > ${PREFIX}.sncRNA.bed && \
+		insertBed_to_bed2 ${SRNA} ${PREFIX}.sncRNA.bed > ${PREFIX}.sncRNA.bed2 && \
+		rm -rf ${PREFIX}.sncRNA.bed
+	SNCRNA=${PREFIX}.sncRNA.bed2 
+	SRNA=${PREFIX}.x_sncRNA.insert
+	PREFIX=${PREFIX}.x_sncRNA
+else
+	echo0 4 "sncRNA index not found. Skip mapping to sncRNA."
+fi
+
+# map to genome
+if [ -s ${PREFIX}.genome.bed2 ];then
+	echo0 4 "Genome mapping file exists. Skip mapping to genome."
+	[ "${NORM_METHOD}" == "miRNA" ] && [ -z ${FACTOR} ] && FACTOR=`awk '{if($5==1){sum+=$4/$5}} END{print sum/1000000}' ${PREFIX}.genome.bed2` && echo0 4 "-N set to miRNA but no hairpin index found in ${GENOME}, using unique genome reads instead." && echo0 3 "factor: ${FACTOR}"
+	[ "${NORM_METHOD}" == "uniq" ] && FACTOR=`awk '{if($5==1){sum+=$4/$5}} END{print sum/1000000}' ${PREFIX}.genome.bed2` && echo0 1 "Using unique genome reads to do normalization." && echo0 3 "factor: ${FACTOR}"
+	[ "${NORM_METHOD}" == "uniqS" ] && FACTOR=`awk '{if(ARGIND==1){if($5==1){sum+=$4/$5}}else{sum+=$4/$5}} END{print sum/1000000}' ${PREFIX}.genome.bed2 ${SNCRNA}` && echo0 1 "Using unique genome reads and sncRNA mapped reads to do normalization." && echo0 3 "factor: ${FACTOR}"
+	[ "${NORM_METHOD}" == "uniqSM" ] && FACTOR=`awk '{if(ARGIND==1){if($5==1){sum+=$4/$5}}else{sum+=$4/$5}} END{print sum/1000000}' ${PREFIX}.genome.bed2 ${SNCRNA} ${HAIRPIN}` && echo0 1 "Using unique genome reads, sncRNA mapped reads and hairpin mapped reads to do normalization." && echo0 3 "factor: ${FACTOR}"
+	[ "${NORM_METHOD}" == "all" ] && FACTOR=`awk '{sum+=$4/$5} END{print sum/1000000}' ${PREFIX}.genome.bed2` && echo0 1 "Using all genome reads to do normalization." && echo0 3 "factor: ${FACTOR}"
+	[ "${NORM_METHOD}" == "allS" ] && FACTOR=`awk '{sum+=$4/$5} END{print sum/1000000}' ${PREFIX}.genome.bed2 ${SNCRNA}` && echo0 1 "Using all genome reads and sncRNA mapped reads to do normalization." && echo0 3 "factor: ${FACTOR}"
+	[ "${NORM_METHOD}" == "allSM" ] && FACTOR=`awk '{sum+=$4/$5} END{print sum/1000000}' ${PREFIX}.genome.bed2 ${SNCRNA} ${HAIRPIN}` && echo0 1 "Using all genome reads, sncRNA mapped reads and hairpin mapped reads to do normalization." && echo0 3 "factor: ${FACTOR}"
+elif [ -f ${PATH_ANNO}/BowtieIndex/genome.1.ebwt ];then
+	echo0 2 "Mapping to genome, with $MM_GENOME mismatch(es) allowed......"
+	bowtie -r -S -v $MM_GENOME -a --best --strata -p ${CPU} \
+		--un ${PREFIX}.x_genome.insert \
+		${PATH_ANNO}/BowtieIndex/genome ${SRNA} \
+		2>${PREFIX}.genome.log | \
+		samtools view -bhSF 0x4 - 2>/dev/null | \
+		bedtools bamtobed -i - > ${PREFIX}.genome.bed && \
+		insertBed_to_bed2 ${SRNA} ${PREFIX}.genome.bed > ${PREFIX}.genome.bed2 && \
+		rm -rf ${PREFIX}.genome.bed
+	[ "${NORM_METHOD}" == "miRNA" ] && [ -z ${FACTOR} ] && FACTOR=`awk '{if($5==1){sum+=$4/$5}} END{print sum/1000000}' ${PREFIX}.genome.bed2` && echo0 4 "-N set to miRNA but no hairpin index found in ${GENOME}, using unique genome reads instead." && echo0 3 "factor: ${FACTOR}"
+	[ "${NORM_METHOD}" == "uniq" ] && FACTOR=`awk '{if($5==1){sum+=$4/$5}} END{print sum/1000000}' ${PREFIX}.genome.bed2` && echo0 1 "Using unique genome reads to do normalization." && echo0 3 "factor: ${FACTOR}"
+	[ "${NORM_METHOD}" == "uniqS" ] && FACTOR=`awk '{if(ARGIND==1){if($5==1){sum+=$4/$5}}else{sum+=$4/$5}} END{print sum/1000000}' ${PREFIX}.genome.bed2 ${SNCRNA}` && echo0 1 "Using unique genome reads and sncRNA mapped reads to do normalization." && echo0 3 "factor: ${FACTOR}"
+	[ "${NORM_METHOD}" == "uniqSM" ] && FACTOR=`awk '{if(ARGIND==1){if($5==1){sum+=$4/$5}}else{sum+=$4/$5}} END{print sum/1000000}' ${PREFIX}.genome.bed2 ${SNCRNA} ${HAIRPIN}` && echo0 1 "Using unique genome reads, sncRNA mapped reads and hairpin mapped reads to do normalization." && echo0 3 "factor: ${FACTOR}"
+	[ "${NORM_METHOD}" == "all" ] && FACTOR=`awk '{sum+=$4/$5} END{print sum/1000000}' ${PREFIX}.genome.bed2` && echo0 1 "Using all genome reads to do normalization." && echo0 3 "factor: ${FACTOR}"
+	[ "${NORM_METHOD}" == "allS" ] && FACTOR=`awk '{sum+=$4/$5} END{print sum/1000000}' ${PREFIX}.genome.bed2 ${SNCRNA}` && echo0 1 "Using all genome reads and sncRNA mapped reads to do normalization." && echo0 3 "factor: ${FACTOR}"
+	[ "${NORM_METHOD}" == "allSM" ] && FACTOR=`awk '{sum+=$4/$5} END{print sum/1000000}' ${PREFIX}.genome.bed2 ${SNCRNA} ${HAIRPIN}` && echo0 1 "Using all genome reads, sncRNA mapped reads and hairpin mapped reads to do normalization." && echo0 3 "factor: ${FACTOR}"
+else
+	echo0 0 "Genome index not found. Please use bowtie-build to build index." && exit 1
+fi
+
+# map to virus
+if [ -s ${PREFIX}.x_genome.virus.bed2 -a -s ${PREFIX}.x_genome.unalign.insert ];then
+	echo0 4 "virus mapping file exists. Skip mapping to virus."
+elif [ -f ${PATH_ANNO}/BowtieIndex/virus.1.ebwt ];then
+	echo0 2 "Mapping to virus, with $MM_VIRUS mismatch(es) allowed......"
+	bowtie -r -S -v $MM_VIRUS -a --best --strata -p ${CPU} \
+		--un ${PREFIX}.x_genome.unalign.insert \
+		${PATH_ANNO}/BowtieIndex/virus ${PREFIX}.x_genome.insert \
+		2>${PREFIX}.virus.log | \
+		samtools view -bhSF 0x4 - 2>/dev/null | \
+		bedtools bamtobed -i - > ${PREFIX}.x_genome.virus.bed && \
+		insertBed_to_bed2 ${PREFIX}.x_genome.insert ${PREFIX}.x_genome.virus.bed > ${PREFIX}.x_genome.virus.bed2 && \
+		rm -rf ${PREFIX}.x_genome.virus.bed
+else
+	echo0 4 "virus index not found. Skip mapping to virus."
+fi
+TIME_MAPPING=$SECONDS # calculate time
+SECONDS=0
+
+# re-assign multipleMappers
+if [ ! -z ${SWITCH_EM} ];then
+	SWITCH_EM=`tail ${PREFIX}.genome.bed2 | awk 'BEGIN{FS=OFS="\t"} {if($5!=int($5)){a=1}} END{if(a!=1){print 1}}'`
+	if [ ! -z ${SWITCH_EM} ];then # judge if genome.bed2 is already re-assigned by EM
+		echo0 2 "assign multiMappers in genome via EM algorithm......"
+		assign_multiMappers_EM.py -i ${PREFIX}.genome.bed2 -o ${PREFIX}.tmp && \
+			mv ${PREFIX}.tmp ${PREFIX}.genome.bed2 
+	fi
+fi
+TIME_EM=$SECONDS # calculate time
+SECONDS=0
+
+# make bigWig files from genome mapping
+if [ -s ${PREFIX}.genome.watson.all.bw -a -s ${PREFIX}.genome.crick.all.bw -a -s ${PREFIX}.genome.watson.uniq.bw -a -s ${PREFIX}.genome.crick.uniq.bw ];then
+	echo0 4 "bigWig files exist. Skip making bigWig."
+else
+	echo0 2 "Making bigWig files from genome mapping......"
+	bed2_to_bw.py ${PREFIX}.genome.bed2 ${PATH_ANNO}/${GENOME}.chrom.size ${PREFIX}.genome ${FACTOR} ${CPU}
+fi
+TIME_BIGWIG=$SECONDS # calculate time
+SECONDS=0
+
+# directly map to picluster
+if [ -s ${PREFIX}.picluster.bed2 ];then
+	echo0 4 "picluster mapping file exists. Skip mapping to piclutser."
+elif [ -f ${PATH_ANNO}/BowtieIndex/picluster.1.ebwt ];then
+	echo0 2 "Mapping to picluster, with $MM_PICLUSTER mismatch(es) allowed......"
+	bowtie -r -S -v $MM_PICLUSTER -a --best --strata -p ${CPU} \
+		${PATH_ANNO}/BowtieIndex/picluster ${SRNA} \
+		2>${PREFIX}.picluster.log | \
+		samtools view -bhSF 0x4 - 2>/dev/null | \
+		bedtools bamtobed -i - > ${PREFIX}.picluster.bed && \
+		insertBed_to_bed2 ${SRNA} ${PREFIX}.picluster.bed > ${PREFIX}.picluster.bed2 && \
+		rm ${PREFIX}.picluster.bed
+else
+	echo0 4 "picluster index not found. Please use piDefiner to define piclusters and then make index via bowtie-build. Skip mapping to picluster.\nTips: You can use srna_map with the same code again after building picluster index."
+fi
+
+# directly map to transposon
+if [ -s ${PREFIX}.transposon.bed2 ];then
+	echo0 4 "Transposon mapping file exists. Skip mapping to transposon."
+elif [ -f ${PATH_ANNO}/BowtieIndex/transposon.1.ebwt ];then
+	echo0 2 "Mapping to transposon, with $MM_TRANSPOSON mismatch(es) allowed......"
+	bowtie -r -S -v $MM_TRANSPOSON -a --best --strata -p ${CPU} \
+		${PATH_ANNO}/BowtieIndex/transposon ${SRNA} \
+		2>${PREFIX}.transposon.log | \
+		samtools view -bhSF 0x4 - 2>/dev/null | \
+		bedtools bamtobed -i - > ${PREFIX}.transposon.bed && \
+		insertBed_to_bed2 ${SRNA} ${PREFIX}.transposon.bed > ${PREFIX}.transposon.bed2 && \
+		rm ${PREFIX}.transposon.bed
+else
+	echo0 4 "Transposon index not ofund. Please use bowtie-build to build index"
+fi
+TIME_PI_TRN=${SECONDS}
+
+echo0 4 "------ congras🍺🍺🍺 ------"
+echo0 3 "Removing adapter:\t$((${TIME_CUTADAPT} / 3600))h $((${TIME_CUTADAPT} / 60))m"
+echo0 3 "Mapping to genome:\t$((${TIME_MAPPING} / 3600))h $((${TIME_MAPPING} / 60))m"
+echo0 3 "MultiMappers assignment:\t$((${TIME_EM} / 3600))h $((${TIME_EM} / 60))m"
+echo0 3 "Making bigWig:\t$((${TIME_BIGWIG} / 3600))h $((${TIME_BIGWIG} / 60))m"
+echo0 3 "Mapping to picluster and transposon:\t$((${TIME_PI_TRN} / 3600))h $((${TIME_PI_TRN} / 60))m"

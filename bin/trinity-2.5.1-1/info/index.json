@@ -1,0 +1,26 @@
+{
+  "arch": "x86_64",
+  "build": "1",
+  "build_number": 1,
+  "depends": [
+    "bowtie",
+    "bowtie2 >=2.3.0",
+    "collectl",
+    "fastool",
+    "jellyfish >=2.2.6",
+    "libgcc",
+    "openjdk",
+    "parafly",
+    "perl-app-cpanminus",
+    "perl-module-build",
+    "samtools >=1.3",
+    "slclust",
+    "trimmomatic >=0.36",
+    "zlib 1.2.11*"
+  ],
+  "license": "BSD-3-Clause",
+  "name": "trinity",
+  "platform": "linux",
+  "subdir": "linux-64",
+  "version": "2.5.1"
+}

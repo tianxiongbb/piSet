@@ -1,0 +1,387 @@
+M,16,biblio.asn:NCBI-Biblio
+--$Revision: 217678 $
+--****************************************************************
+--
+--  NCBI Bibliographic data elements
+--  by James Ostell, 1990
+--
+--  Taken from the American National Standard for
+--      Bibliographic References
+--      ANSI Z39.29-1977
+--  Version 3.0 - June 1994
+--  PubMedId added in 1996
+--  ArticleIds and eprint elements added in 1999
+--
+--****************************************************************
+  T,26,NCBI-Biblio:ArticleId
+  T,36,NCBI-Biblio:PubMedId
+  T,37,NCBI-Biblio:MedlineUID
+  T,38,NCBI-Biblio:DOI
+  T,39,NCBI-Biblio:PII
+  T,40,NCBI-Biblio:PmcID
+  T,41,NCBI-Biblio:PmcPid
+  T,42,NCBI-Biblio:PmPid
+  T,44,NCBI-Biblio:ArticleIdSet
+  T,48,NCBI-Biblio:PubStatus
+  T,63,NCBI-Biblio:PubStatusDate
+  T,67,NCBI-Biblio:PubStatusDateSet
+  T,71,NCBI-Biblio:Cit-art
+  T,80,NCBI-Biblio:Cit-jour
+  T,84,NCBI-Biblio:Cit-book
+  T,90,NCBI-Biblio:Cit-proc
+  T,99,NCBI-Biblio:Cit-pat
+  T,114,NCBI-Biblio:Patent-priority
+  T,119,NCBI-Biblio:Id-pat
+  T,126,NCBI-Biblio:Cit-let
+  T,136,NCBI-Biblio:Cit-sub
+  T,148,NCBI-Biblio:Cit-gen
+  T,163,NCBI-Biblio:Auth-list
+  T,170,NCBI-Biblio:Author
+  T,183,NCBI-Biblio:Affil
+  T,202,NCBI-Biblio:Title
+  T,214,NCBI-Biblio:Imprint
+  T,233,NCBI-Biblio:CitRetract
+  T,241,NCBI-Biblio:Meeting
+
+T,26,ArticleId,CHOICE
+-- Article Ids
+-- can be many ids for an article
+  F,27,ArticleId:pubmed,/PubMedId
+  -- see types below
+  F,28,ArticleId:medline,/MedlineUID
+  F,29,ArticleId:doi,/DOI
+  F,30,ArticleId:pii,/PII
+  F,31,ArticleId:pmcid,/PmcID
+  F,32,ArticleId:pmcpid,/PmcPid
+  F,33,ArticleId:pmpid,/PmPid
+  F,34,ArticleId:other,/Dbtag
+  -- generic catch all
+
+T,36,PubMedId,INTEGER
+-- Id from the PubMed database at NCBI
+
+T,37,MedlineUID,INTEGER
+-- Id from MEDLINE
+
+T,38,DOI,VisibleString
+-- Document Object Identifier
+
+T,39,PII,VisibleString
+-- Controlled Publisher Identifier
+
+T,40,PmcID,INTEGER
+-- PubMed Central Id
+
+T,41,PmcPid,VisibleString
+-- Publisher Id supplied to PubMed Central
+
+T,42,PmPid,VisibleString
+-- Publisher Id supplied to PubMed
+
+T,44,ArticleIdSet,SET /ArticleId
+
+T,48,PubStatus,INTEGER
+-- Status Dates
+-- points of publication
+  V,49,PubStatus:received,1
+  -- date manuscript received for review
+  V,50,PubStatus:accepted,2
+  -- accepted for publication
+  V,51,PubStatus:epublish,3
+  -- published electronically by publisher
+  V,52,PubStatus:ppublish,4
+  -- published in print by publisher
+  V,53,PubStatus:revised,5
+  -- article revised by publisher/author
+  V,54,PubStatus:pmc,6
+  -- article first appeared in PubMed Central
+  V,55,PubStatus:pmcr,7
+  -- article revision in PubMed Central
+  V,56,PubStatus:pubmed,8
+  -- article citation first appeared in PubMed
+  V,57,PubStatus:pubmedr,9
+  -- article citation revision in PubMed
+  V,58,PubStatus:aheadofprint,10
+  -- epublish, but will be followed by print
+  V,59,PubStatus:premedline,11
+  -- date into PreMedline status
+  V,60,PubStatus:medline,12
+  -- date made a MEDLINE record
+  V,61,PubStatus:other,255
+
+T,63,PubStatusDate,SEQUENCE
+-- done as a structure so fields can be added
+  F,64,PubStatusDate:pubstatus,/PubStatus
+  F,65,PubStatusDate:date,/Date
+  -- time may be added later
+
+T,67,PubStatusDateSet,SET /PubStatusDate
+
+T,71,Cit-art,SEQUENCE
+-- Citation Types
+-- article in journal or book
+  F,72,Cit-art:title,/Title,OPTIONAL
+  -- title of paper (ANSI requires)
+  F,73,Cit-art:authors,/Auth-list,OPTIONAL
+  -- authors (ANSI requires)
+  F,74,Cit-art:from,CHOICE
+  -- journal or book
+    F,75,Cit-art:from:journal,/Cit-jour
+    F,76,Cit-art:from:book,/Cit-book
+    F,77,Cit-art:from:proc,/Cit-proc
+  F,78,Cit-art:ids,/ArticleIdSet,OPTIONAL
+  -- lots of ids
+
+T,80,Cit-jour,SEQUENCE
+-- Journal citation
+  F,81,Cit-jour:title,/Title
+  -- title of journal
+  F,82,Cit-jour:imp,/Imprint
+
+T,84,Cit-book,SEQUENCE
+-- Book citation
+  F,85,Cit-book:title,/Title
+  -- Title of book
+  F,86,Cit-book:coll,/Title,OPTIONAL
+  -- part of a collection
+  F,87,Cit-book:authors,/Auth-list
+  -- authors
+  F,88,Cit-book:imp,/Imprint
+
+T,90,Cit-proc,SEQUENCE
+-- Meeting proceedings
+  F,91,Cit-proc:book,/Cit-book
+  -- citation to meeting
+  F,92,Cit-proc:meet,/Meeting
+  -- time and location of meeting
+
+T,99,Cit-pat,SEQUENCE
+-- Patent number and date-issue were made optional in 1997 to
+--   support patent applications being issued from the USPTO
+--   Semantically a Cit-pat must have either a patent number or
+--   an application number (or both) to be valid
+-- patent citation
+  F,100,Cit-pat:title,VisibleString
+  F,101,Cit-pat:authors,/Auth-list
+  -- author/inventor
+  F,102,Cit-pat:country,VisibleString
+  -- Patent Document Country
+  F,103,Cit-pat:doc-type,VisibleString
+  -- Patent Document Type
+  F,104,Cit-pat:number,VisibleString,OPTIONAL
+  -- Patent Document Number
+  F,105,Cit-pat:date-issue,/Date,OPTIONAL
+  -- Patent Issue/Pub Date
+  F,106,Cit-pat:class,SEQUENCE VisibleString,OPTIONAL
+  -- Patent Doc Class Code 
+  F,107,Cit-pat:app-number,VisibleString,OPTIONAL
+  -- Patent Doc Appl Number
+  F,108,Cit-pat:app-date,/Date,OPTIONAL
+  -- Patent Appl File Date
+  F,109,Cit-pat:applicants,/Auth-list,OPTIONAL
+  -- Applicants
+  F,110,Cit-pat:assignees,/Auth-list,OPTIONAL
+  -- Assignees
+  F,111,Cit-pat:priority,SEQUENCE /Patent-priority,OPTIONAL
+  -- Priorities
+  F,112,Cit-pat:abstract,VisibleString,OPTIONAL
+  -- abstract of patent
+
+T,114,Patent-priority,SEQUENCE
+  F,115,Patent-priority:country,VisibleString
+  -- Patent country code
+  F,116,Patent-priority:number,VisibleString
+  -- number assigned in that country
+  F,117,Patent-priority:date,/Date
+  -- date of application
+
+T,119,Id-pat,SEQUENCE
+-- just to identify a patent
+  F,120,Id-pat:country,VisibleString
+  -- Patent Document Country
+  F,121,Id-pat:id,CHOICE
+    F,122,Id-pat:id:number,VisibleString
+    -- Patent Document Number
+    F,123,Id-pat:id:app-number,VisibleString
+    -- Patent Doc Appl Number
+  F,124,Id-pat:doc-type,VisibleString,OPTIONAL
+  -- Patent Doc Type
+
+T,126,Cit-let,SEQUENCE
+-- letter, thesis, or manuscript
+  F,127,Cit-let:cit,/Cit-book
+  -- same fields as a book
+  F,128,Cit-let:man-id,VisibleString,OPTIONAL
+  -- Manuscript identifier
+  F,129,Cit-let:type,ENUMERATED,OPTIONAL
+    V,130,Cit-let:type:manuscript,1
+    V,131,Cit-let:type:letter,2
+    V,132,Cit-let:type:thesis,3
+
+T,136,Cit-sub,SEQUENCE
+-- NOTE: this is just to cite a
+-- direct data submission, see NCBI-Submit
+-- for the form of a sequence submission
+-- citation for a direct submission
+  F,137,Cit-sub:authors,/Auth-list
+  -- not necessarily authors of the paper
+  F,138,Cit-sub:imp,/Imprint,OPTIONAL
+  -- this only used to get date.. will go
+  F,139,Cit-sub:medium,ENUMERATED,OPTIONAL
+  -- medium of submission
+    V,140,Cit-sub:medium:paper,1
+    V,141,Cit-sub:medium:tape,2
+    V,142,Cit-sub:medium:floppy,3
+    V,143,Cit-sub:medium:email,4
+    V,144,Cit-sub:medium:other,255
+  F,145,Cit-sub:date,/Date,OPTIONAL
+  -- replaces imp, will become required
+  F,146,Cit-sub:descr,VisibleString,OPTIONAL
+  -- description of changes for public view
+
+T,148,Cit-gen,SEQUENCE
+-- NOT from ANSI, this is a catchall
+  F,149,Cit-gen:cit,VisibleString,OPTIONAL
+  -- anything, not parsable
+  F,150,Cit-gen:authors,/Auth-list,OPTIONAL
+  F,151,Cit-gen:muid,INTEGER,OPTIONAL
+  -- medline uid
+  F,152,Cit-gen:journal,/Title,OPTIONAL
+  F,153,Cit-gen:volume,VisibleString,OPTIONAL
+  F,154,Cit-gen:issue,VisibleString,OPTIONAL
+  F,155,Cit-gen:pages,VisibleString,OPTIONAL
+  F,156,Cit-gen:date,/Date,OPTIONAL
+  F,157,Cit-gen:serial-number,INTEGER,OPTIONAL
+  -- for GenBank style references
+  F,158,Cit-gen:title,VisibleString,OPTIONAL
+  -- eg. cit="unpublished",title="title"
+  F,159,Cit-gen:pmid,/PubMedId,OPTIONAL
+  -- PubMed Id
+
+T,163,Auth-list,SEQUENCE
+-- Authorship Group
+  F,164,Auth-list:names,CHOICE
+    F,165,Auth-list:names:std,SEQUENCE /Author
+    -- full citations
+    F,166,Auth-list:names:ml,SEQUENCE VisibleString
+    -- MEDLINE, semi-structured
+    F,167,Auth-list:names:str,SEQUENCE VisibleString
+    -- free for all
+  F,168,Auth-list:affil,/Affil,OPTIONAL
+  -- author affiliation
+
+T,170,Author,SEQUENCE
+  F,171,Author:name,/Person-id
+  -- Author, Primary or Secondary
+  F,172,Author:level,ENUMERATED,OPTIONAL
+    V,173,Author:level:primary,1
+    V,174,Author:level:secondary,2
+  F,175,Author:role,ENUMERATED,OPTIONAL
+  -- Author Role Indicator
+    V,176,Author:role:compiler,1
+    V,177,Author:role:editor,2
+    V,178,Author:role:patent-assignee,3
+    V,179,Author:role:translator,4
+  F,180,Author:affil,/Affil,OPTIONAL
+  F,181,Author:is-corr,BOOLEAN,OPTIONAL
+  -- TRUE if corresponding author
+
+T,183,Affil,CHOICE
+  F,184,Affil:str,VisibleString
+  -- unparsed string
+  F,185,Affil:std,SEQUENCE
+  -- std representation
+    F,186,Affil:std:affil,VisibleString,OPTIONAL
+    -- Author Affiliation, Name
+    F,187,Affil:std:div,VisibleString,OPTIONAL
+    -- Author Affiliation, Division
+    F,188,Affil:std:city,VisibleString,OPTIONAL
+    -- Author Affiliation, City
+    F,189,Affil:std:sub,VisibleString,OPTIONAL
+    -- Author Affiliation, County Sub
+    F,190,Affil:std:country,VisibleString,OPTIONAL
+    -- Author Affiliation, Country
+    F,191,Affil:std:street,VisibleString,OPTIONAL
+    -- street address, not ANSI
+    F,192,Affil:std:email,VisibleString,OPTIONAL
+    F,193,Affil:std:fax,VisibleString,OPTIONAL
+    F,194,Affil:std:phone,VisibleString,OPTIONAL
+    F,195,Affil:std:postal-code,VisibleString,OPTIONAL
+
+T,202,Title,SET CHOICE
+-- Title Group
+-- Valid for = A = Analytic (Cit-art)
+--             J = Journals (Cit-jour)
+--             B = Book (Cit-book)
+-- Valid for:
+  F,203,Title:name,VisibleString
+  -- Title, Anal,Coll,Mono    AJB
+  F,204,Title:tsub,VisibleString
+  -- Title, Subordinate       A B
+  F,205,Title:trans,VisibleString
+  -- Title, Translated        AJB
+  F,206,Title:jta,VisibleString
+  -- Title, Abbreviated        J
+  F,207,Title:iso-jta,VisibleString
+  -- specifically ISO jta      J
+  F,208,Title:ml-jta,VisibleString
+  -- specifically MEDLINE jta  J
+  F,209,Title:coden,VisibleString
+  -- a coden                   J
+  F,210,Title:issn,VisibleString
+  -- ISSN                      J
+  F,211,Title:abr,VisibleString
+  -- Title, Abbreviated         B
+  F,212,Title:isbn,VisibleString
+  -- ISBN                       B
+
+T,214,Imprint,SEQUENCE
+-- Imprint group
+  F,215,Imprint:date,/Date
+  -- date of publication
+  F,216,Imprint:volume,VisibleString,OPTIONAL
+  F,217,Imprint:issue,VisibleString,OPTIONAL
+  F,218,Imprint:pages,VisibleString,OPTIONAL
+  F,219,Imprint:section,VisibleString,OPTIONAL
+  F,220,Imprint:pub,/Affil,OPTIONAL
+  -- publisher, required for book
+  F,221,Imprint:cprt,/Date,OPTIONAL
+  -- copyright date, "    "   "
+  F,222,Imprint:part-sup,VisibleString,OPTIONAL
+  -- part/sup of volume
+  F,223,Imprint:language,VisibleString,DEFAULT,"ENG"
+  -- put here for simplicity
+  F,224,Imprint:prepub,ENUMERATED,OPTIONAL
+  -- for prepublication citations
+    V,225,Imprint:prepub:submitted,1
+    -- submitted, not accepted
+    V,226,Imprint:prepub:in-press,2
+    -- accepted, not published
+    V,227,Imprint:prepub:other,255
+  F,228,Imprint:part-supi,VisibleString,OPTIONAL
+  -- part/sup on issue
+  F,229,Imprint:retract,/CitRetract,OPTIONAL
+  -- retraction info
+  F,230,Imprint:pubstatus,/PubStatus,OPTIONAL
+  -- current status of this publication
+  F,231,Imprint:history,/PubStatusDateSet,OPTIONAL
+  -- dates for this record
+
+T,233,CitRetract,SEQUENCE
+  F,234,CitRetract:type,ENUMERATED
+  -- retraction of an entry
+    V,235,CitRetract:type:retracted,1
+    -- this citation retracted
+    V,236,CitRetract:type:notice,2
+    -- this citation is a retraction notice
+    V,237,CitRetract:type:in-error,3
+    -- an erratum was published about this
+    V,238,CitRetract:type:erratum,4
+    -- this is a published erratum
+  F,239,CitRetract:exp,VisibleString,OPTIONAL
+  -- citation and/or explanation
+
+T,241,Meeting,SEQUENCE
+  F,242,Meeting:number,VisibleString
+  F,243,Meeting:date,/Date
+  F,244,Meeting:place,/Affil,OPTIONAL

@@ -1,0 +1,6 @@
+LIB = cdd
+SRC = cdd__ cdd___
+
+
+USES_LIBRARIES =  \
+    cn3d scoremat

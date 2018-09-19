@@ -1,0 +1,16 @@
+.cvsignore
+Projdesc_.cpp
+Project_.cpp
+Project_descr_.cpp
+Project_id_.cpp
+Project_item_.cpp
+Projdesc.cpp
+Project.cpp
+Project_descr.cpp
+Project_id.cpp
+Project_item.cpp
+NCBI_Project_module.cpp
+proj___.cpp
+proj__.cpp
+proj.files
+proj.dump

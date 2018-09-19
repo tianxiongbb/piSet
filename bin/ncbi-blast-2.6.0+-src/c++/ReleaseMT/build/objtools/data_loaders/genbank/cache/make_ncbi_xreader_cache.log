@@ -1,0 +1,16 @@
+make[6]: Entering directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/build/objtools/data_loaders/genbank/cache'
+Updating dependency information for /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objtools/data_loaders/genbank/cache/writer_cache.cpp.
+Updating dependency information for /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objtools/data_loaders/genbank/cache/reader_cache.cpp.
+/usr/bin/ccache /usr/bin/g++  -std=gnu++11 -c -Wall -Wno-format-y2k  -pthread -fopenmp -O2 -fPIC    -DNDEBUG -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE   -D_MT -D_REENTRANT -D_THREAD_SAFE -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/inc -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/include     -fdiagnostics-color=always /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objtools/data_loaders/genbank/cache/reader_cache.cpp -o reader_cache.o 
+/usr/bin/ccache /usr/bin/g++  -std=gnu++11 -c -Wall -Wno-format-y2k  -pthread -fopenmp -O2 -fPIC    -DNDEBUG -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE   -D_MT -D_REENTRANT -D_THREAD_SAFE -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/inc -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/include     -fdiagnostics-color=always /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objtools/data_loaders/genbank/cache/writer_cache.cpp -o writer_cache.o 
+/bin/rm -f libncbi_xreader_cache.a .libncbi_xreader_cache.a.stamp
+ar cr libncbi_xreader_cache.a reader_cache.o writer_cache.o  
+/bin/bash /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/scripts/common/impl/if_diff.sh /bin/ln -f libncbi_xreader_cache.a /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib
+/bin/ln -f libncbi_xreader_cache.a /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib/libncbi_xreader_cache.a
+/bin/ln -f .ncbi_xreader_cache.dep /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/status/.ncbi_xreader_cache.dep
+/bin/rm -f libncbi_xreader_cache-dll.so .libncbi_xreader_cache-dll.so.stamp
+/usr/bin/g++  -std=gnu++11  -shared -o libncbi_xreader_cache-dll.so -Wl,--enable-new-dtags -Wl,-export-dynamic  -pthread -fopenmp   -O -fdiagnostics-color=always -fPIC  reader_cache.o writer_cache.o  -Wl,-rpath,/home/yutianx/bin/lib -Wl,-rpath-link,/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib -L/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib -lncbi_xreader-dll -ldl -lm  -lpthread 
+/bin/bash /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/scripts/common/impl/if_diff.sh /bin/ln -f libncbi_xreader_cache-dll.so /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib
+/bin/ln -f libncbi_xreader_cache-dll.so /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib/libncbi_xreader_cache-dll.so
+/bin/ln -f .ncbi_xreader_cache-dll.dep /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/status/.ncbi_xreader_cache-dll.dep
+make[6]: Leaving directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/build/objtools/data_loaders/genbank/cache'

@@ -1,0 +1,17 @@
+#include <objects/seqloc/Giimport_id.hpp>
+#include <objects/seqloc/Na_strand.hpp>
+#include <objects/seqloc/PDB_mol_id.hpp>
+#include <objects/seqloc/PDB_seq_id.hpp>
+#include <objects/seqloc/Packed_seqint.hpp>
+#include <objects/seqloc/Packed_seqpnt.hpp>
+#include <objects/seqloc/Patent_seq_id.hpp>
+#include <objects/seqloc/Seq_bond.hpp>
+#include <objects/seqloc/Seq_id.hpp>
+#include <objects/seqloc/Seq_id_set.hpp>
+#include <objects/seqloc/Seq_interval.hpp>
+#include <objects/seqloc/Seq_loc.hpp>
+#include <objects/seqloc/Seq_loc_equiv.hpp>
+#include <objects/seqloc/Seq_loc_mix.hpp>
+#include <objects/seqloc/Seq_point.hpp>
+#include <objects/seqloc/Textseq_id.hpp>
+#include <objects/seqloc/NCBI_Seqloc_module.hpp>

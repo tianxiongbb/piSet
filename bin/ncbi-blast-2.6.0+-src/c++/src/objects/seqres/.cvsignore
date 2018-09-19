@@ -1,0 +1,13 @@
+.cvsignore
+Byte_graph_.cpp
+Int_graph_.cpp
+Real_graph_.cpp
+Seq_graph_.cpp
+Byte_graph.cpp
+Int_graph.cpp
+Real_graph.cpp
+NCBI_Seqres_module.cpp
+seqres___.cpp
+seqres__.cpp
+seqres.files
+seqres.dump

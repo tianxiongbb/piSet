@@ -1,0 +1,2 @@
+cgi _cgi_common
+fcgi _cgi_common

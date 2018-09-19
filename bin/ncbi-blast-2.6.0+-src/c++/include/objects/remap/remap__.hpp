@@ -1,0 +1,9 @@
+#include <objects/remap/RMReply.hpp>
+#include <objects/remap/RMRequest.hpp>
+#include <objects/remap/Remap_db_id.hpp>
+#include <objects/remap/Remap_dt.hpp>
+#include <objects/remap/Remap_query.hpp>
+#include <objects/remap/Remap_reply.hpp>
+#include <objects/remap/Remap_request.hpp>
+#include <objects/remap/Remap_result.hpp>
+#include <objects/remap/NCBI_Remap_module.hpp>

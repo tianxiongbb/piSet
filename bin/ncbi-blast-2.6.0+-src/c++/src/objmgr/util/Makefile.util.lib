@@ -1,0 +1,19 @@
+# $Id: Makefile.util.lib 501626 2016-05-17 17:32:10Z kornbluh $
+
+# Build library "xobjutil"
+###############################
+
+ASN_DEP = submit
+
+SRC = weight sequence feature seqtitle create_defline obj_sniff seq_loc_util seq_align_util seq_trimmer bioseqgaps_ci \
+        objutil
+LIB = xobjutil
+
+DLL_LIB = $(SOBJMGR_LIBS)
+
+WATCHERS = ucko vasilche
+
+
+
+USES_LIBRARIES =  \
+    $(DL_LIBS) $(SOBJMGR_LIBS)

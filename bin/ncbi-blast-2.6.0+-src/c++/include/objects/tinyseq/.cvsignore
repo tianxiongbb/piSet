@@ -1,0 +1,8 @@
+.cvsignore
+TSeq_.hpp
+TSeqSet_.hpp
+TSeq.hpp
+TSeqSet.hpp
+NCBI_TSeq_module.hpp
+tinyseq__.hpp
+tinyseq.dump

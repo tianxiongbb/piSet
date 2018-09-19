@@ -1,0 +1,31 @@
+make[5]: Entering directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/build/objtools/blast/blastdb_format'
+Updating dependency information for /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objtools/blast/blastdb_format/seq_formatter.cpp.
+Updating dependency information for /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objtools/blast/blastdb_format/blastdb_formatter.cpp.
+Updating dependency information for /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objtools/blast/blastdb_format/blastdb_dataextract.cpp.
+Updating dependency information for /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objtools/blast/blastdb_format/seq_writer.cpp.
+/usr/bin/ccache /usr/bin/g++  -std=gnu++11 -c  -Wall -Wno-format-y2k  -pthread -fopenmp -O2 -fPIC   -DNCBI_MODULE=BLASTDB -DNDEBUG -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE   -D_MT -D_REENTRANT -D_THREAD_SAFE -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/inc -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/include  -fdiagnostics-color=always /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objtools/blast/blastdb_format/seq_writer.cpp -o seq_writer.o 
+In file included from at/seq_writer.cpp:35:0at/seq_writer.hpp:85:69:atterConfigatterConfig config = CSeqFormatterConfig());
+at/seq_writer.hpp:43:40:atterConfig {
+at/seq_writer.hpp:96:85:atterConfigpAll(CSeqDB& blastdb, CSeqFormatterConfig config = CSeqFormatterConfig());
+at/seq_writer.hpp:43:40:atterConfig {
+at/seq_writer.hpp:128:43:atteratter(const CSeqFormatter& rhs);
+at/seq_writer.hpp:130:54:atteratter& operator=(const CSeqFormatter& rhs);
+at/seq_writer.hpp:77:39:atter 
+at/seq_writer.hpp:130:54:atteratter& operator=(const CSeqFormatter& rhs);
+at/seq_writer.hpp:85:68:atterConfigatterConfig config = CSeqFormatterConfig());
+at/seq_writer.hpp:43:40:atterConfig {
+at/seq_writer.hpp:96:84:atterConfigpAll(CSeqDB& blastdb, CSeqFormatterConfig config = CSeqFormatterConfig());
+at/seq_writer.hpp:43:40:atterConfig {
+at/seq_writer.cpp:49:45:atterConfigatterConfig config /* = CSeqFormatterConfig() */)
+ at/seq_writer.cpp:35:0at/seq_writer.hpp:43:40:atterConfig {
+at/seq_writer.cpp:270:72:atterConfigatter::DumpAll(CSeqDB& blastdb, CSeqFormatterConfig config)
+ at/seq_writer.cpp:35:0at/seq_writer.hpp:43:40:atterConfig {
+/usr/bin/ccache /usr/bin/g++  -std=gnu++11 -c  -Wall -Wno-format-y2k  -pthread -fopenmp -O2 -fPIC   -DNCBI_MODULE=BLASTDB -DNDEBUG -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE   -D_MT -D_REENTRANT -D_THREAD_SAFE -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/inc -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/include  -fdiagnostics-color=always /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objtools/blast/blastdb_format/blastdb_dataextract.cpp -o blastdb_dataextract.o 
+/usr/bin/ccache /usr/bin/g++  -std=gnu++11 -c  -Wall -Wno-format-y2k  -pthread -fopenmp -O2 -fPIC   -DNCBI_MODULE=BLASTDB -DNDEBUG -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE   -D_MT -D_REENTRANT -D_THREAD_SAFE -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/inc -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/include  -fdiagnostics-color=always /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objtools/blast/blastdb_format/blastdb_formatter.cpp -o blastdb_formatter.o 
+/usr/bin/ccache /usr/bin/g++  -std=gnu++11 -c  -Wall -Wno-format-y2k  -pthread -fopenmp -O2 -fPIC   -DNCBI_MODULE=BLASTDB -DNDEBUG -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE   -D_MT -D_REENTRANT -D_THREAD_SAFE -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/inc -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/include  -fdiagnostics-color=always /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objtools/blast/blastdb_format/seq_formatter.cpp -o seq_formatter.o 
+/bin/rm -f libblastdb_format.a .libblastdb_format.a.stamp
+ar cr libblastdb_format.a seq_writer.o blastdb_dataextract.o blastdb_formatter.o seq_formatter.o  
+/bin/bash /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/scripts/common/impl/if_diff.sh /bin/ln -f libblastdb_format.a /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib
+/bin/ln -f libblastdb_format.a /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib/libblastdb_format.a
+/bin/ln -f .blastdb_format.dep /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/status/.blastdb_format.dep
+make[5]: Leaving directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/build/objtools/blast/blastdb_format'

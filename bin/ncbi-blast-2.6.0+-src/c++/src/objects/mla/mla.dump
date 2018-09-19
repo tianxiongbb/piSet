@@ -1,0 +1,158 @@
+M,16,mla.asn:NCBI-MedArchive
+--$Revision: 210253 $
+--********************************************************************
+--
+--  Network MEDLINE Archive message formats
+--  Ostell 1993
+--
+--
+--*********************************************************************
+--
+--  mla.asn
+--
+--     messages for medline archive data access
+--
+--*********************************************************************
+  T,30,NCBI-MedArchive:Mla-request
+  T,68,NCBI-MedArchive:Title-type
+  T,83,NCBI-MedArchive:Title-msg
+  T,88,NCBI-MedArchive:Title-msg-list
+  T,93,NCBI-MedArchive:Error-val
+  T,109,NCBI-MedArchive:Mla-back
+
+T,30,Mla-request,CHOICE
+--**********************************
+-- requests
+--
+  F,31,Mla-request:init,NULL
+  -- DlInit
+  F,32,Mla-request:getmle,INTEGER
+  -- get MedlineEntry
+  F,33,Mla-request:getpub,INTEGER
+  -- get citation by muid
+  F,34,Mla-request:gettitle,/Title-msg
+  -- match titles
+  F,35,Mla-request:citmatch,/Pub
+  --
+  F,36,Mla-request:fini,NULL
+  -- DlFini
+  F,37,Mla-request:getmriuids,INTEGER
+  -- Get MUIDs for an MRI
+  F,38,Mla-request:getaccuids,/Medline-si
+  -- Get MUIDs for an Accessions
+  F,39,Mla-request:uidtopmid,INTEGER
+  -- get PMID for MUID
+  F,40,Mla-request:pmidtouid,/PubMedId
+  -- get MUID for PMID
+  F,41,Mla-request:getmlepmid,/PubMedId
+  -- get MedlineEntry by PubMed id
+  F,42,Mla-request:getpubpmid,/PubMedId
+  -- get citation by PubMed id
+  F,43,Mla-request:citmatchpmid,/Pub
+  -- citation match, PMID on out
+  F,44,Mla-request:getmripmids,INTEGER
+  -- get PMIDs for an MRI
+  F,45,Mla-request:getaccpmids,/Medline-si
+  -- get PMIDs for an Accessions
+  F,46,Mla-request:citlstpmids,/Pub
+  -- generate list of PMID for Pub
+  F,47,Mla-request:getmleuid,INTEGER
+  -- get MedlineEntry by Medline id
+  F,48,Mla-request:getmlrpmid,/PubMedId
+  -- get MedlarsEntry by PubMed id
+  F,49,Mla-request:getmlruid,INTEGER
+  -- get MedlarsEntry by Medline id
+
+T,68,Title-type,ENUMERATED
+--**********************************************************************
+--
+--  if request = all
+--	if one row returned
+--	   reply=all, return every column
+--	else 
+--	   reply=ml-jta for each row
+--
+--  if request = not-set, reply=ml-jta
+--
+--  otherwise,
+--	if request != ml-jta
+--	   if column exist, reply=column, else reply=ml-jta
+--
+--**********************************************************************
+  V,69,Title-type:not-set,0
+  -- request=ml-jta (default), reply=not-found
+  V,70,Title-type:name,1
+  V,71,Title-type:tsub,2
+  V,72,Title-type:trans,3
+  V,73,Title-type:jta,4
+  V,74,Title-type:iso-jta,5
+  V,75,Title-type:ml-jta,6
+  V,76,Title-type:coden,7
+  V,77,Title-type:issn,8
+  V,78,Title-type:abr,9
+  V,79,Title-type:isbn,10
+  V,80,Title-type:all,255
+
+T,83,Title-msg,SEQUENCE
+-- Title match request/response
+  F,84,Title-msg:type,/Title-type
+  -- type to get, or type returned
+  F,85,Title-msg:title,/Title
+  -- title(s) to look up, or title(s) found
+
+T,88,Title-msg-list,SEQUENCE
+  F,89,Title-msg-list:num,INTEGER
+  -- number of titles
+  F,90,Title-msg-list:titles,SEQUENCE /Title-msg
+
+T,93,Error-val,ENUMERATED
+  V,94,Error-val:not-found,0
+  -- Entry was not found
+  V,95,Error-val:operational-error,1
+  -- A run-time operation error was occurred
+  V,96,Error-val:cannot-connect-jrsrv,2
+  -- Cannot connect to Journal server
+  V,97,Error-val:cannot-connect-pmdb,3
+  -- Cannot connect to PubMed
+  V,98,Error-val:journal-not-found,4
+  -- Journal title not found
+  V,99,Error-val:citation-not-found,5
+  -- Volume, Page and Author do not match any
+  -- article
+  V,101,Error-val:citation-ambiguous,6
+  -- More than one article found
+  V,102,Error-val:citation-too-many,7
+  -- Too many article was found
+  V,104,Error-val:cannot-connect-searchbackend-jrsrv,8
+  -- Cannot connect to searchbackend Journals db
+  V,105,Error-val:cannot-connect-searchbackend-pmdb,9
+  -- Cannot connect to searchbackend PubMed db
+  V,106,Error-val:cannot-connect-docsumbackend,10
+  -- Cannot connect to docsumbackend
+
+T,109,Mla-back,CHOICE
+  F,110,Mla-back:init,NULL
+  -- DlInit
+  F,111,Mla-back:error,/Error-val
+  -- not found for getmle/getpub/citmatch
+  F,112,Mla-back:getmle,/Medline-entry
+  -- got Medline Entry
+  F,113,Mla-back:getpub,/Pub
+  F,114,Mla-back:gettitle,/Title-msg-list
+  -- match titles
+  F,115,Mla-back:citmatch,INTEGER
+  -- citation lookup muid or 0
+  F,116,Mla-back:fini,NULL
+  -- DlFini
+  F,117,Mla-back:getuids,SEQUENCE INTEGER
+  -- got a set of MUIDs
+  F,118,Mla-back:getpmids,SEQUENCE INTEGER
+  -- got a set of PMIDs
+  F,119,Mla-back:outuid,INTEGER
+  -- result muid or 0 if not found
+  F,120,Mla-back:outpmid,/PubMedId
+  -- result pmid or 0 if not found
+  F,121,Mla-back:getpme,/Pubmed-entry
+  -- got Pubmed Entry
+  F,122,Mla-back:getmlr,/Medlars-entry
+  -- got Medlars Entry

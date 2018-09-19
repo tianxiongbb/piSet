@@ -1,0 +1,47 @@
+[34;1;4mwget: /home/yutianx/miniconda2/bin/wget[0m
+[34;1;4mbowtie: /data/tusers/yutianx/tongji2/GitHuB/piSet/bin/bowtie[0m
+[34;1;4mSTAR: /data/tusers/yutianx/tongji2/GitHuB/piSet/bin/STAR[0m
+[34;1;4mbowtie2: /data/tusers/yutianx/tongji2/GitHuB/piSet/bin/bowtie2[0m
+[34;1;4mbwa: /data/tusers/yutianx/tongji2/GitHuB/piSet/bin/bwa[0m
+[34;1;4manno_rmsk: /data/tusers/yutianx/tongji2/GitHuB/piSet/bin/anno_rmsk[0m
+[34;1;4manno_mirna: /data/tusers/yutianx/tongji2/GitHuB/piSet/bin/anno_mirna[0m
+[34;1;4mgffread: /data/tusers/yutianx/tongji2/Software/piPipes/bin/gffread[0m
+[34;1;4mgff_to_elements.py: /data/tusers/yutianx/tongji2/GitHuB/piSet/bin/gff_to_elements.py[0m
+[34;1;4mgtf_to_elements_ensemble.py: /data/tusers/yutianx/tongji2/GitHuB/piSet/bin/gtf_to_elements_ensemble.py[0m
+[33;1m------install sarHar------[0m
+[32mmake dicrectories......	Thu May 17 14:03:41 EDT 2018[0m
+[32mget rRNA annotation for sarHar......	Thu May 17 14:03:41 EDT 2018[0m
+[32mbuild rRNA bowtie index for sarHar......	Thu May 17 14:04:17 EDT 2018[0m
+[32mbuild rRNA bowtie2 index for sarHar......	Thu May 17 14:04:18 EDT 2018[0m
+[32mget hairpin annotation for sarHar......	Thu May 17 14:04:18 EDT 2018[0m
+[32mbuild hairpin bowtie index for sarHar......	Thu May 17 14:04:18 EDT 2018[0m
+[32mget mature miRNA annotation for sarHar......	Thu May 17 14:04:19 EDT 2018[0m
+[32mno genome fasta file provided, download from Refseq......	Thu May 17 14:04:20 EDT 2018[0m
+[32mrename fasta header to chromosome name......	Thu May 17 14:05:06 EDT 2018[0m
+[32mmake chrom.size file from genome fasta......	Thu May 17 14:07:49 EDT 2018[0m
+[32mno gff annotation file provided, download from Refseq......	Thu May 17 14:08:31 EDT 2018[0m
+[32mrename first column in gff to chromosome name......	Thu May 17 14:08:34 EDT 2018[0m
+[32mbuild bowtie index for genome......	Thu May 17 14:08:40 EDT 2018[0m
+[32mbuild bowtie2 index for genome......	Thu May 17 14:08:40 EDT 2018[0m
+[32mbuild bwa index for genome......	Thu May 17 14:08:40 EDT 2018[0m
+[31;1m5[0m
+[32mbuild STAR index for genome......	Thu May 17 14:08:40 EDT 2018[0m
+Number of  Commands: 4
+
+
+All commands completed successfully. :-)
+
+[32mmake bed annotation from sarHar.gff file......	Thu May 17 15:59:13 EDT 2018[0m
+[36;1mget sequence for small noncoding RNAs......[0m
+index file sarHar.fa.fai not found, generating...
+[36;1mbuild bowtie index for small noncoding RNAs......[0m
+[32mdownload repeatMasker output from Refseq......	Thu May 17 15:59:44 EDT 2018[0m
+[32mmake rmsk bed just for LINE, SINE, LTR, DNA elements......	Thu May 17 15:59:58 EDT 2018[0m
+[32mrename first column in rmsk.bed9 to chromosome name......	Thu May 17 16:00:25 EDT 2018[0m
+null device 
+          1 
+[32malso make a bed6 file for rmsk......	Thu May 17 16:01:35 EDT 2018[0m
+[32mget transposon consensus sequence......	Thu May 17 16:01:44 EDT 2018[0m
+[32mbuild transposon bowtie index for sarHar......	Thu May 17 16:01:50 EDT 2018[0m
+[32mbuild transposon bowtie2 index for sarHar......	Thu May 17 16:01:50 EDT 2018[0m
+[33;1m------finished, congras🍺🍺🍺------[0m

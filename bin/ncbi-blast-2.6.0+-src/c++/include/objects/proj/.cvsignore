@@ -1,0 +1,14 @@
+.cvsignore
+Projdesc_.hpp
+Project_.hpp
+Project_descr_.hpp
+Project_id_.hpp
+Project_item_.hpp
+Projdesc.hpp
+Project.hpp
+Project_descr.hpp
+Project_id.hpp
+Project_item.hpp
+NCBI_Project_module.hpp
+proj__.hpp
+proj.dump

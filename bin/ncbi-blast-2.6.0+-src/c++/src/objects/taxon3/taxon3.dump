@@ -1,0 +1,73 @@
+M,11,taxon3.asn:NCBI-Taxon3
+--$Revision: 400097 $
+--**********************************************************************
+--
+--  NCBI Taxonomy Server
+--  by James Ostell, 1995
+--  Version 3.0 - May 2004
+--
+--**********************************************************************
+  T,16,NCBI-Taxon3:Taxon3-request
+  T,20,NCBI-Taxon3:SequenceOfInt
+  T,22,NCBI-Taxon3:T3Request
+  T,29,NCBI-Taxon3:Taxon3-reply
+  T,33,NCBI-Taxon3:T3Reply
+  T,38,NCBI-Taxon3:T3Error
+  T,51,NCBI-Taxon3:T3Data
+  T,58,NCBI-Taxon3:T3StatusFlags
+  T,67,NCBI-Taxon3:T3RefreshFlags
+
+T,16,Taxon3-request,SEQUENCE
+  F,17,Taxon3-request:request,SEQUENCE /T3Request
+
+T,20,SequenceOfInt,SEQUENCE INTEGER
+
+T,22,T3Request,CHOICE
+  F,23,T3Request:taxid,INTEGER
+  F,24,T3Request:name,VisibleString
+  F,25,T3Request:org,/Org-ref
+  F,26,T3Request:join,/SequenceOfInt
+
+T,29,Taxon3-reply,SEQUENCE
+  F,30,Taxon3-reply:reply,SEQUENCE /T3Reply
+
+T,33,T3Reply,CHOICE
+  F,34,T3Reply:error,/T3Error
+  F,35,T3Reply:data,/T3Data
+
+T,38,T3Error,SEQUENCE
+  F,39,T3Error:level,ENUMERATED
+    V,40,T3Error:level:none,0
+    -- not an error, just a message
+    V,41,T3Error:level:info,1
+    -- informational error
+    V,42,T3Error:level:warn,2
+    V,43,T3Error:level:error,3
+    V,44,T3Error:level:fatal,4
+  F,45,T3Error:message,VisibleString
+  F,46,T3Error:taxid,INTEGER,OPTIONAL
+  F,47,T3Error:name,VisibleString,OPTIONAL
+  F,48,T3Error:org,/Org-ref,OPTIONAL
+
+T,51,T3Data,SEQUENCE
+  F,52,T3Data:org,/Org-ref
+  F,53,T3Data:blast-name-lineage,SEQUENCE VisibleString,OPTIONAL
+  F,54,T3Data:status,SEQUENCE /T3StatusFlags,OPTIONAL
+  F,55,T3Data:refresh,/T3RefreshFlags,OPTIONAL
+
+T,58,T3StatusFlags,SEQUENCE
+  F,59,T3StatusFlags:property,VisibleString
+  F,60,T3StatusFlags:value,CHOICE
+    F,61,T3StatusFlags:value:bool,BOOLEAN
+    F,62,T3StatusFlags:value:int,INTEGER
+    F,63,T3StatusFlags:value:str,VisibleString
+
+T,67,T3RefreshFlags,SEQUENCE
+  F,68,T3RefreshFlags:taxid-changed,BOOLEAN
+  F,69,T3RefreshFlags:taxname-changed,BOOLEAN
+  F,70,T3RefreshFlags:division-changed,BOOLEAN
+  F,71,T3RefreshFlags:lineage-changed,BOOLEAN
+  F,72,T3RefreshFlags:gc-changed,BOOLEAN
+  F,73,T3RefreshFlags:mgc-changed,BOOLEAN
+  F,74,T3RefreshFlags:orgmod-changed,BOOLEAN
+  F,75,T3RefreshFlags:pgc-changed,BOOLEAN,OPTIONAL

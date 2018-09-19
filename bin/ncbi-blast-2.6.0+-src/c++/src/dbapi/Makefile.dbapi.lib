@@ -1,0 +1,14 @@
+# $Id: Makefile.dbapi.lib 428919 2014-03-10 13:59:49Z ucko $
+
+SRC = variant active_obj dbapi driver_mgr err_handler ds_impl conn_impl \
+	 stmt_impl rs_impl rsmeta_impl cstmt_impl  \
+	 bytestreambuf blobstream \
+	 cursor_impl bulkinsert rw_impl
+
+LIB    = dbapi
+
+WATCHERS = ucko
+
+
+USES_LIBRARIES =  \
+    dbapi_driver

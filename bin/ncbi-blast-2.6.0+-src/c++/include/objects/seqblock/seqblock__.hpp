@@ -1,0 +1,16 @@
+#include <objects/seqblock/EMBL_block.hpp>
+#include <objects/seqblock/EMBL_dbname.hpp>
+#include <objects/seqblock/EMBL_xref.hpp>
+#include <objects/seqblock/GB_block.hpp>
+#include <objects/seqblock/PDB_block.hpp>
+#include <objects/seqblock/PDB_replace.hpp>
+#include <objects/seqblock/PIR_block.hpp>
+#include <objects/seqblock/PRF_ExtraSrc.hpp>
+#include <objects/seqblock/PRF_block.hpp>
+#include <objects/seqblock/SP_block.hpp>
+#include <objects/seqblock/EMBL_General_module.hpp>
+#include <objects/seqblock/GenBank_General_module.hpp>
+#include <objects/seqblock/PDB_General_module.hpp>
+#include <objects/seqblock/PIR_General_module.hpp>
+#include <objects/seqblock/PRF_General_module.hpp>
+#include <objects/seqblock/SP_General_module.hpp>

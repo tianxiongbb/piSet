@@ -1,0 +1,1 @@
+../opt/trinity-2.5.1/util/support_scripts/get_Trinity_gene_to_trans_map.pl

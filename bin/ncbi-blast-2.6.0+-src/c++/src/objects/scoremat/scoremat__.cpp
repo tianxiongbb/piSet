@@ -1,0 +1,13 @@
+#include <ncbi_pch.hpp>
+#include "BlockProperty.cpp"
+#include "CoreBlock.cpp"
+#include "CoreDef.cpp"
+#include "FormatRpsDbParameters.cpp"
+#include "LoopConstraint.cpp"
+#include "Pssm.cpp"
+#include "PssmFinalData.cpp"
+#include "PssmIntermediateData.cpp"
+#include "PssmParameters.cpp"
+#include "PssmWithParameters.cpp"
+#include "Site_annot.cpp"
+#include "Site_annot_set.cpp"

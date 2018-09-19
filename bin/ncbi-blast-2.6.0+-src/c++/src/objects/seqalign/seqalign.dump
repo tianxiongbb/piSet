@@ -1,0 +1,277 @@
+M,9,seqalign.asn:NCBI-Seqalign
+--$Revision: 370718 $
+--**********************************************************************
+--
+--  NCBI Sequence Alignment elements
+--  by James Ostell, 1990
+--
+--**********************************************************************
+  T,20,NCBI-Seqalign:Seq-align-set
+  T,22,NCBI-Seqalign:Seq-align
+  T,53,NCBI-Seqalign:Dense-diag
+  T,74,NCBI-Seqalign:Dense-seg
+  T,83,NCBI-Seqalign:Packed-seg
+  T,94,NCBI-Seqalign:Std-seg
+  T,101,NCBI-Seqalign:Spliced-seg
+  T,138,NCBI-Seqalign:Spliced-seg-modifier
+  T,151,NCBI-Seqalign:Spliced-exon
+  T,188,NCBI-Seqalign:Product-pos
+  T,195,NCBI-Seqalign:Prot-pos
+  T,208,NCBI-Seqalign:Spliced-exon-chunk
+  T,230,NCBI-Seqalign:Splice-site
+  T,245,NCBI-Seqalign:Sparse-seg
+  T,258,NCBI-Seqalign:Sparse-align
+  T,272,NCBI-Seqalign:Sparse-seg-ext
+  T,283,NCBI-Seqalign:Score
+  T,292,NCBI-Seqalign:Score-set
+
+T,20,Seq-align-set,SET /Seq-align
+--*** Sequence Alignment ********************************
+--*
+
+T,22,Seq-align,SEQUENCE
+  F,23,Seq-align:type,ENUMERATED
+    V,24,Seq-align:type:not-set,0
+    V,25,Seq-align:type:global,1
+    V,26,Seq-align:type:diags,2
+    -- unbroken, but not ordered, diagonals
+    V,27,Seq-align:type:partial,3
+    -- mapping pieces together
+    V,28,Seq-align:type:disc,4
+    -- discontinuous alignment
+    V,29,Seq-align:type:other,255
+  F,30,Seq-align:dim,INTEGER,OPTIONAL
+  -- dimensionality
+  F,31,Seq-align:score,SET /Score,OPTIONAL
+  -- for whole alignment
+  F,32,Seq-align:segs,CHOICE
+  -- alignment data
+    F,33,Seq-align:segs:dendiag,SEQUENCE /Dense-diag
+    F,34,Seq-align:segs:denseg,/Dense-seg
+    F,35,Seq-align:segs:std,SEQUENCE /Std-seg
+    F,36,Seq-align:segs:packed,/Packed-seg
+    F,37,Seq-align:segs:disc,/Seq-align-set
+    F,38,Seq-align:segs:spliced,/Spliced-seg
+    F,39,Seq-align:segs:sparse,/Sparse-seg
+  F,44,Seq-align:bounds,SET /Seq-loc,OPTIONAL
+  -- regions of sequence over which align
+  --  was computed
+  F,47,Seq-align:id,SEQUENCE /Object-id,OPTIONAL
+  -- alignment id
+  F,50,Seq-align:ext,SEQUENCE /User-object,OPTIONAL
+  --extra info
+
+T,53,Dense-diag,SEQUENCE
+-- for (multiway) diagonals
+  F,54,Dense-diag:dim,INTEGER,DEFAULT,2
+  -- dimensionality
+  F,55,Dense-diag:ids,SEQUENCE /Seq-id
+  -- sequences in order
+  F,56,Dense-diag:starts,SEQUENCE INTEGER
+  -- start OFFSETS in ids order
+  F,57,Dense-diag:len,INTEGER
+  -- len of aligned segments
+  F,58,Dense-diag:strands,SEQUENCE /Na-strand,OPTIONAL
+  F,59,Dense-diag:scores,SET /Score,OPTIONAL
+
+T,74,Dense-seg,SEQUENCE
+-- Dense-seg: the densist packing for sequence alignments only.
+--            a start of -1 indicates a gap for that sequence of
+--            length lens.
+--
+-- id=100  AAGGCCTTTTAGAGATGATGATGATGATGA
+-- id=200  AAGGCCTTTTAG.......GATGATGATGA
+-- id=300  ....CCTTTTAGAGATGATGAT....ATGA
+--
+-- dim = 3, numseg = 6, ids = { 100, 200, 300 }
+-- starts = { 0,0,-1, 4,4,0, 12,-1,8, 19,12,15, 22,15,-1, 26,19,18 }
+-- lens = { 4, 8, 7, 3, 4, 4 }
+--
+-- for (multiway) global or partial alignments
+  F,75,Dense-seg:dim,INTEGER,DEFAULT,2
+  -- dimensionality
+  F,76,Dense-seg:numseg,INTEGER
+  -- number of segments here
+  F,77,Dense-seg:ids,SEQUENCE /Seq-id
+  -- sequences in order
+  F,78,Dense-seg:starts,SEQUENCE INTEGER
+  -- start OFFSETS in ids order within segs
+  F,79,Dense-seg:lens,SEQUENCE INTEGER
+  -- lengths in ids order within segs
+  F,80,Dense-seg:strands,SEQUENCE /Na-strand,OPTIONAL
+  F,81,Dense-seg:scores,SEQUENCE /Score,OPTIONAL
+  -- score for each seg
+
+T,83,Packed-seg,SEQUENCE
+-- for (multiway) global or partial alignments
+  F,84,Packed-seg:dim,INTEGER,DEFAULT,2
+  -- dimensionality
+  F,85,Packed-seg:numseg,INTEGER
+  -- number of segments here
+  F,86,Packed-seg:ids,SEQUENCE /Seq-id
+  -- sequences in order
+  F,87,Packed-seg:starts,SEQUENCE INTEGER
+  -- start OFFSETS in ids order for whole alignment
+  F,88,Packed-seg:present,OCTET STRING
+  -- Boolean if each sequence present or absent in
+  --   each segment
+  F,90,Packed-seg:lens,SEQUENCE INTEGER
+  -- length of each segment
+  F,91,Packed-seg:strands,SEQUENCE /Na-strand,OPTIONAL
+  F,92,Packed-seg:scores,SEQUENCE /Score,OPTIONAL
+  -- score for each segment
+
+T,94,Std-seg,SEQUENCE
+  F,95,Std-seg:dim,INTEGER,DEFAULT,2
+  -- dimensionality
+  F,96,Std-seg:ids,SEQUENCE /Seq-id,OPTIONAL
+  F,97,Std-seg:loc,SEQUENCE /Seq-loc
+  F,98,Std-seg:scores,SET /Score,OPTIONAL
+
+T,101,Spliced-seg,SEQUENCE
+  F,103,Spliced-seg:product-id,/Seq-id,OPTIONAL
+  -- product is either protein or transcript (cDNA)
+  F,104,Spliced-seg:genomic-id,/Seq-id,OPTIONAL
+  F,107,Spliced-seg:product-strand,/Na-strand,OPTIONAL
+  -- should be 'plus' or 'minus'
+  F,108,Spliced-seg:genomic-strand,/Na-strand,OPTIONAL
+  F,110,Spliced-seg:product-type,ENUMERATED
+    V,111,Spliced-seg:product-type:transcript,0
+    V,112,Spliced-seg:product-type:protein,1
+  F,118,Spliced-seg:exons,SEQUENCE /Spliced-exon
+  -- set of segments involved
+  -- each segment corresponds to one exon
+  -- exons are always in biological order
+  F,127,Spliced-seg:poly-a,INTEGER,OPTIONAL
+  -- start of poly(A) tail on the transcript
+  -- For sense transcripts:
+  --   aligned product positions < poly-a <= product-length
+  --   poly-a == product-length indicates inferred poly(A) tail at transcript's end
+  -- For antisense transcripts:
+  --   -1 <= poly-a < aligned product positions
+  --   poly-a == -1 indicates inferred poly(A) tail at transcript's start
+  F,131,Spliced-seg:product-length,INTEGER,OPTIONAL
+  -- length of the product, in bases/residues
+  -- from this (or from poly-a if present), a 3' unaligned length can be extracted
+  F,135,Spliced-seg:modifiers,SET /Spliced-seg-modifier,OPTIONAL
+  -- alignment descriptors / modifiers
+  -- this provides us a set for extension
+
+T,138,Spliced-seg-modifier,CHOICE
+  F,141,Spliced-seg-modifier:start-codon-found,BOOLEAN
+  -- protein aligns from the start and the first codon 
+  -- on both product and genomic is start codon
+  F,145,Spliced-seg-modifier:stop-codon-found,BOOLEAN
+  -- protein aligns to it's end and there is stop codon 
+  -- on the genomic right after the alignment
+
+T,151,Spliced-exon,SEQUENCE
+-- complete or partial exon
+-- two consecutive Spliced-exons may belong to one exon
+  F,153,Spliced-exon:product-start,/Product-pos
+  -- product-end >= product-start
+  F,154,Spliced-exon:product-end,/Product-pos
+  F,157,Spliced-exon:genomic-start,INTEGER
+  -- genomic-end >= genomic-start
+  F,158,Spliced-exon:genomic-end,INTEGER
+  F,161,Spliced-exon:product-id,/Seq-id,OPTIONAL
+  -- product is either protein or transcript (cDNA)
+  F,162,Spliced-exon:genomic-id,/Seq-id,OPTIONAL
+  F,165,Spliced-exon:product-strand,/Na-strand,OPTIONAL
+  -- should be 'plus' or 'minus'
+  F,168,Spliced-exon:genomic-strand,/Na-strand,OPTIONAL
+  -- genomic-strand represents the strand of translation
+  F,171,Spliced-exon:parts,SEQUENCE /Spliced-exon-chunk,OPTIONAL
+  -- basic seqments always are in biologic order
+  F,174,Spliced-exon:scores,/Score-set,OPTIONAL
+  -- scores for this exon
+  F,177,Spliced-exon:acceptor-before-exon,/Splice-site,OPTIONAL
+  -- splice sites
+  F,178,Spliced-exon:donor-after-exon,/Splice-site,OPTIONAL
+  F,181,Spliced-exon:partial,BOOLEAN,OPTIONAL
+  -- flag: is this exon complete or partial?
+  F,184,Spliced-exon:ext,SEQUENCE /User-object,OPTIONAL
+  --extra info
+
+T,188,Product-pos,CHOICE
+  F,189,Product-pos:nucpos,INTEGER
+  F,190,Product-pos:protpos,/Prot-pos
+
+T,195,Prot-pos,SEQUENCE
+-- position on protein (1/3 of amino-acid resolution)
+  F,197,Prot-pos:amin,INTEGER
+  -- amino-acid position (0-based)
+  F,201,Prot-pos:frame,INTEGER,DEFAULT,0
+  -- position within codon (1-based)
+  -- 0 = not set (meaning 1)
+
+T,208,Spliced-exon-chunk,CHOICE
+-- Spliced-exon-chunk: piece of an exon
+-- lengths are given in nucleotide bases (1/3 of aminoacid when product is a
+-- protein)
+  F,210,Spliced-exon-chunk:match,INTEGER
+  -- both sequences represented, product and genomic sequences match
+  F,213,Spliced-exon-chunk:mismatch,INTEGER
+  -- both sequences represented, product and genomic sequences do not match
+  F,219,Spliced-exon-chunk:diag,INTEGER
+  -- both sequences are represented, there is sufficient similarity 
+  -- between product and genomic sequences. Can be used to replace stretches
+  -- of matches and mismatches, mostly for protein to genomic where 
+  -- definition of match or mismatch depends on translation table
+  F,222,Spliced-exon-chunk:product-ins,INTEGER
+  -- insertion in product sequence (i.e. gap in the genomic sequence)
+  F,225,Spliced-exon-chunk:genomic-ins,INTEGER
+  -- insertion in genomic sequence (i.e. gap in the product sequence)
+
+T,230,Splice-site,SEQUENCE
+-- site involved in splice
+  F,233,Splice-site:bases,VisibleString
+  -- typically two bases in the intronic region, always
+  -- in IUPAC format
+
+T,245,Sparse-seg,SEQUENCE
+-- ==========================================================================
+--
+-- Sparse-seg follows the semantics of dense-seg and is more optimal for
+-- representing sparse multiple alignments
+--
+-- ==========================================================================
+  F,246,Sparse-seg:master-id,/Seq-id,OPTIONAL
+  F,249,Sparse-seg:rows,SET /Sparse-align
+  -- pairwise alignments constituting this multiple alignment
+  F,252,Sparse-seg:row-scores,SET /Score,OPTIONAL
+  -- per-row scores
+  F,255,Sparse-seg:ext,SET /Sparse-seg-ext,OPTIONAL
+  -- index of extra items
+
+T,258,Sparse-align,SEQUENCE
+  F,259,Sparse-align:first-id,/Seq-id
+  F,260,Sparse-align:second-id,/Seq-id
+  F,262,Sparse-align:numseg,INTEGER
+  --number of segments
+  F,263,Sparse-align:first-starts,SEQUENCE INTEGER
+  --starts on the first sequence [numseg]
+  F,264,Sparse-align:second-starts,SEQUENCE INTEGER
+  --starts on the second sequence [numseg]
+  F,265,Sparse-align:lens,SEQUENCE INTEGER
+  --lengths of segments [numseg]
+  F,266,Sparse-align:second-strands,SEQUENCE /Na-strand,OPTIONAL
+  F,269,Sparse-align:seg-scores,SET /Score,OPTIONAL
+  -- per-segment scores
+
+T,272,Sparse-seg-ext,SEQUENCE
+  F,277,Sparse-seg-ext:index,INTEGER
+  --seg-ext SET OF {
+  --    index INTEGER,
+  --    data User-field
+  -- }
+
+T,283,Score,SEQUENCE
+-- use of Score is discouraged for external ASN.1 specifications
+  F,284,Score:id,/Object-id,OPTIONAL
+  F,285,Score:value,CHOICE
+    F,286,Score:value:real,REAL
+    F,287,Score:value:int,INTEGER
+
+T,292,Score-set,SET /Score
+-- use of Score-set is encouraged for external ASN.1 specifications

@@ -1,0 +1,14 @@
+# $Id: Makefile.test_mt.lib 420264 2013-12-03 17:28:27Z gouriano $
+
+SRC = test_mt
+LIB    = test_mt
+
+# REQUIRES = MT
+
+USE_PCH = no
+WATCHERS = grichenk
+PROJ_TAG = test
+
+
+USES_LIBRARIES =  \
+    xncbi

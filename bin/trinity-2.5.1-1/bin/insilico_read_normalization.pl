@@ -1,0 +1,1 @@
+../opt/trinity-2.5.1/util/insilico_read_normalization.pl

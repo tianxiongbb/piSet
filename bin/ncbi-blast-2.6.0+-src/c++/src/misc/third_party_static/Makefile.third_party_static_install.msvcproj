@@ -1,0 +1,11 @@
+# $Id: Makefile.third_party_static_install.msvcproj 196847 2010-07-09 13:40:18Z gouriano $
+
+MSVC_PROJ = third_party_static_install
+
+APP_DEP   = 
+
+DLL_DEP   = 
+
+VCPROJ    = $(msvc_prj)\static\third_party_static_install.vcproj
+VCXPROJ   = $(msvc_prj)\static\third_party_static_install.vcxproj
+

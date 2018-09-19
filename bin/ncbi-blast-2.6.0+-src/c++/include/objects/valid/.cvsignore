@@ -1,0 +1,16 @@
+.cvsignore
+Comment_rule_.hpp
+Comment_set_.hpp
+Dependent_field_rule_.hpp
+Dependent_field_set_.hpp
+Field_rule_.hpp
+Field_set_.hpp
+Phrase_list_.hpp
+Severity_level_.hpp
+Dependent_field_set.hpp
+Field_set.hpp
+Phrase_list.hpp
+Severity_level.hpp
+NCBI_Structured_comment_validation_module.hpp
+valid__.hpp
+valid.dump

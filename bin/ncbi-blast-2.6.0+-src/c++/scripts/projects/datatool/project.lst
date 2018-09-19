@@ -1,0 +1,10 @@
+corelib$
+corelib/hash_impl$
+corelib/impl$
+util$
+util/bitset$
+util/regexp$
+util/xregexp$
+serial$
+serial/impl$
+serial/datatool

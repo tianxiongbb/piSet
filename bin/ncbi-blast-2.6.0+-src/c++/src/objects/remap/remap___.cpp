@@ -1,0 +1,10 @@
+#include <ncbi_pch.hpp>
+#include "RMReply_.cpp"
+#include "RMRequest_.cpp"
+#include "Remap_db_id_.cpp"
+#include "Remap_dt_.cpp"
+#include "Remap_query_.cpp"
+#include "Remap_reply_.cpp"
+#include "Remap_request_.cpp"
+#include "Remap_result_.cpp"
+#include "NCBI_Remap_module.cpp"

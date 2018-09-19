@@ -1,0 +1,15 @@
+#!/bin/bash
+
+GITHUB=https://github.com/tianxiongbb/piSet
+PATH_PROG=`dirname $0`
+ADAPTER=${PATH_PROG%/*}/annotation/common/adapters
+
+if [ $# -lt 1 ];then
+	echo0 1 "$0 in.fastq"
+	echo0 4 "This script is based on frequency adapters database"
+	exit 1
+fi
+
+[ ! -f ${ADAPTER} ] && echo0 0 "no adapter file found in ${ADAPTER}, please download it from ${GITHUB} and rename it to ${ADAPTER}" && exit 1
+
+awk 'BEGIN{FS=OFS="\t"} {if(NR==FNR){adp[$2]=$1}else{if(FNR%4==2){for(i=1;i<=(length($1)-6);i++){key=substr($1,i,6);if(adp[key]){num[key]++;continue}}};if(FNR>400000){exit}}} END{for(i in adp){if(num[i]>20000 && num[i]>n){adapter=adp[i];n=num[i]}};print adapter,n/1000"%"}' ${ADAPTER} $1

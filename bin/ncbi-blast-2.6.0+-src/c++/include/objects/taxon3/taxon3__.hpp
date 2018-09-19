@@ -1,0 +1,10 @@
+#include <objects/taxon3/SequenceOfInt.hpp>
+#include <objects/taxon3/T3Data.hpp>
+#include <objects/taxon3/T3Error.hpp>
+#include <objects/taxon3/T3RefreshFlags.hpp>
+#include <objects/taxon3/T3Reply.hpp>
+#include <objects/taxon3/T3Request.hpp>
+#include <objects/taxon3/T3StatusFlags.hpp>
+#include <objects/taxon3/Taxon3_reply.hpp>
+#include <objects/taxon3/Taxon3_request.hpp>
+#include <objects/taxon3/NCBI_Taxon3_module.hpp>

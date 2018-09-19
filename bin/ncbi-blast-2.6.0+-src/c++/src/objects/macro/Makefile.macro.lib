@@ -1,0 +1,11 @@
+# $Id: Makefile.macro.lib 450410 2014-10-27 12:18:08Z bollin $
+
+LIB = macro
+SRC = macro__ macro___
+
+WATCHERS = bollin kans
+
+ASN_DEP = genome_collection seqset
+
+USES_LIBRARIES =  \
+    $(SEQ_LIBS) pub

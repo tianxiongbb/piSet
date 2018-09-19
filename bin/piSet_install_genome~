@@ -1,0 +1,489 @@
+#!/bin/bash
+
+PATH_PRO=$(dirname `readlink -f $0`) && PATH_PRO=${PATH_PRO%/bin}
+
+# function
+function checkTools(){
+	if [ `which $1` ];then
+		echo0 3 "$1: `which $1`"
+	else
+		echo0 0 "$1 not found, please install it or add it into your PATH!"
+		exit 1
+	fi
+}
+
+# help infomation
+help_info(){
+	echo0 1 "for genome installation, please run:"
+	echo0 1 "$0"
+	echo0 1 "\t-g <genome>\tgenome name. eg: mm10, dm6, dm3, Aaeg"
+	echo0 1 "\t-s <\"species\">\tLatin name of the species to be installed. eg: \"Mus musculus\", \"Aedes aegypti\""
+	echo0 1 "optional:"
+	echo0 1 "\t-O\t\tset -O to download genome.fa from UCSC if your genome is not the newest assembled version."
+	echo0 1 "\t-r <ftp_url>\tprovide refseq url yourself for annotation download"
+	echo0 1 "\t-m \tset -m to enable de novo miRNA annotation by miRDeep2. use with -i. default: disable"
+	echo0 1 "\t-i <file>\tsmallRNA sequencing file used for miRDeep2, use with -m"
+	echo0 1 "\t-a <string>\tadapter to be removed from smallRNAseq, set to 0 to automaticlly guess the adapter sequence, use with -m. default: not remove"
+	echo0 1 "\t-t \tset -t to enable de novo transposon annotation by RepeatModeler and RepeatMasker. default: disable"
+	echo0 1 "\t-v \tset -v to enable de novo virus annotation by anno_virus. use with -i. default: disable"
+	echo0 1 "\t-L <file>\tleft RNA sequencing file used for anno_virus, use with -v"
+	echo0 1 "\t-R <file>\tright RNA sequencing file used for anno_virus, use with -v"
+	echo0 1 "\t-c \tCPU used for index building, miRDeep2, RepeatModeler and RepeatMasker. default: disable"
+	echo0 1 ""
+	echo0 4 "Use -T to provide the repeatMasker output download url to get the annotation. If there is no repeatMask output for your species, please run install.sh with -t to de novo annotate rmsk via RepeatModeler and RepeatMasker. Also, if you don't want to annotate repeatMask, run install.sh without -R and -t"
+	echo0 4 "Mostly, the script will get the url to Refseq annotation. But for some particular genome, you may need to specify the refseq_ftp_url via -r"
+	echo0 4 "The script can only install the lastest version of genome of the species."
+	echo0 3 "example to install fruit fly's genome:"
+	echo0 3 "\t./install.sh -g dm6 -s \"Drosophila melanogaster\" -T http://www.repeatmasker.org/genomes/dm6/RepeatMasker-rm406-dfam2.0/dm6.fa.out.gz"
+	echo0 3 "example to install pillbug's genome:"
+	echo0 3 "\t1. ./install.sh -g Avul -s \"Armadillidium vulgare\" -r ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/001/887/335/GCA_001887335.1_A_vulgare_v1"
+	echo0 3 "\t2. anno_rmsk -i ${PATH_PRO}/annotation/genome/genome.fa -o ${PATH_PRO}/annotation/genome"
+	echo0 3 "\t3. ./install.sh -g Avul -s \"Armadillidium vulgare\""
+}
+
+if [ $# -lt 2 ];then
+	help_info
+	exit 1
+fi
+
+CPU=1
+# parameters
+while getopts "hg:s:R:r:mti:a:c:vL:r:T:O" OPTION; do
+	case $OPTION in
+		h)	help_info && exit 1;;
+		g)	GENOME=${OPTARG};;
+		s)	SPECIES=${OPTARG};;
+		r)	REFSEQ_URL=${OPTARG};;
+		m)	IF_MIRNA=1;;
+		i)	SRNA=`readlink -f ${OPTARG}`;;
+		a)	ADAPTER=${OPTARG};;
+		t)	IF_TRN=1;;
+		v)	IF_VIRUS=1;;
+		L)	RNASEQ_LEFT=`readlink -f ${OPTARG}`;;
+		R)	RNASEQ_RIGHT=`readlink -f ${OPTARG}`;;
+		T)	RMSK_URL=${OPTARG};;
+		c)	CPU=${OPTARG};;
+		O)	OLD=1;;
+		*)	help_info && exit 1;;
+	esac
+done
+
+# check parameters
+CPU_STAR=${CPU}
+! [ ${CPU} -gt 0 ] 2>/dev/null && echo0 "-C must be interger bigger than 1" && exit 1
+
+# checkTools
+checkTools wget
+checkTools bowtie
+checkTools STAR
+checkTools bowtie2
+checkTools bwa
+checkTools anno_rmsk
+checkTools anno_mirna
+checkTools gffread
+checkTools gff_to_elements.py
+checkTools gtf_to_elements_ensemble.py
+
+######################
+### install genome ###
+######################
+
+echo0 4 "------install ${GENOME}------"
+echo0 2 "make dicrectories......"
+[ ! -d ${PATH_PRO}/annotation/${GENOME} ] && mkdir -p ${PATH_PRO}/annotation/${GENOME} # make genome folder
+cd ${PATH_PRO}/annotation/${GENOME}
+[ ! -d BowtieIndex ] && mkdir -p BowtieIndex # make BowtieIndex folder
+[ ! -d Bowtie2Index ] && mkdir -p Bowtie2Index # make Bowtie2Index folder
+[ ! -d Hisat2Index ] && mkdir -p Hisat2Index # make Hisat2Index folder
+[ ! -d BWAIndex ] && mkdir -p BWAIndex # make BWAIndex folder
+[ ! -d STARIndex ] && mkdir -p STARIndex # make STARIndex folder
+[ ! -d log ] && mkdir -p log # make log folder
+[ ! -d ../common ] && mkdir -p ../common # make common folder
+# download SSU and LSU rRNA from SILVA release 132
+if [ ! -f ${PATH_PRO}/annotation/common/rRNA.SILVA.fa ];then
+	echo0 2 "download SSU and LSU rRNA annotation from SILVA release 132......"
+	wget -nd -q https://www.arb-silva.de/fileadmin/silva_databases/release_132/Exports/SILVA_132_LSURef_tax_silva.fasta.gz || (echo0 0 "LSU rRNA download failed, please check newwork connection or accessibility to https://www.arb-silva.de/fileadmin/silva_databases/release_132/Exports/SILVA_132_LSURef_tax_silva.fasta.gz" && exit 1)
+	wget -nd -q https://www.arb-silva.de/fileadmin/silva_databases/release_132/Exports/SILVA_132_SSURef_tax_silva.fasta.gz || (echo0 0 "SSU rRNA download failed, please check newwork connection or accessibility to https://www.arb-silva.de/fileadmin/silva_databases/release_132/Exports/SILVA_132_SSURef_tax_silva.fasta.gz" && exit 1)
+	zcat SILVA_132_LSURef_tax_silva.fasta.gz SILVA_132_SSURef_tax_silva.fasta.gz > ../common/rRNA.SILVA.U.fa && rm SILVA_132_LSURef_tax_silva.fasta.gz SILVA_132_SSURef_tax_silva.fasta.gz 
+	U_to_T_fasta.py ../common/rRNA.SILVA.U.fa ../common/rRNA.SILVA.fa fa && rm ../common/rRNA.SILVA.U.fa 
+fi
+
+# download hairpin annotation from miRBase current release
+if [ ! -f ${PATH_PRO}/annotation/common/hairpin.miRBase.fa ];then
+	echo0 2 "download hairpin annotation from miRBase current release......"
+	wget -nd -q ftp://mirbase.org/pub/mirbase/CURRENT/hairpin.fa.gz || (echo0 0 "hairpin download failed, please check newwork connection or accessibility to ftp://mirbase.org/pub/mirbase/CURRENT/hairpin.fa.gz" && exit 1)
+	gunzip hairpin.fa.gz && mv hairpin.fa ../common/hairpin.miRBase.U.fa
+	U_to_T_fasta.py ../common/hairpin.miRBase.U.fa ../common/hairpin.miRBase.fa fa && rm ../common/hairpin.miRBase.U.fa
+fi
+
+# download mature miRNA annotation from miRBase current release
+if [ ! -f ${PATH_PRO}/annotation/common/mature.miRBase.fa ];then
+	echo0 2 "download mature miRNA annotation from miRBase current release......"
+	wget -nd -q ftp://mirbase.org/pub/mirbase/CURRENT/mature.fa.gz || (echo0 0 "mature miRNA download failed, please check newwork connection or accessibility to ftp://mirbase.org/pub/mirbase/CURRENT/mature.fa.gz" && exit 1)
+	gunzip mature.fa.gz && mv mature.fa ../common/mature.miRBase.U.fa
+	U_to_T_fasta.py ../common/mature.miRBase.U.fa ../common/mature.miRBase.fa fa && rm ../common/mature.miRBase.U.fa
+fi
+
+# get rRNA annotation and build bowtie index
+if [ ! -f ${GENOME}.rRNA.fa ];then
+	echo0 2 "get rRNA annotation for ${GENOME}......"
+	grep_fa ";${SPECIES}" ../common/rRNA.SILVA.fa > ${GENOME}.rRNA.fa
+fi
+LC=(`wc -l ${GENOME}.rRNA.fa`)
+if [ ${LC} -gt 0 ];then
+	if [ ! -f BowtieIndex/rRNA.1.ebwt ];then # bowtie index
+		echo0 2 "build rRNA bowtie index for ${GENOME}......"
+		bowtie-build ${GENOME}.rRNA.fa BowtieIndex/rRNA > log/install.${GENOME} 2>&1 || (echo0 0 "build rRNA bowtie index error, please check log/install.${GENOME}" && exit 1)
+	fi
+else
+	echo0 4 "rRNA annotation not found in rRNA.SILVA.fa for ${SPECIES}, skip make bowtie index"
+fi
+if [ ${LC} -gt 0 ];then # bowtie2 index
+	if [ ! -f Bowtie2Index/rRNA.1.bt2 ];then
+		echo0 2 "build rRNA bowtie2 index for ${GENOME}......"
+		bowtie2-build ${GENOME}.rRNA.fa Bowtie2Index/rRNA > log/install.${GENOME} 2>&1 || (echo0 0 "build rRNA bowtie2 index error, please check log/install.${GENOME}" && exit 1)
+	fi
+else
+	echo0 4 "rRNA annotation not found in rRNA.SILVA.fa for ${SPECIES}, skip make bowtie2 index"
+fi
+
+# get hairpin annotation
+if [ ! -f ${GENOME}.hairpin.fa ];then
+	echo0 2 "get hairpin annotation for ${GENOME}......"
+	grep_fa "${SPECIES} mi" ../common/hairpin.miRBase.fa | awk '{print $1}' > ${GENOME}.hairpin.fa
+fi
+
+# build bowtie index for hairpin
+LC=(`wc -l ${GENOME}.hairpin.fa`)
+if [ ${LC} -gt 0 ];then
+	if [ ! -f BowtieIndex/hairpin.1.ebwt ];then
+		echo0 2 "build hairpin bowtie index for ${GENOME}......"
+		bowtie-build ${GENOME}.hairpin.fa BowtieIndex/hairpin >> log/install.${GENOME} 2>&1 || (echo0 0 "build hairpin index error, please check log/install.${GENOME}" && exit 1)
+	fi
+else
+	echo0 4 "hairpin annotation not found in hairpin.miRBase.fa for ${SPECIES}, skip make bowtie index. If possible, please run install.sh with -i smallrnaseq.rmadapt.fq"
+fi
+
+# get mature miRNA annotation
+if [ ! -f ${GENOME}.mature.fa ];then
+	echo0 2 "get mature miRNA annotation for ${GENOME}......"
+	grep_fa "${SPECIES} mi" ../common/mature.miRBase.fa | awk '{print $1}' > ${GENOME}.mature.fa
+fi
+
+if [ ! -z ${OLD} ];then # donwload genome annotation from UCSC for old assembled genome
+	if [ ! -f ${GENOME}.fa ];then
+		[ ! -f ${GENOME}.2bit ] && echo0 2 "download ${GENOME}.2bit from UCSC......" && wget -nd -q http://hgdownload.soe.ucsc.edu/goldenPath/${GENOME}/bigZips/${GENOME}.2bit || (echo0 0 "genome 2bit download failed, please check network connection or accessibility to http://hgdownload.soe.ucsc.edu/goldenPath/${GENOME}/bigZips/${GENOME}.2bit" && exit 1)
+		echo0 2 "transform twoBit to fasta format......"
+		twoBitToFa ${GENOME}.2bit ${GENOME}.fa 
+	fi
+else # download genome annotation from Refseq for newest assembled genome
+	[ ! -f ../common/assembly_summary_refseq.txt ] && (echo0 2 "download Refseq assemble summary file......" && wget -nd -q ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/assembly_summary_refseq.txt && mv assembly_summary_refseq.txt ../common/ || (echo0 0 "Refseq summary download failed, please check network connection or accessibility to ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/assembly_summary_refseq.txt" && exit 1))
+	if [ -z ${REFSEQ_URL} ];then
+		REFSEQ_URL=(`grep -P "\t${SPECIES}\t" ../common/assembly_summary_refseq.txt | grep -P "\trepresentative genome\t|\treference genome\t" | cut -f 20`)
+		[ -z ${REFSEQ_URL} ] && echo0 0 "no ${SPECIES} in assembly_summary_refseq.txt, please provide the refseq genome url in the third parameter" && exit 1
+	fi
+	if [ ! -f ${GENOME}.fa ];then
+		# first download Refseq summary file
+		[ ! -f *_assembly_report.txt ] && wget -nd -q ${REFSEQ_URL}/*_assembly_report.txt
+		[ ! -f *_assembly_report.txt ] && echo0 0 "assembly report download failed, please check network connection or accessibility to ${REFSEQ_URL}" && exit 1
+		GN=`ls *_assembly_report.txt` && GP=${GN%_assembly_report.txt}
+		echo0 2 "no genome fasta file provided, download from Refseq......"
+		wget -nd -q ${REFSEQ_URL}/${GP}_genomic.fna.gz || (echo0 0 "genome fasta download failed, please check network connection or accessibility to ${REFSEQ_URL}" && exit 1)
+		gunzip *_genomic.fna.gz
+		echo0 2 "rename fasta header to chromosome name......"
+		awk 'BEGIN{FS=OFS="\t"} {if(NR==FNR){if($1!~/^#/){if($4=="Chromosome"){r[$7]="chr"$1}}}else{if($1~/^>/){split($1,t," ");ref_id=substr(t[1],2,length(t[1])-1);if(r[ref_id]){print ">"r[ref_id]}else{print t[1]}}else{print $0}}}' *_assembly_report.txt *_genomic.fna > ${GENOME}.fa && rm *_genomic.fna 
+		sed -i 's/\r//' ${GENOME}.fa
+	fi
+fi
+
+# make chrom.size file from genome fasta
+[ ! -f ${GENOME}.chrom.size ] && echo0 2 "make chrom.size file from genome fasta......" && faToChromSize ${GENOME}.fa > ${GENOME}.chrom.size
+
+# download gff annotation file from Refseq
+if [ ! -f ${GENOME}.gff ];then
+	[ ! -f ../common/assembly_summary_refseq.txt ] && (echo0 2 "download Refseq assemble summary file......" && wget -nd -q ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/assembly_summary_refseq.txt && mv assembly_summary_refseq.txt ../common/ || (echo0 0 "Refseq summary download failed, please check network connection or accessibility to ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/assembly_summary_refseq.txt" && exit 1))
+	echo0 2 "no gff annotation file provided, download from Refseq......"
+	if [ -z ${REFSEQ_URL} ];then
+		REFSEQ_URL=(`grep -P "\t${SPECIES}\t" ../common/assembly_summary_refseq.txt | grep -P "\trepresentative genome\t|\treference genome\t" | cut -f 20`)
+		[ -z ${REFSEQ_URL} ] && echo0 0 "no ${SPECIES} in assembly_summary_refseq.txt, please provide the refseq genome url in the third parameter" && exit 1
+	fi
+	wget -nd -q ${REFSEQ_URL}/*_genomic.gff.gz && gunzip *_genomic.gff.gz 
+	[ ! -f GC*_genomic.gff ] && echo0 0 "gff annotation download failed, please check network connection or accessibility to ${REFSEQ_URL}" && exit 1
+	[ ! -f *_assembly_report.txt ] && wget -nd -q ${REFSEQ_URL}/*_assembly_report.txt
+	[ ! -f *_assembly_report.txt ] && echo0 0 "assembly report download failed, please check network connection or accessibility to ${REFSEQ_URL}" && exit 1
+	echo0 2 "rename first column in gff to chromosome name......"
+	awk 'BEGIN{FS=OFS="\t"} {if(NR==FNR){if($1!~/^#/){if($4=="Chromosome"){r[$7]="chr"$1}}}else{if(r[$1]){$1=r[$1]};print $0}}' *_assembly_report.txt *_genomic.gff > ${GENOME}.gff && rm *_genomic.gff 
+	sed -i 's/\r//' ${GENOME}.gff # convert dos file to unix file
+fi
+
+# make index for genome
+if [ ! -f BowtieIndex/genome.1.ebwt ];then # bowtie index
+	CPU_STAR=$(( ${CPU_STAR} - 1 ))
+	echo0 2 "build bowtie index for genome......"
+	echo -e "bowtie-build ${GENOME}.fa BowtieIndex/genome > log/install.${GENOME}.bowtie 2>&1 || (echo0 0 'build genome bowtie index error, please check log/install.${GENOME}.bowtie' && exit 1)" >> ParaFile_makeIndex
+fi
+if [ ! -f Bowtie2Index/genome.1.bt2 ];then # bowtie index
+	CPU_STAR=$(( ${CPU_STAR} - 1 ))
+	echo0 2 "build bowtie2 index for genome......"
+	echo -e "bowtie2-build ${GENOME}.fa Bowtie2Index/genome > log/install.${GENOME}.bowtie2 2>&1 || (echo0 0 'build genome bowtie2 index error, please check log/install.${GENOME}.bowtie2' && exit 1)" >> ParaFile_makeIndex
+fi
+if [ ! -f BWAIndex/genome.amb ];then # bwa index
+	CPU_STAR=$(( ${CPU_STAR} - 1 ))
+	echo0 2 "build bwa index for genome......"
+	echo -e "bwa index -p BWAIndex/genome ${GENOME}.fa > log/install.${GENOME}.bwa 2>&1 || (echo0 0 'build genome bwa index error, please check log/install.${GENOME}.bwa' && exit 1)" >> ParaFile_makeIndex
+fi
+if [ ! -f STARIndex/SAindex ];then # STAR index
+	echo0 0 ${CPU_STAR}
+	[ ${CPU_STAR} -lt 1 ] && CPU_STAR=1 # use remain CPUs for STAR index building
+	echo0 2 "build STAR index for genome......"
+	gffread ${GENOME}.gff -T -o ${GENOME}.gtf
+	awk '$3=="exon"' ${GENOME}.gtf | grep -v "gene_name" > t && mv t ${GENOME}.gtf
+	echo -e "STAR --runMode genomeGenerate --runThreadN ${CPU_STAR} --genomeDir STARIndex/ --genomeFastaFiles ${GENOME}.fa --sjdbGTFfile ${GENOME}.gtf --sjdbOverhang 99 --limitGenomeGenerateRAM 40000000000 > log/install.${GENOME}.STAR 2>&1 || (echo0 0 'build genome STAR index error, please check log/install.${GENOME}.STAR' && exit 1)" >> ParaFile_makeIndex
+fi
+[ -f ParaFile_makeIndex ] && ParaFly -c ParaFile_makeIndex -CPU ${CPU}
+[ -f ParaFile_makeIndex ] && rm ParaFile_makeIndex
+[ -f ParaFile_makeIndex.completed ] && rm ParaFile_makeIndex.completed 
+[ -f FailedCommands ] && rm FailedCommands
+
+# make bed annotation from gff file
+if ! [ -f ${GENOME}.mRNA.3UTR.bed -a -f ${GENOME}.mRNA.5UTR.bed -a -f ${GENOME}.mRNA.exon.bed -a -f ${GENOME}.mRNA.intron.bed -a -f ${GENOME}.otherRNA.exon.bed -a -f ${GENOME}.otherRNA.intron.bed -a -f ${GENOME}.sncRNA.bed -a -f ${GENOME}.mRNA.CDS.bed ];then
+	echo0 2 "make bed annotation from ${GENOME}.gff file......"
+	gff_to_elements.py ${GENOME}.gff ${GENOME} || echo0 4 "cannot make full set of bed annotation from gff file, please check gff or give the annotation files yourself"
+	awk '!a[$4]++' ${GENOME}.sncRNA.bed > t && mv t ${GENOME}.sncRNA.bed 
+	cut -f 4 ${GENOME}.mRNA.exon.bed | sort -u > mRNA.name
+	cut -f 4 ${GENOME}.otherRNA.exon.bed | sort -u > otherRNA.name
+	# check every bed record if they are invalid
+	awk '$3>$2 && $2>=0' ${GENOME}.mRNA.exon.bed > t && mv t ${GENOME}.mRNA.exon.bed 
+	awk '$3>$2 && $2>=0' ${GENOME}.mRNA.intron.bed > t && mv t ${GENOME}.mRNA.intron.bed 
+	awk '$3>$2 && $2>=0' ${GENOME}.mRNA.5UTR.bed > t && mv t ${GENOME}.mRNA.5UTR.bed 
+	awk '$3>$2 && $2>=0' ${GENOME}.mRNA.3UTR.bed > t && mv t ${GENOME}.mRNA.3UTR.bed 
+	awk '$3>$2 && $2>=0' ${GENOME}.mRNA.CDS.bed > t && mv t ${GENOME}.mRNA.CDS.bed 
+	awk '$3>$2 && $2>=0' ${GENOME}.otherRNA.exon.bed > t && mv t ${GENOME}.otherRNA.exon.bed 
+	awk '$3>$2 && $2>=0' ${GENOME}.otherRNA.intron.bed > t && mv t ${GENOME}.otherRNA.intron.bed 
+	sed -i 's/[\:\(\)]/./g' ${GENOME}.sncRNA.bed # sub :,(,) to . for all sncRNA names
+fi
+
+# make bowtie index for sncRNA
+if [ ! -f BowtieIndex/sncRNA.1.ebwt ];then
+	LC=(`wc -l ${GENOME}.sncRNA.bed`)
+	if [ ${LC} -gt 0 ];then
+		[ ! -f ${GENOME}.sncRNA.fa ] && echo0 1 "get sequence for small noncoding RNAs......" && (bedtools getfasta -fi ${GENOME}.fa -fo ${GENOME}.sncRNA.fa -bed ${GENOME}.sncRNA.bed -s -name || (echo0 0 "cannot get fasta for sncRNA, please check bedtools, ${GENOME}.sncRNA.bed and ${GENOME}.fa" && exit 1)) && sed -i 's/[\:\(\)]/./g' ${GENOME}.sncRNA.fa
+		[ ! -f BowtieIndex/sncRNA.1.ebwt ] && echo0 1 "build bowtie index for small noncoding RNAs......" && (bowtie-build ${GENOME}.sncRNA.fa BowtieIndex/sncRNA  >> log/install.${GENOME} 2>&1 || (echo0 0 "build hairpin index error, please check log/install.${GENOME}" && exit 1))
+		[ ! -f ${GENOME}.sncRNA.size ] && faToChromSize ${GENOME}.sncRNA.fa > ${GENOME}.sncRNA.size  
+	else
+		echo0 4 "sncRNA annotation not found in ${GENOME}.gff for ${SPECIES}, skip make bowtie index"
+	fi
+fi
+
+# run anno_mirna to de novo annotate hairpin
+if [ ! -z ${IF_MIRNA} ];then
+	checkTools anno_mirna
+	echo0 2 "run anno_mirna to annotate hairpin via miRDeep2......"
+	[ -z ${SRNA} ] && echo0 0 "-m set but -i not set, please provide srna.fq via -i" && exit 1
+	if [ ! -f ./miRDeep2/result_*.bed ];then
+		if [ -z ${ADAPTER} ];then
+			anno_mirna -i ${SRNA} -r ${GENOME}.fa -b BowtieIndex/genome -o ./miRDeep2 -m ${GENOME}.mature.fa -H ${GENOME}.hairpin.fa -C ${CPU} > log/anno_mirna 2>&1
+		else
+			echo0 2 "guess adapter......"
+			ADAPTER_RESULT=`guess_adapter ${SRNA}`
+			ADAPTER=`awk -v ar=${ADAPTER_RESULT} 'BEGIN{split(ar,a," ");print a[1]}'`
+			ADAPTER_RATE=`awk -v ar=${ADAPTER_RESULT} 'BEGIN{split(ar,a," ");print a[2]}'`
+			echo0 3 "adapter ${ADAPTER} was found, about ${ADAPTER_RATE} of sequence have this adapter"
+			anno_mirna -i ${SRNA} -r ${GENOME}.fa -b BowtieIndex/genome -o ./miRDeep2 -m ${GENOME}.mature.fa -H ${GENOME}.hairpin.fa -C ${CPU} -a ${ADAPTER} > log/anno_mirna 2>&1
+		fi
+	else
+		echo0 4 "-m set but miRDeep2 result already found, skip run miRDeep2. if youwant to run miRDeep2 again, please delete the ${PATH_PRO}/annotation/${GENOME}/miRDeep2"
+	fi
+	cd ${PATH_PRO}/annotation/${GENOME}
+	[ ! -f ./miRDeep2/result_*.bed ] && echo0 0 "anno_mirna error, please check log/anno_mirna" && exit 1
+	awk 'BEGIN{FS=OFS="\t"} {if($4~/^novel/ && $5>=10){k++;print $1,$2,$3,"novel."k,$5,$6}}' ./miRDeep2/result_*.bed > temp.miRDeep2.bed
+	bedtools getfasta -fi ${GENOME}.fa -fo temp.miRDeep2.fa -bed temp.miRDeep2.bed -name -s
+	cat ${GENOME}.hairpin.fa temp.miRDeep2.fa > t && mv t ${GENOME}.hairpin.fa && rm temp.miRDeep2.bed temp.miRDeep2.fa
+	# build bowtie index for hairpin after running miRDeep2
+	LC=(`wc -l ${GENOME}.hairpin.fa`)
+	if [ ${LC} -gt 0 ];then
+		if [ ! -f BowtieIndex/hairpin.1.ebwt ];then
+			echo0 2 "build hairpin bowtie index for ${GENOME}......"
+			bowtie-build ${GENOME}.hairpin.fa BowtieIndex/hairpin >> log/install.${GENOME} 2>&1 || (echo0 0 "build hairpin index error, please check log/install.${GENOME}" && exit 1)
+		fi
+	else
+		echo0 4 "hairpin annotation not found in hairpin.miRBase.fa for ${SPECIES}, skip make bowtie index. If possible, please run run_miRDeep2 -r ${PATH_PRO}/annotation/${GENOME}/${GENOME}.fa -i smallrnaseq.rmadapt.fq"
+	fi
+fi
+
+# run anno_rmsk to de novo annotate rmsk
+if [ ! -z ${IF_TRN} ];then
+	checkTools anno_rmsk
+	echo0 2 "run anno_rmsk to annotate rmsk via RepeatModeler and RepeatMasker......"
+	anno_rmsk -i ${GENOME}.fa -a -s "${SPECIES}" -C ${CPU} -o anno_rmsk > log/anno_rmsk 2>&1
+	mv anno_rmsk/${GENOME}.fa.out ./
+	mv anno_rmsk/${GENOME}.trn.fa ./${GENOME}.transposon.fa
+	[ ! -f ${GENOME}.fa.out ] && echo0 0 "anno_rmsk error, please check log/anno_rmsk" && exit 1
+fi
+
+# download rmsk annotation from refseq if -t not set
+if [ -z ${IF_TRN} ];then
+	if [ ! -f ${GENOME}.fa.out ];then
+		if [ -z ${RMSK_URL} ];then
+			echo0 2 "download repeatMasker output from Refseq......"
+			wget -nd -q ${REFSEQ_URL}/*_rm.out.gz
+		[ ! -f GC*_rm.out.gz ] && echo0 0 "rmsk annotation download failed, please check network connection or accessibility to ${REFSEQ_URL}" && exit 1
+			gunzip *_rm.out.gz && mv *_rm.out ${GENOME}.fa.out
+		else
+			wget -nd -q ${RMSK_URL} && gunzip *.fa.out.gz
+		fi
+	fi
+fi
+
+# make rmsk annotation bed file
+if [ ! -f ${GENOME}.rmsk.bed9 ];then
+	if [ -f ${GENOME}.fa.out ];then
+		echo0 2 "make rmsk bed just for LINE, SINE, LTR, DNA elements......" && awk 'BEGIN{FS=" ";OFS="\t"} {if(NR>3 && $11~/DNA|SINE|LINE|LTR/){if($9=="+"){strand="+";st=$12}else{strand="-";st=$14};split($11,family,"/");print $5,$6,$7,$10,$2,strand,family[1],family[2],st}}' ${GENOME}.fa.out > ${GENOME}.rmsk.bed9
+		if [ -z ${RMSK_URL} ];then
+			[ ! -f *_assembly_report.txt ] && wget -nd -q ${REFSEQ_URL}/*_assembly_report.txt
+			[ ! -f *_assembly_report.txt ] && echo0 0 "assembly report download failed, please check network connection or accessibility to ${REFSEQ_URL}" && exit 1
+			echo0 2 "rename first column in rmsk.bed9 to chromosome name......"
+			awk 'BEGIN{FS=OFS="\t"} {if(NR==FNR){if($1!~/^#/){if($4=="Chromosome" && $10!~/^na/){r[$7]=$10}}}else{if(r[$1]){$1=r[$1]};print $0}}' *_assembly_report.txt ${GENOME}.rmsk.bed9 > t && mv t ${GENOME}.rmsk.bed9
+			sed -i 's/\r//' ${GENOME}.rmsk.bed9 # convert dos file to unix file
+			sed -i 's/_I-int/_I/' ${GENOME}.rmsk.bed9 # keep identical with repbase name
+		fi
+	else
+		echo0 4 "no ${GENOME}.fa.out found, skip make rmsk annotation; if possible, please provide repeatMasker url via -R or run anno_rmsk -i ${PATH_PRO}/annotation/${GENOME}/${GENOME}.fa -o ${PATH_PRO}/annotation/${GENOME} to get ${GENOME}.fa.out"
+	fi
+fi
+
+# get transposon consensus sequence
+if [ ! -f ${GENOME}.transposon.fa ];then
+	[ ! -f ../common/RMRBSeqs.fa ] && echo0 0 "../common/RMRBSeqs.fa not found, please re-download it from GitHub" && exit 1
+	echo0 2 "get transposon consensus sequence......" && awk 'BEGIN{FS=OFS="\t"} {if(NR==FNR){a[$4]=1}else{if($1~/^>/){split(substr($1,2,length($1)-1),b,"#");if(a[b[1]]){k=1;$0=">"b[1]}else{k=0}};if(k){print $0}}}' ${GENOME}.rmsk.bed9 ../common/RMRBSeqs.fa > ${GENOME}.transposon.original.fa
+	merge_repbase_fa.py ${GENOME}.transposon.original.fa ${GENOME}.transposon.fa # merge LTR and I for transposons consensus sequence
+fi
+
+# rename LTR and I for rmsk genomic copies
+sed -i "s/_I//" ${GENOME}.rmsk.bed9
+sed -i "s/_LTR//" ${GENOME}.rmsk.bed9
+sed -i "s/_LTR//" ${GENOME}.rmsk.bed9
+sed -i "s/-I_/_/" ${GENOME}.rmsk.bed9
+sed -i "s/-LTR_/_/" ${GENOME}.rmsk.bed9
+if [ ! -f ${GENOME}.rmsk.bed ];then
+	if [ -f ${GENOME}.rmsk.bed9 ];then
+		echo0 2 "also make a bed6 file for rmsk......"
+		awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,$4,0,$6}' ${GENOME}.rmsk.bed9 > ${GENOME}.rmsk.bed
+	fi
+fi
+
+# summary transposon information
+if [ -f ${GENOME}.rmsk.bed9 ];then
+	if [ ! -f ${GENOME}.rmsk.pdf ];then
+		GL=`awk '{sum+=$2} END{print sum}' ${GENOME}.chrom.size`
+		summary_rmsk.bed9.py ${GENOME}.rmsk.bed9 ${GENOME}.rmsk ${GL} 
+	fi
+fi
+
+# get transposon size and build transposon bowtie and bowtie2 index
+[ ! -f ${GENOME}.transposon.size ] && echo0 2 "get transposon size......" && faToChromSize ${GENOME}.transposon.fa > ${GENOME}.transposon.size 
+if [ ! -f BowtieIndex/transposon.1.ebwt ];then # bowtie index
+	echo0 2 "build transposon bowtie index for ${GENOME}......"
+	bowtie-build ${GENOME}.transposon.fa BowtieIndex/transposon > log/install.${GENOME} 2>&1 || (echo0 0 "build transposon bowtie index error, please check log/install.${GENOME}" && exit 1)
+fi
+if [ ! -f Hisat2Index/transposon.1.ht2 ];then # hisat2 index
+	echo0 2 "build transposon hisat2 index for ${GENOME}......"
+	hisat2-build ${GENOME}.transposon.fa Hisat2Index/transposon > log/install.${GENOME} 2>&1 || (echo0 0 "build transposon hisat2 index error, please check log/install.${GENOME}" && exit 1)
+fi
+
+# annotate virus via RNAseq data
+if [ ! -z ${IF_VIRUS} ];then
+	echo0 2 "run anno_virus to annotate virus sequence......"
+	# download virus sequence and nonredundant sequence
+	if [ ! -f ../common/virus.refseq.faa ];then
+		echo0 2 "download virus sequecnes from refseq......"
+		wget -nd -q ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.1.protein.faa.gz && wget -nd -q ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.2.protein.faa.gz && gunzip viral.*.protein.faa.gz && cat viral.1.protein.faa viral.2.protein.faa > ../common/virus.refseq.faa && rm viral.1.protein.faa viral.2.protein.faa || (echo0 0 "all sequence of virus download failed, please check newwork connection or accessibility to ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/" && exit 1)
+	fi
+	if [ ! -f ../common/nonredundant.refseq.faa ];then
+		echo0 2 "download nonredundant sequecnes from refseq, this may take long time, please make sure the internet connection......"
+		wget -nd -q ftp://ftp.ncbi.nlm.nih.gov/refseq/release/viral/viral.nonredundant_protein.1.protein.faa.gz && gunzip *.nonredundant_protein.*.protein.faa.gz && cat *.nonredundant_protein.*.protein.faa ../common/nonredundant.refseq.faa && rm *.nonredundant_protein.*.protein.faa || (echo0 0 "all nonredundant sequence download failed, please check newwork connection or accessibility to ftp://ftp.ncbi.nlm.nih.gov/refseq/release/" && exit 1)
+	fi
+	# make diamond database
+	if [ ! -f ../common/diamond_database/virus.dmnd ];then
+		echo0 2 "make diamond database for virus sequences......"
+		../../bin/diamond/diamond makedb --in ../common/virus.refseq.faa -d ../common/diamond_database/virus > log/makedb 2>&1 || (echo0 0 "make diamond database failed, please check log/makedb" && exit 1)
+	fi
+	if [ ! -f ../common/diamond_database/nonredundant.dmnd ];then
+		echo0 2 "make diamond database for nonredundant sequences......"
+		../../bin/diamond/diamond makedb --in ../common/nonredundant.refseq.faa -d ../common/diamond_database/nonredundant > log/makedb 2>&1 || (echo0 0 "make diamond database failed, please check log/makedb" && exit 1)
+	fi
+	# run anno_virus
+	echo0 2 "run anno_virus......"
+	anno_virus -l ${RNASEQ_LEFT} -r ${RNASEQ_RIGHT} -c ${CPU} -p anno_virus/${GENOME} -m 1 -M 32G -i STARIndex -d ../common/diamond_database/virus -D ../common/diamond_database/nonredundant > log/anno_virus 2>&1 || (echo0 0 "annotating virus sequence error, please check log/anno_virus" && exit 1)
+	cp anno_virus/${GENOME}.virus.fa ./
+	cp anno_virus/${GENOME}.virus.homolog ./
+	NWC=(`wc -l ${GENOME}.virus.fa`)
+	if [ ${NWC} -gt 0 ];then # if no virus was found, skip build index and visulization
+		echo0 2 "build bowtie and bowtie2 index for virus......"
+		bowtie-build ${GENOME}.virus.fa BowtieIndex/virus > log/install.${GENOME} 2>&1 || (echo0 0 "build virus bowtie index error, please check log/install.${GENOME}" && exit 1)
+		bowtie2-build ${GENOME}.virus.fa Bowtie2Index/virus > log/install.${GENOME} 2>&1 || (echo0 0 "build virus bowtie2 index error, please check log/install.${GENOME}" && exit 1)
+		faToChromSize ${GENOME}.virus.fa > ${GENOME}.virus.size 
+		echo0 2 "visulization for anno_virus results......"
+		bowtie2 -x Bowtie2Index/virus -1 anno_virus/${GENOME}Unmapped.1.fq -2 anno_virus/${GENOME}Unmapped.2.fq -S anno_virus/${GENOME}.mapToVirus.sam -a -X 700 -p ${CPU} --no-unal --no-discordant --no-mixed > anno_virus/${GENOME}.mapToVirus.log 2>&1 || (echo0 0 "map to virus error, please check anno_virus/${GENOME}.mapToVirus.log" && exit 1)		
+		samtools view -@ ${CPU} -bhS -o anno_virus/${GENOME}.mapToVirus.bam anno_virus/${GENOME}.mapToVirus.sam 
+		samtools sort -n -@ ${CPU} -o anno_virus/${GENOME}.mapToVirus.sortByName.bam anno_virus/${GENOME}.mapToVirus.bam 
+		bedtools bamtobed -bedpe -mate1 -i anno_virus/${GENOME}.mapToVirus.sortByName.bam | awk 'BEGIN{FS=OFS="\t"} {if($2<$5){st=$2}else{st=$5};if($3<$6){ed=$6}else{ed=$3};print $1,st,ed,$7,$8,$9}' > anno_virus/${GENOME}.mapToVirus.bed
+		awk 'BEGIN{FS=OFS="\t"} {for(i=$2;i<$3;i++){print $1,i,i+1,1,1,$6}}' anno_virus/${GENOME}.mapToVirus.bed > anno_virus/${GENOME}.mapToVirus.bed2
+		bed2_bucket anno_virus/${GENOME}.mapToVirus.bed2 ${GENOME}.virus.size anno_virus/${GENOME}.mapToVirus.cov 1
+		plot_virus_bucket.R anno_virus/${GENOME}.mapToVirus.cov ${GENOME}.virus.homolog ${GENOME}.virus.pdf
+	fi
+fi
+
+# download picluster annotation from GitHub if -p not set: TODO
+
+
+# build bowtie index for piclusters
+if [ ! -f BowtieIndex/picluster.1.ebwt ];then
+	if [ -f ${GENOME}.picluster.fa ];then
+		echo0 2 "build bowtie index for piclusters......"
+		bowtie-build ${GENOME}.picluster.fa BowtieIndex/picluster > log/install.${GENOME} 2>&1 || (echo0 0 "build picluster bowtie index error, please check log/install.${GENOME}" && exit 1)
+	elif [ -f ${GENOME}.picluster.bed ];then
+		echo0 2 "get picluster sequence based on ${GENOME}.picluster.bed......"
+		bedtools getfasta -fi ${GENOME}.fa -fo ${GENOME}.picluster.fa -bed ${GENOME}.picluster.bed -s -name
+		awk '{if($1~/^>/){split($1,a,"(");print a[1]}else{print $0}}' ${GENOME}.picluster.fa > t && mv t ${GENOME}.picluster.fa
+		echo0 2 "build bowtie index for piclusters......"
+		bowtie-build ${GENOME}.picluster.fa BowtieIndex/picluster > log/install.${GENOME} 2>&1 || (echo0 0 "build picluster bowtie index error, please check log/install.${GENOME}" && exit 1)
+	fi
+fi
+
+# get picluster size
+if [ ! -f ${GENOME}.picluster.size ];then
+	if [ -f ${GENOME}.picluster.fa ];then
+		faToChromSize ${GENOME}.picluster.fa > ${GENOME}.picluster.size
+	fi
+fi
+
+# make gene+picluster and rmsk gtf file
+if [ ! -f ${GENOME}.gene+picluster.gtf ];then
+	echo0 2 "make gene+picluster+rmsk gtf file......"
+	if [ -f ${GENOME}.picluster.bed -a -f ${GENOME}.rmsk.bed -a -f ${GENOME}.gtf ];then
+		[ ! -f ${GENOME}.picluster.gtf ] && bed6ToGtf ${GENOME}.picluster.bed ${GENOME}.picluster.gtf && awk 'BEGIN{FS=OFS="\t"} {if($7=="."){$7="+"};print $0}' ${GENOME}.picluster.gtf > t && mv t ${GENOME}.picluster.gtf 
+		cat ${GENOME}.gtf ${GENOME}.picluster.gtf > ${GENOME}.gene+picluster.gtf && rm ${GENOME}.picluster.gtf
+	fi
+fi
+[ ! -f ${GENOME}.rmsk.gtf ] && bed6ToGtf ${GENOME}.rmsk.bed ${GENOME}.rmsk.gtf 
+
+# get gene+cluster+transposon size file
+if [ ! -f ${GENOME}.gene+picluster+rmsk.size ];then
+	BB_GtfToExonForEachGene.py ${GENOME}.gtf ${GENOME}.temp.bed gene_name && awk 'BEGIN{FS=OFS="\t"} {l[$4]+=($3-$2)} END{for(i in l){print i,l[i]}}' ${GENOME}.temp.bed > ${GENOME}.temp.size 
+	cat ${GENOME}.temp.size ${GENOME}.picluster.size ${GENOME}.transposon.size > ${GENOME}.gene+picluster+rmsk.size
+	rm ${GENOME}.temp.size ${GENOME}.temp.bed 
+fi
+
+# chop piclusters into 1kb bins
+if [ -f ${GENOME}.picluster.bed ];then
+	if [ ! -f ${GENOME}.picluster.chopped.bed ];then
+		awk 'BEGIN{FS=OFS="\t"} {n=int(($3-$2-1)/1000);for(i=1;i<=n;i++){print $1,$2+(i-1)*1000,$2+i*1000,$4"_"i,$4,$6};print $1,$2+n*1000,$3,$4"_"(n+1),$4,$6}' ${GENOME}.picluster.bed > ${GENOME}.picluster.chopped.bed 
+	fi
+	if [ ! -f ${GENOME}.picluster.chopped.size ];then
+		awk 'BEGIN{FS=OFS="\t"} {print $4,$3-$2}' ${GENOME}.picluster.chopped.bed > ${GENOME}.picluster.chopped.size 
+	fi
+fi
+
+
+echo0 4 "------finished, congras🍺🍺🍺------"

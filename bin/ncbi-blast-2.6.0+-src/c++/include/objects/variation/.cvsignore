@@ -1,0 +1,11 @@
+.cvsignore
+VariantPlacement_.hpp
+Variation_.hpp
+VariationException_.hpp
+VariationMethod_.hpp
+VariantPlacement.hpp
+VariationException.hpp
+VariationMethod.hpp
+NCBI_VariationPackage_module.hpp
+variation__.hpp
+variation.dump

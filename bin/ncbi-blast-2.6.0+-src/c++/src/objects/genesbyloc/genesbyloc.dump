@@ -1,0 +1,29 @@
+M,9,genesbyloc.asn:NCBI-GenesByLoc
+--$Revision: 394589 $ 
+--********************************************************************** 
+-- 
+--  NCBI Genes By Location
+--  by Craig Wallin, 2013
+-- 
+--********************************************************************** 
+  T,12,NCBI-GenesByLoc:GBL-Data
+  T,19,NCBI-GenesByLoc:GBL-Gene
+  T,24,NCBI-GenesByLoc:GBL-Reply
+
+T,12,GBL-Data,SEQUENCE
+  F,13,GBL-Data:total,INTEGER
+  -- total number of genes found
+  F,14,GBL-Data:returned,INTEGER
+  -- number of gene records returned in the reply data, may be less than the total gene count
+  F,15,GBL-Data:genes,SEQUENCE /GBL-Gene,OPTIONAL
+
+T,19,GBL-Gene,SEQUENCE
+-- a single gene record
+  F,20,GBL-Gene:geneid,INTEGER
+  -- NCBI GeneID
+  F,21,GBL-Gene:symbol,VisibleString
+  -- official or interim symbol for the gene
+
+T,24,GBL-Reply,CHOICE
+  F,25,GBL-Reply:data,/GBL-Data
+  F,26,GBL-Reply:error,VisibleString

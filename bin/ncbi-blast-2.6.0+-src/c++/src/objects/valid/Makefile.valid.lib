@@ -1,0 +1,8 @@
+# $Id: Makefile.valid.lib 428744 2014-03-06 21:43:57Z ucko $
+LIB = valid
+SRC = valid__ valid___
+
+ASN_DEP = general
+
+USES_LIBRARIES =  \
+    general xregexp

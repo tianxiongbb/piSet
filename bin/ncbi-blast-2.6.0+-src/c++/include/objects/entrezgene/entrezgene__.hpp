@@ -1,0 +1,9 @@
+#include <objects/entrezgene/Entrezgene.hpp>
+#include <objects/entrezgene/Entrezgene_Set.hpp>
+#include <objects/entrezgene/Gene_commentary.hpp>
+#include <objects/entrezgene/Gene_source.hpp>
+#include <objects/entrezgene/Gene_track.hpp>
+#include <objects/entrezgene/Maps.hpp>
+#include <objects/entrezgene/Other_source.hpp>
+#include <objects/entrezgene/Xtra_Terms.hpp>
+#include <objects/entrezgene/NCBI_Entrezgene_module.hpp>

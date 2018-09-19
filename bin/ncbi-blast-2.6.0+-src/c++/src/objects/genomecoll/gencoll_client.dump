@@ -1,0 +1,199 @@
+M,12,gencoll_client.asn:NCBI-GencollClient
+-- $Id: gencoll_client.asn 500701 2016-05-06 17:36:05Z zherikov $
+-- **********************************************************************
+--
+--  NCBI Genome Collections Statistics
+--  by Michael DiCuccio, Vinay Kumar
+--
+-- **********************************************************************
+  T,18,NCBI-GencollClient:GCClientRequest
+  T,28,NCBI-GencollClient:GCClientResponse
+  T,40,NCBI-GencollClient:GCClient-Error
+  T,49,NCBI-GencollClient:GCClient-AttributeFlags
+  T,91,NCBI-GencollClient:GCClient-GetAssemblyRequest
+  T,119,NCBI-GencollClient:GCClient-GetAssemblyBlobRequest
+  T,133,NCBI-GencollClient:GCClient-ValidateChrTypeLocRequest
+  T,142,NCBI-GencollClient:GCClient-ValidateChrTypeLocResponse
+  T,150,NCBI-GencollClient:GCClient-FindBestAssemblyFilter
+  T,159,NCBI-GencollClient:GCClient-FindBestAssemblySort
+  T,166,NCBI-GencollClient:GCClient-FindBestAssemblyRequest
+  T,177,NCBI-GencollClient:GCClient-GetAssemblyBySequenceFilter
+  T,185,NCBI-GencollClient:GCClient-GetAssemblyBySequenceRequest
+  T,200,NCBI-GencollClient:GCClient-AssemblyInfo
+  T,211,NCBI-GencollClient:GCClient-AssemblySequenceInfo
+  T,217,NCBI-GencollClient:GCClient-AssembliesForSequences
+  T,224,NCBI-GencollClient:GCClient-GetEquivalentAssembliesRequest
+  T,235,NCBI-GencollClient:GCClient-EquivalentAssemblies
+
+T,18,GCClientRequest,CHOICE
+  F,19,GCClientRequest:get-assembly,/GCClient-GetAssemblyRequest
+  F,20,GCClientRequest:get-chrtype-valid,/GCClient-ValidateChrTypeLocRequest
+  F,21,GCClientRequest:get-best-assembly,/GCClient-FindBestAssemblyRequest
+  F,22,GCClientRequest:get-equivalent-assemblies,/GCClient-GetEquivalentAssembliesRequest
+  F,23,GCClientRequest:get-assembly-blob,/GCClient-GetAssemblyBlobRequest
+  F,24,GCClientRequest:get-assembly-by-sequence,/GCClient-GetAssemblyBySequenceRequest
+
+T,28,GCClientResponse,CHOICE
+  F,29,GCClientResponse:get-assembly,/GC-Assembly
+  F,30,GCClientResponse:get-chrtype-valid,VisibleString
+  F,31,GCClientResponse:get-best-assembly,/GCClient-AssembliesForSequences
+  F,32,GCClientResponse:get-equivalent-assemblies,/GCClient-EquivalentAssemblies
+  F,35,GCClientResponse:srvr-error,/GCClient-Error
+  --  errors encountered at the server side.
+  F,36,GCClientResponse:get-assembly-blob,OCTET STRING
+  F,37,GCClientResponse:get-assembly-by-sequence,/GCClient-AssembliesForSequences
+
+T,40,GCClient-Error,SEQUENCE
+  F,41,GCClient-Error:error-id,INTEGER
+    V,42,GCClient-Error:error-id:assembly-not-found,0
+    V,43,GCClient-Error:error-id:other,255
+  F,45,GCClient-Error:description,VisibleString,OPTIONAL
+
+T,49,GCClient-AttributeFlags,INTEGER
+-- This is a bitfield.  All values are powers of two.
+  V,50,GCClient-AttributeFlags:none,0
+  V,51,GCClient-AttributeFlags:biosource,1
+  V,53,GCClient-AttributeFlags:molinfo,2
+  -- obsolete; do not use
+  V,54,GCClient-AttributeFlags:all,3
+  V,56,GCClient-AttributeFlags:publications,4
+  -- obsolete; do not use
+  V,59,GCClient-AttributeFlags:only-stats,32
+  -- assembly level flag. Only statistics will be retrieved. For use by editing GUI.
+  -- 1<<5
+  V,62,GCClient-AttributeFlags:exclude-stats,512
+  -- No stats info will be retrieved.
+  -- 1<<9
+  V,69,GCClient-AttributeFlags:include-unordered-scaffolds,1024
+  -- scaffold-flags:
+  -- by default, pseudo-scaffolds are reported as submitted.
+  -- include_unordered_scaffolds: show pseudo-scaffolds as unordered/unplaced
+  -- include_UCSC_pseudo_scaffolds: all unordered/unplaced aer shown as placed
+  --  (using UCSC coordinates of chr*_random or chrUn)
+  --  1<<10
+  V,70,GCClient-AttributeFlags:include-UCSC-pseudo-scaffolds,2048
+  -- 1<<11
+  V,77,GCClient-AttributeFlags:exclude-aligndb,8192
+  -- chromosome-flags:
+  -- by default, alt-loci/patches position on chromosome reported using AlignDb
+  -- database alignments.
+  -- exclude_aligndb: report alt-loci/patches position on chromosome
+  -- using placement and not using AlignDb alignments
+  -- 1<<13
+  V,82,GCClient-AttributeFlags:only-gui-data,16384
+  -- Only data needed by the Assemblies GUI will be retrieved.
+  --  subsumes obsolete flags exclude_primary_assembly_scaffolds and only_gui_stats
+  --  and excludes alignment retrieval like flag exclude_aligndb.
+  -- 1<<14
+  V,85,GCClient-AttributeFlags:get-wgs-contigs,32768
+  -- If no scaffolds retrieve all wgs contigs.
+  -- 1<<15
+
+T,91,GCClient-GetAssemblyRequest,SEQUENCE
+  F,97,GCClient-GetAssemblyRequest:accession,VisibleString,OPTIONAL
+  -- One of accession or release id MUST BE SUPPLIED
+  -- Assembly accession or accession.version
+  -- (versionless accession is answered with most recent version)
+  F,100,GCClient-GetAssemblyRequest:release-id,INTEGER,OPTIONAL
+  -- release ID
+  F,102,GCClient-GetAssemblyRequest:level,INTEGER,DEFAULT,scaffold
+    V,103,GCClient-GetAssemblyRequest:level:assembly,0
+    V,104,GCClient-GetAssemblyRequest:level:replicon,1
+    V,105,GCClient-GetAssemblyRequest:level:scaffold,2
+    V,106,GCClient-GetAssemblyRequest:level:component,3
+  F,110,GCClient-GetAssemblyRequest:assm-flags,/GCClient-AttributeFlags,DEFAULT,none
+  -- assm-flags, chrom-flags, scaf-flags, component-flags
+  F,112,GCClient-GetAssemblyRequest:chrom-flags,/GCClient-AttributeFlags,DEFAULT,biosource
+  F,114,GCClient-GetAssemblyRequest:scaf-flags,/GCClient-AttributeFlags,DEFAULT,none
+  F,116,GCClient-GetAssemblyRequest:component-flags,/GCClient-AttributeFlags,DEFAULT,none
+
+T,119,GCClient-GetAssemblyBlobRequest,SEQUENCE
+  F,125,GCClient-GetAssemblyBlobRequest:accession,VisibleString,OPTIONAL
+  -- One of accession or release id MUST BE SUPPLIED
+  -- Assembly accession or accession.version
+  -- (versionless accession is answered with most recent version)
+  F,128,GCClient-GetAssemblyBlobRequest:release-id,INTEGER,OPTIONAL
+  -- release ID
+  F,130,GCClient-GetAssemblyBlobRequest:mode,VisibleString
+
+T,133,GCClient-ValidateChrTypeLocRequest,SEQUENCE
+  F,137,GCClient-ValidateChrTypeLocRequest:type,VisibleString
+  -- Validate the Type Location in the request
+  F,139,GCClient-ValidateChrTypeLocRequest:location,VisibleString
+
+T,142,GCClient-ValidateChrTypeLocResponse,SEQUENCE
+  F,146,GCClient-ValidateChrTypeLocResponse:result,VisibleString
+  -- Result of the Type Location validate request
+
+T,150,GCClient-FindBestAssemblyFilter,INTEGER
+  V,151,GCClient-FindBestAssemblyFilter:any,0
+  V,152,GCClient-FindBestAssemblyFilter:latest-major-annotated,0
+  V,153,GCClient-FindBestAssemblyFilter:latest,1
+  V,154,GCClient-FindBestAssemblyFilter:major,2
+  V,155,GCClient-FindBestAssemblyFilter:annotated,3
+  V,156,GCClient-FindBestAssemblyFilter:all,4
+
+T,159,GCClient-FindBestAssemblySort,INTEGER
+  V,160,GCClient-FindBestAssemblySort:default,0
+  V,161,GCClient-FindBestAssemblySort:latest,1
+  V,162,GCClient-FindBestAssemblySort:major,2
+  V,163,GCClient-FindBestAssemblySort:annotated,3
+
+T,166,GCClient-FindBestAssemblyRequest,SEQUENCE
+  F,167,GCClient-FindBestAssemblyRequest:seq-id-acc,SET VisibleString
+  F,169,GCClient-FindBestAssemblyRequest:filter,/GCClient-FindBestAssemblyFilter,DEFAULT,latest-major-annotated
+  F,171,GCClient-FindBestAssemblyRequest:sort,/GCClient-FindBestAssemblySort,DEFAULT,default
+  F,173,GCClient-FindBestAssemblyRequest:assembly-return-limit,INTEGER,OPTIONAL
+
+T,177,GCClient-GetAssemblyBySequenceFilter,INTEGER
+-- This is a bitfield.  All values are powers of two.
+  V,178,GCClient-GetAssemblyBySequenceFilter:all,0
+  V,179,GCClient-GetAssemblyBySequenceFilter:latest,1
+  V,180,GCClient-GetAssemblyBySequenceFilter:major,2
+  V,181,GCClient-GetAssemblyBySequenceFilter:genbank,4
+  V,182,GCClient-GetAssemblyBySequenceFilter:refseq,8
+
+T,185,GCClient-GetAssemblyBySequenceRequest,SEQUENCE
+  F,186,GCClient-GetAssemblyBySequenceRequest:sequence-acc,SET VisibleString
+  F,188,GCClient-GetAssemblyBySequenceRequest:filter,/GCClient-GetAssemblyBySequenceFilter,DEFAULT,all
+  F,190,GCClient-GetAssemblyBySequenceRequest:sort,INTEGER,DEFAULT,default
+    V,191,GCClient-GetAssemblyBySequenceRequest:sort:default,0
+    V,192,GCClient-GetAssemblyBySequenceRequest:sort:latest,1
+    V,193,GCClient-GetAssemblyBySequenceRequest:sort:major,2
+  F,196,GCClient-GetAssemblyBySequenceRequest:top-assembly-only,INTEGER,DEFAULT,0
+
+T,200,GCClient-AssemblyInfo,SEQUENCE
+  F,201,GCClient-AssemblyInfo:accession,VisibleString
+  F,202,GCClient-AssemblyInfo:latest,BOOLEAN
+  F,203,GCClient-AssemblyInfo:major,BOOLEAN
+  F,204,GCClient-AssemblyInfo:annotated,BOOLEAN,OPTIONAL
+  F,205,GCClient-AssemblyInfo:type,INTEGER,OPTIONAL
+    V,206,GCClient-AssemblyInfo:type:genbank,1
+    V,207,GCClient-AssemblyInfo:type:refseq,2
+
+T,211,GCClient-AssemblySequenceInfo,SEQUENCE
+  F,212,GCClient-AssemblySequenceInfo:assembly,/GCClient-AssemblyInfo
+  F,213,GCClient-AssemblySequenceInfo:sequences-in-assembly,SET VisibleString
+  F,214,GCClient-AssemblySequenceInfo:sequences-not-in-assembly,SET VisibleString,OPTIONAL
+
+T,217,GCClient-AssembliesForSequences,SEQUENCE
+  F,218,GCClient-AssembliesForSequences:assemblies,SET /GCClient-AssemblySequenceInfo,OPTIONAL
+  F,219,GCClient-AssembliesForSequences:not-found-sequences,SET VisibleString,OPTIONAL
+
+T,224,GCClient-GetEquivalentAssembliesRequest,SEQUENCE
+  F,225,GCClient-GetEquivalentAssembliesRequest:accession,VisibleString
+  F,226,GCClient-GetEquivalentAssembliesRequest:equivalency,INTEGER
+    V,227,GCClient-GetEquivalentAssembliesRequest:equivalency:paired-strict,1
+    -- Paired assembly, if identical
+    V,228,GCClient-GetEquivalentAssembliesRequest:equivalency:paired,2
+    -- Paired assembly, if exists, even if not identical
+    V,229,GCClient-GetEquivalentAssembliesRequest:equivalency:same-coordinates,3
+    -- All assemblies with same major release and same type (Gb/Rs)
+    V,230,GCClient-GetEquivalentAssembliesRequest:equivalency:all-types-same-coordinates,4
+    -- All assemblies with same major release, both Gb and Rs.
+    V,231,GCClient-GetEquivalentAssembliesRequest:equivalency:major-release,5
+    -- Major release of assembly, same type
+
+T,235,GCClient-EquivalentAssemblies,SEQUENCE
+  F,236,GCClient-EquivalentAssemblies:assemblies,SET SEQUENCE
+    F,237,GCClient-EquivalentAssemblies:assemblies:accession,VisibleString

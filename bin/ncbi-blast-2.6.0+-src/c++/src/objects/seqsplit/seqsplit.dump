@@ -1,0 +1,310 @@
+M,16,seqsplit.asn:NCBI-Seq-split
+--$Revision: 464673 $
+--********************************************************************
+--
+--  Network Id server network access
+--  Vasilchenko 2003
+--
+--
+--*********************************************************************
+--
+--  seqsplit.asn
+--
+--     representation of split sequences
+--
+--*********************************************************************
+  T,34,NCBI-Seq-split:ID2S-Split-Info
+  T,41,NCBI-Seq-split:ID2S-Bioseqs-Info
+  T,47,NCBI-Seq-split:ID2S-Bioseq-Info
+  T,53,NCBI-Seq-split:ID2S-Chunk-Info
+  T,61,NCBI-Seq-split:ID2S-Chunk-Content
+  T,88,NCBI-Seq-split:ID2S-Seq-descr-Info
+  T,95,NCBI-Seq-split:ID2S-Seq-annot-Info
+  T,106,NCBI-Seq-split:ID2S-Seq-annot-place-Info
+  T,113,NCBI-Seq-split:ID2S-Seq-feat-Ids-Info
+  T,121,NCBI-Seq-split:ID2S-Feat-type-Info
+  T,127,NCBI-Seq-split:ID2S-Seq-assembly-Info
+  T,132,NCBI-Seq-split:ID2S-Seq-map-Info
+  T,135,NCBI-Seq-split:ID2S-Seq-data-Info
+  T,138,NCBI-Seq-split:ID2S-Bioseq-place-Info
+  T,144,NCBI-Seq-split:ID2S-Chunk
+  T,149,NCBI-Seq-split:ID2S-Chunk-Data
+  T,174,NCBI-Seq-split:ID2S-Sequence-Piece
+  T,185,NCBI-Seq-split:ID2S-Chunk-Id
+  T,188,NCBI-Seq-split:ID2S-Bioseq-set-Ids
+  T,191,NCBI-Seq-split:ID2S-Bioseq-Ids
+  T,198,NCBI-Seq-split:ID2S-Gi-Range
+  T,211,NCBI-Seq-split:ID2S-Seq-loc
+  T,223,NCBI-Seq-split:ID2S-Gi-Interval
+  T,230,NCBI-Seq-split:ID2S-Seq-id-Interval
+  T,237,NCBI-Seq-split:ID2S-Interval
+  T,243,NCBI-Seq-split:ID2S-Gi-Ints
+  T,249,NCBI-Seq-split:ID2S-Seq-id-Ints
+
+T,34,ID2S-Split-Info,SEQUENCE
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+-- Blob split info types
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+-- Chunks split description
+  F,35,ID2S-Split-Info:bioseqs-info,SET /ID2S-Bioseqs-Info,OPTIONAL
+  F,36,ID2S-Split-Info:chunks,SET /ID2S-Chunk-Info
+  F,37,ID2S-Split-Info:skeleton,/Seq-entry,OPTIONAL
+
+T,41,ID2S-Bioseqs-Info,SEQUENCE
+  F,42,ID2S-Bioseqs-Info:info,/ID2S-Bioseq-Info
+  F,43,ID2S-Bioseqs-Info:bioseqs,/ID2S-Bioseq-Ids
+
+T,47,ID2S-Bioseq-Info,SEQUENCE
+  F,48,ID2S-Bioseq-Info:gap-count,INTEGER,OPTIONAL
+  F,49,ID2S-Bioseq-Info:seq-map-has-ref,BOOLEAN,OPTIONAL
+
+T,53,ID2S-Chunk-Info,SEQUENCE
+  F,54,ID2S-Chunk-Info:id,/ID2S-Chunk-Id
+  F,55,ID2S-Chunk-Info:content,SET /ID2S-Chunk-Content
+
+T,61,ID2S-Chunk-Content,CHOICE
+-- Description of information in this chunk
+-- Place means id of Bioseq or Bioseq-set
+  F,63,ID2S-Chunk-Content:seq-descr,/ID2S-Seq-descr-Info
+  -- place of Seq-descrs
+  F,66,ID2S-Chunk-Content:seq-annot,/ID2S-Seq-annot-Info
+  -- locations and types of annotations
+  F,69,ID2S-Chunk-Content:seq-assembly,/ID2S-Seq-assembly-Info
+  -- place of assembly history
+  F,72,ID2S-Chunk-Content:seq-map,/ID2S-Seq-map-Info
+  -- place of sequence map
+  F,75,ID2S-Chunk-Content:seq-data,/ID2S-Seq-data-Info
+  -- place of sequence data
+  F,78,ID2S-Chunk-Content:seq-annot-place,/ID2S-Seq-annot-place-Info
+  -- place of Seq-annots
+  F,81,ID2S-Chunk-Content:bioseq-place,SET /ID2S-Bioseq-place-Info
+  -- place of Bioseqs
+  F,84,ID2S-Chunk-Content:feat-ids,SET /ID2S-Seq-feat-Ids-Info
+  -- ids of features
+
+T,88,ID2S-Seq-descr-Info,SEQUENCE
+  F,89,ID2S-Seq-descr-Info:type-mask,INTEGER
+  -- mask of Seq-descr types,
+  F,90,ID2S-Seq-descr-Info:bioseqs,/ID2S-Bioseq-Ids,OPTIONAL
+  F,91,ID2S-Seq-descr-Info:bioseq-sets,/ID2S-Bioseq-set-Ids,OPTIONAL
+
+T,95,ID2S-Seq-annot-Info,SEQUENCE
+  F,98,ID2S-Seq-annot-Info:name,VisibleString,OPTIONAL
+  -- name is set if this is named annot
+  -- name may be empty which differ from unnamed annot
+  F,99,ID2S-Seq-annot-Info:align,NULL,OPTIONAL
+  F,100,ID2S-Seq-annot-Info:graph,NULL,OPTIONAL
+  F,101,ID2S-Seq-annot-Info:feat,SET /ID2S-Feat-type-Info,OPTIONAL
+  F,102,ID2S-Seq-annot-Info:seq-loc,/ID2S-Seq-loc,OPTIONAL
+
+T,106,ID2S-Seq-annot-place-Info,SEQUENCE
+  F,107,ID2S-Seq-annot-place-Info:name,VisibleString,OPTIONAL
+  F,108,ID2S-Seq-annot-place-Info:bioseqs,/ID2S-Bioseq-Ids,OPTIONAL
+  F,109,ID2S-Seq-annot-place-Info:bioseq-sets,/ID2S-Bioseq-set-Ids,OPTIONAL
+
+T,113,ID2S-Seq-feat-Ids-Info,SEQUENCE
+  F,114,ID2S-Seq-feat-Ids-Info:feat-types,SET /ID2S-Feat-type-Info,OPTIONAL
+  F,115,ID2S-Seq-feat-Ids-Info:xref-types,SET /ID2S-Feat-type-Info,OPTIONAL
+  F,116,ID2S-Seq-feat-Ids-Info:local-ids,SET INTEGER,OPTIONAL
+  F,117,ID2S-Seq-feat-Ids-Info:local-str-ids,SET VisibleString,OPTIONAL
+
+T,121,ID2S-Feat-type-Info,SEQUENCE
+  F,122,ID2S-Feat-type-Info:type,INTEGER
+  F,123,ID2S-Feat-type-Info:subtypes,SET INTEGER,OPTIONAL
+
+T,127,ID2S-Seq-assembly-Info,SEQUENCE
+  F,128,ID2S-Seq-assembly-Info:bioseqs,/ID2S-Bioseq-Ids
+
+T,132,ID2S-Seq-map-Info,/ID2S-Seq-loc
+
+T,135,ID2S-Seq-data-Info,/ID2S-Seq-loc
+
+T,138,ID2S-Bioseq-place-Info,SEQUENCE
+  F,139,ID2S-Bioseq-place-Info:bioseq-set,INTEGER
+  F,140,ID2S-Bioseq-place-Info:seq-ids,/ID2S-Bioseq-Ids
+
+T,144,ID2S-Chunk,SEQUENCE
+  F,145,ID2S-Chunk:data,SET /ID2S-Chunk-Data
+
+T,149,ID2S-Chunk-Data,SEQUENCE
+  F,151,ID2S-Chunk-Data:id,CHOICE
+  -- place of data to insert
+    F,153,ID2S-Chunk-Data:id:bioseq-set,INTEGER
+    -- Bioseq-set id
+    F,155,ID2S-Chunk-Data:id:gi,INTEGER
+    -- Bioseq id
+    F,157,ID2S-Chunk-Data:id:seq-id,/Seq-id
+    -- Bioseq id
+  F,160,ID2S-Chunk-Data:descr,/Seq-descr,OPTIONAL
+  -- Seq-descr, for Bioseq and Bioseq-set
+  F,162,ID2S-Chunk-Data:annots,SET /Seq-annot,OPTIONAL
+  -- Seq-annot, for Bioseq and Bioseq-set
+  F,164,ID2S-Chunk-Data:assembly,SET /Seq-align,OPTIONAL
+  -- assembly history Seq-align, for Bioseq
+  F,166,ID2S-Chunk-Data:seq-map,SEQUENCE /ID2S-Sequence-Piece,OPTIONAL
+  -- sequence map, for Bioseq
+  F,168,ID2S-Chunk-Data:seq-data,SEQUENCE /ID2S-Sequence-Piece,OPTIONAL
+  -- sequence data, for Bioseq
+  F,170,ID2S-Chunk-Data:bioseqs,SET /Bioseq,OPTIONAL
+  -- Bioseq, for Bioseq-set
+
+T,174,ID2S-Sequence-Piece,SEQUENCE
+  F,175,ID2S-Sequence-Piece:start,INTEGER
+  -- start position on sequence
+  F,176,ID2S-Sequence-Piece:data,SEQUENCE /Seq-literal
+
+T,185,ID2S-Chunk-Id,INTEGER
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+-- utility types
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+
+T,188,ID2S-Bioseq-set-Ids,SET INTEGER
+
+T,191,ID2S-Bioseq-Ids,SET CHOICE
+  F,192,ID2S-Bioseq-Ids:gi,INTEGER
+  F,193,ID2S-Bioseq-Ids:seq-id,/Seq-id
+  F,194,ID2S-Bioseq-Ids:gi-range,/ID2S-Gi-Range
+
+T,198,ID2S-Gi-Range,SEQUENCE
+  F,199,ID2S-Gi-Range:start,INTEGER
+  -- start gi in this gi range
+  F,200,ID2S-Gi-Range:count,INTEGER,DEFAULT,1
+  -- number of sequential gis
+
+T,211,ID2S-Seq-loc,CHOICE
+-- ID2S-Seq-loc is used to represent unordered and unstranded
+-- set of intervals on set of sequences.
+-- It's optimized for compact encoding of several common cases:
+--    Seq-ids of type gi,
+--    intervals covering whole sequences,
+--    whole sequences with sequential gis,
+--    set of intervals on the same sequence (Seq-id sharing).
+  F,212,ID2S-Seq-loc:whole-gi,INTEGER
+  -- whole sequence by gi
+  F,213,ID2S-Seq-loc:whole-seq-id,/Seq-id
+  -- whole sequence by Seq-id
+  F,214,ID2S-Seq-loc:whole-gi-range,/ID2S-Gi-Range
+  -- set of whole sequences by gis
+  F,215,ID2S-Seq-loc:gi-interval,/ID2S-Gi-Interval
+  -- interval on sequence by gi
+  F,216,ID2S-Seq-loc:seq-id-interval,/ID2S-Seq-id-Interval
+  -- interval on sequence by Seq-id
+  F,217,ID2S-Seq-loc:gi-ints,/ID2S-Gi-Ints
+  -- set of intervals on the same gi
+  F,218,ID2S-Seq-loc:seq-id-ints,/ID2S-Seq-id-Ints
+  -- set of intervals on the same id
+  F,219,ID2S-Seq-loc:loc-set,SET /ID2S-Seq-loc
+  -- combination of locations
+
+T,223,ID2S-Gi-Interval,SEQUENCE
+  F,224,ID2S-Gi-Interval:gi,INTEGER
+  F,225,ID2S-Gi-Interval:start,INTEGER
+  F,226,ID2S-Gi-Interval:length,INTEGER,DEFAULT,1
+
+T,230,ID2S-Seq-id-Interval,SEQUENCE
+  F,231,ID2S-Seq-id-Interval:seq-id,/Seq-id
+  F,232,ID2S-Seq-id-Interval:start,INTEGER
+  F,233,ID2S-Seq-id-Interval:length,INTEGER,DEFAULT,1
+
+T,237,ID2S-Interval,SEQUENCE
+  F,238,ID2S-Interval:start,INTEGER
+  F,239,ID2S-Interval:length,INTEGER,DEFAULT,1
+
+T,243,ID2S-Gi-Ints,SEQUENCE
+  F,244,ID2S-Gi-Ints:gi,INTEGER
+  F,245,ID2S-Gi-Ints:ints,SET /ID2S-Interval
+
+T,249,ID2S-Seq-id-Ints,SEQUENCE
+  F,250,ID2S-Seq-id-Ints:seq-id,/Seq-id
+  F,251,ID2S-Seq-id-Ints:ints,SET /ID2S-Interval

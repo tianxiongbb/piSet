@@ -1,0 +1,19 @@
+# $Id: Makefile.ncbi_xloader_genbank.lib 427429 2014-02-20 13:41:40Z gouriano $
+
+SRC = gbloader gbload_util
+
+LIB = ncbi_xloader_genbank
+
+ASN_DEP = seqsplit
+
+# Build shared version when possible
+LIB_OR_DLL = both
+
+# Dependencies for shared library
+DLL_LIB = ncbi_xreader$(DLL)
+
+WATCHERS = vasilche
+
+
+USES_LIBRARIES =  \
+    ncbi_xreader_cache ncbi_xreader_id1 ncbi_xreader_id2

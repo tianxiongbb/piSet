@@ -1,0 +1,792 @@
+M,30,blast.asn:NCBI-Blast4
+--  
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--                            PUBLIC DOMAIN NOTICE
+--                National Center for Biotechnology Information
+--
+--  This software/database is a "United States Government Work" under the terms
+--  of the United States Copyright Act.  It was written as part of the author's
+--  official duties as a United States Government employee and thus cannot be
+--  copyrighted.  This software/database is freely available to the public for
+--  use.  The National Library of Medicine and the U.S. Government have not
+--  placed any restriction on its use or reproduction.
+--
+--  Although all reasonable efforts have been taken to ensure the accuracy and
+--  reliability of the software and data, the NLM and the U.S. Government do not
+--  and cannot warrant the performance or results that may be obtained by using
+--  this software or data.  The NLM and the U.S. Government disclaim all
+--  warranties, express or implied, including warranties of performance,
+--  merchantability or fitness for any particular purpose.
+--
+--  Please cite the authors in any work or product based on this material.
+--
+--  
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--  Authors: Tom Madden, Tim Boemker
+--
+--  ASN.1 interface to BLAST.
+--
+--  
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+  T,56,NCBI-Blast4:Blast4-request
+  T,67,NCBI-Blast4:Blast4-archive
+  T,76,NCBI-Blast4:Blast4-request-body
+  T,99,NCBI-Blast4:Blast4-get-databases-ex-request
+  T,103,NCBI-Blast4:Blast4-finish-params-request
+  T,111,NCBI-Blast4:Blast4-result-types
+  T,124,NCBI-Blast4:Blast4-get-search-results-request
+  T,138,NCBI-Blast4:Blast4-queries
+  T,156,NCBI-Blast4:Blast4-queue-search-request
+  T,169,NCBI-Blast4:Blast4-get-search-status-request
+  T,174,NCBI-Blast4:Blast4-get-search-status-reply
+  T,180,NCBI-Blast4:Blast4-get-request-info-request
+  T,184,NCBI-Blast4:Blast4-get-request-info-reply
+  T,197,NCBI-Blast4:Blast4-get-search-strategy-request
+  T,203,NCBI-Blast4:Blast4-get-search-strategy-reply
+  T,206,NCBI-Blast4:Blast4-get-sequences-request
+  T,221,NCBI-Blast4:Blast4-get-seq-parts-request
+  T,232,NCBI-Blast4:Blast4-get-protocol-info-request
+  T,235,NCBI-Blast4:Blast4-get-search-info-request
+  T,245,NCBI-Blast4:Blast4-reply
+  T,250,NCBI-Blast4:Blast4-reply-body
+  T,269,NCBI-Blast4:Blast4-finish-params-reply
+  T,271,NCBI-Blast4:Blast4-get-windowmasked-taxids-reply
+  T,273,NCBI-Blast4:Blast4-get-databases-reply
+  T,274,NCBI-Blast4:Blast4-get-databases-ex-reply
+  T,276,NCBI-Blast4:Blast4-get-matrices-reply
+  T,278,NCBI-Blast4:Blast4-get-parameters-reply
+  T,283,NCBI-Blast4:Blast4-get-paramsets-reply
+  T,285,NCBI-Blast4:Blast4-get-programs-reply
+  T,287,NCBI-Blast4:Blast4-get-search-results-reply
+  T,301,NCBI-Blast4:Blast4-get-sequences-reply
+  T,304,NCBI-Blast4:Blast4-seq-part-data
+  T,310,NCBI-Blast4:Blast4-get-seq-parts-reply
+  T,312,NCBI-Blast4:Blast4-queue-search-reply
+  T,316,NCBI-Blast4:Blast4-get-queries-reply
+  T,320,NCBI-Blast4:Blast4-get-protocol-info-reply
+  T,322,NCBI-Blast4:Blast4-get-search-info-reply
+  T,332,NCBI-Blast4:Blast4-error
+  T,342,NCBI-Blast4:Blast4-error-flags
+  T,350,NCBI-Blast4:Blast4-error-code
+  T,375,NCBI-Blast4:Blast4-cutoff
+  T,380,NCBI-Blast4:Blast4-database
+  T,387,NCBI-Blast4:Blast4-seqtech
+  T,412,NCBI-Blast4:Blast4-database-info
+  T,423,NCBI-Blast4:Blast4-frame-type
+  T,433,NCBI-Blast4:Blast4-ka-block
+  T,454,NCBI-Blast4:Blast4-mask
+  T,459,NCBI-Blast4:Blast4-matrix-id
+  T,464,NCBI-Blast4:Blast4-parameter
+  T,469,NCBI-Blast4:Blast4-parameter-info
+  T,475,NCBI-Blast4:Blast4-task-info
+  T,482,NCBI-Blast4:Blast4-program-info
+  T,487,NCBI-Blast4:Blast4-residue-type
+  T,493,NCBI-Blast4:Blast4-strand-type
+  T,499,NCBI-Blast4:Blast4-subject
+  T,505,NCBI-Blast4:Blast4-parameters
+  T,507,NCBI-Blast4:Blast4-phi-alignments
+  T,512,NCBI-Blast4:Blast4-value
+  T,554,NCBI-Blast4:Blast4-simple-results
+  T,559,NCBI-Blast4:Blast4-alignments-for-query
+  T,570,NCBI-Blast4:Blast4-simple-alignment
+  T,596,NCBI-Blast4:Blast4-range
+
+T,56,Blast4-request,SEQUENCE
+--  
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--  Requests
+--
+--  
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+  F,59,Blast4-request:ident,VisibleString,OPTIONAL
+  -- Client identifier (email address, organization name, program/script
+  -- name, or any other form of contacting the owner of this request)
+  F,62,Blast4-request:body,/Blast4-request-body
+  -- Payload of the request
+
+T,67,Blast4-archive,SEQUENCE
+-- An archive format for results.  the results can be reformatted from
+-- this format also.
+  F,69,Blast4-archive:request,/Blast4-request
+  -- Query and options
+  F,72,Blast4-archive:results,/Blast4-get-search-results-reply
+  -- Results of search
+  F,73,Blast4-archive:messages,SEQUENCE /Blast4-error,OPTIONAL
+
+T,76,Blast4-request-body,CHOICE
+  F,77,Blast4-request-body:finish-params,/Blast4-finish-params-request
+  F,79,Blast4-request-body:get-databases,NULL
+  -- Get all available BLAST databases
+  F,81,Blast4-request-body:get-matrices,NULL
+  -- Get supported scoring matrices
+  F,82,Blast4-request-body:get-parameters,NULL
+  F,83,Blast4-request-body:get-paramsets,NULL
+  F,84,Blast4-request-body:get-programs,NULL
+  F,85,Blast4-request-body:get-search-results,/Blast4-get-search-results-request
+  F,86,Blast4-request-body:get-sequences,/Blast4-get-sequences-request
+  F,87,Blast4-request-body:queue-search,/Blast4-queue-search-request
+  F,88,Blast4-request-body:get-request-info,/Blast4-get-request-info-request
+  F,89,Blast4-request-body:get-sequence-parts,/Blast4-get-seq-parts-request
+  F,90,Blast4-request-body:get-windowmasked-taxids,NULL
+  F,92,Blast4-request-body:get-protocol-info,/Blast4-get-protocol-info-request
+  -- Get version and info about some extended methods
+  F,94,Blast4-request-body:get-search-info,/Blast4-get-search-info-request
+  -- Get search info: status, title and etc.
+  F,96,Blast4-request-body:get-databases-ex,/Blast4-get-databases-ex-request
+  -- OLD OK get-databases-ex           NULL
+
+T,99,Blast4-get-databases-ex-request,SEQUENCE
+  F,100,Blast4-get-databases-ex-request:params,/Blast4-parameters,OPTIONAL
+
+T,103,Blast4-finish-params-request,SEQUENCE
+-- END ADD EXT INFO
+  F,104,Blast4-finish-params-request:program,VisibleString
+  F,105,Blast4-finish-params-request:service,VisibleString
+  F,106,Blast4-finish-params-request:paramset,VisibleString,OPTIONAL
+  F,107,Blast4-finish-params-request:params,/Blast4-parameters,OPTIONAL
+
+T,111,Blast4-result-types,ENUMERATED
+-- This type allows the specification of what result types are desired
+  V,114,Blast4-result-types:default,63
+  -- Default retrieves the following result types (if available): alignments,
+  -- phi-alignments masks, ka-blocks, search-stats and pssm
+  V,115,Blast4-result-types:alignments,1
+  V,116,Blast4-result-types:phi-alignments,2
+  V,117,Blast4-result-types:masks,4
+  V,118,Blast4-result-types:ka-blocks,8
+  V,119,Blast4-result-types:search-stats,16
+  V,120,Blast4-result-types:pssm,32
+  V,121,Blast4-result-types:simple-results,64
+
+T,124,Blast4-get-search-results-request,SEQUENCE
+  F,126,Blast4-get-search-results-request:request-id,VisibleString
+  -- The request ID of the BLAST search
+  F,128,Blast4-get-search-results-request:result-types,INTEGER,OPTIONAL
+  -- Logical OR of Blast4-result-types, assumes default if absent
+
+T,138,Blast4-queries,CHOICE
+-- If a PSSM is used (ie. for PSI-Blast), it must contain a "query"
+-- for formatting purposes.  Bioseq-set may contain any number of
+-- queries, specified as data.  Seq-loc-list may contain only the
+-- "whole" or "interval" types.  In the case of "whole", any number of
+-- queries may be used; in the case of "interval", there should be
+-- exactly one query.  (This is limited by the BlastObject.)
+  F,139,Blast4-queries:pssm,/PssmWithParameters
+  F,140,Blast4-queries:seq-loc-list,SEQUENCE /Seq-loc
+  F,141,Blast4-queries:bioseq-set,/Bioseq-set
+
+T,156,Blast4-queue-search-request,SEQUENCE
+-- Options have been broken down into three groups as part of the BLAST
+-- API work.  The algorithm options essentially correspond to those
+-- options available via the CBlastOptions class.
+-- For definitions of the names used in the Blast4-parameter structures, see
+-- c++/{include,src}/objects/blast/names.[hc]pp in the NCBI C++ toolkit.
+--   algorithm-options: Options for BLAST (ie. seq comparison) algorithm.
+--   program-options:   Options for controlling program execution and/or 
+--                      database filtering
+--   format-options:    Options for formatting BLAST results, clients should
+--                      use this only if applicable, otherwise they should be
+--                      ignored
+  F,157,Blast4-queue-search-request:program,VisibleString
+  F,158,Blast4-queue-search-request:service,VisibleString
+  F,159,Blast4-queue-search-request:queries,/Blast4-queries
+  F,160,Blast4-queue-search-request:subject,/Blast4-subject
+  F,162,Blast4-queue-search-request:paramset,VisibleString,OPTIONAL
+  -- This field contains a task description
+  F,163,Blast4-queue-search-request:algorithm-options,/Blast4-parameters,OPTIONAL
+  F,164,Blast4-queue-search-request:program-options,/Blast4-parameters,OPTIONAL
+  F,165,Blast4-queue-search-request:format-options,/Blast4-parameters,OPTIONAL
+
+T,169,Blast4-get-search-status-request,SEQUENCE
+-- Request to retrieve the status of a given search
+  F,170,Blast4-get-search-status-request:request-id,VisibleString
+
+T,174,Blast4-get-search-status-reply,SEQUENCE
+-- Reply to retrieve the status of a given search
+  F,175,Blast4-get-search-status-reply:status,VisibleString
+
+T,180,Blast4-get-request-info-request,SEQUENCE
+-- Fetch information about the search request.
+  F,181,Blast4-get-request-info-request:request-id,VisibleString
+
+T,184,Blast4-get-request-info-reply,SEQUENCE
+  F,185,Blast4-get-request-info-reply:database,/Blast4-database
+  F,186,Blast4-get-request-info-reply:program,VisibleString
+  F,187,Blast4-get-request-info-reply:service,VisibleString
+  F,188,Blast4-get-request-info-reply:created-by,VisibleString
+  F,189,Blast4-get-request-info-reply:queries,/Blast4-queries
+  F,190,Blast4-get-request-info-reply:algorithm-options,/Blast4-parameters
+  F,191,Blast4-get-request-info-reply:program-options,/Blast4-parameters
+  F,192,Blast4-get-request-info-reply:format-options,/Blast4-parameters,OPTIONAL
+  F,193,Blast4-get-request-info-reply:subjects,/Blast4-subject,OPTIONAL
+
+T,197,Blast4-get-search-strategy-request,SEQUENCE
+-- Fetch the search strategy (i.e.: object used to submit the search)
+  F,198,Blast4-get-search-strategy-request:request-id,VisibleString
+
+T,203,Blast4-get-search-strategy-reply,/Blast4-request
+-- Return the search strategy (i.e.: Blast4-request containing a
+-- Blast4-queue-search-request, an object used to submit the search)
+
+T,206,Blast4-get-sequences-request,SEQUENCE
+-- Fetch sequence data from a BLAST database
+  F,208,Blast4-get-sequences-request:database,/Blast4-database
+  -- Name of the BLAST database from which to retrieve the sequence data
+  F,210,Blast4-get-sequences-request:seq-ids,SEQUENCE /Seq-id
+  -- Sequence identifiers for the sequence to get
+  F,213,Blast4-get-sequences-request:skip-seq-data,BOOLEAN,DEFAULT,FALSE
+  -- Determines whether the returned Bioseqs should contain the sequence data
+  -- or not
+  F,217,Blast4-get-sequences-request:target-only,BOOLEAN,OPTIONAL
+  -- Determines whether or not the defline of the returned Bioseqs should 
+  -- contain only the requested seq id.  This optional field only applies
+  -- to non-redundant BLAST database
+
+T,221,Blast4-get-seq-parts-request,SEQUENCE
+-- Fetch parts of sequences from a BLAST database
+  F,223,Blast4-get-seq-parts-request:database,/Blast4-database
+  -- Name of the BLAST database from which to retrieve the sequence data
+  F,229,Blast4-get-seq-parts-request:seq-locations,SEQUENCE /Seq-interval
+  -- Allows the specification of ranges of sequence data needed.
+  -- If the sequence(s) interval's end is 0, no data will be fetched. 
+  -- If end is past the length of the sequence, it will be adjusted to the
+  -- end of the sequence (this allows fetching of the first chunk in
+  -- cases where the length is not yet known).
+
+T,232,Blast4-get-protocol-info-request,/Blast4-parameters
+-- support for version and checking availability of methods
+
+T,235,Blast4-get-search-info-request,SEQUENCE
+-- variose search information
+  F,236,Blast4-get-search-info-request:request-id,VisibleString
+  F,237,Blast4-get-search-info-request:info,/Blast4-parameters,OPTIONAL
+
+T,245,Blast4-reply,SEQUENCE
+--  
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--  Replies
+--
+--  
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+  F,246,Blast4-reply:errors,SEQUENCE /Blast4-error,OPTIONAL
+  F,247,Blast4-reply:body,/Blast4-reply-body
+
+T,250,Blast4-reply-body,CHOICE
+  F,251,Blast4-reply-body:finish-params,/Blast4-finish-params-reply
+  F,252,Blast4-reply-body:get-databases,/Blast4-get-databases-reply
+  F,253,Blast4-reply-body:get-matrices,/Blast4-get-matrices-reply
+  F,254,Blast4-reply-body:get-parameters,/Blast4-get-parameters-reply
+  F,255,Blast4-reply-body:get-paramsets,/Blast4-get-paramsets-reply
+  F,256,Blast4-reply-body:get-programs,/Blast4-get-programs-reply
+  F,257,Blast4-reply-body:get-search-results,/Blast4-get-search-results-reply
+  F,258,Blast4-reply-body:get-sequences,/Blast4-get-sequences-reply
+  F,259,Blast4-reply-body:queue-search,/Blast4-queue-search-reply
+  F,260,Blast4-reply-body:get-queries,/Blast4-get-queries-reply
+  F,261,Blast4-reply-body:get-request-info,/Blast4-get-request-info-reply
+  F,262,Blast4-reply-body:get-sequence-parts,/Blast4-get-seq-parts-reply
+  F,263,Blast4-reply-body:get-windowmasked-taxids,/Blast4-get-windowmasked-taxids-reply
+  F,264,Blast4-reply-body:get-protocol-info,/Blast4-get-protocol-info-reply
+  F,265,Blast4-reply-body:get-search-info,/Blast4-get-search-info-reply
+  F,266,Blast4-reply-body:get-databases-ex,/Blast4-get-databases-ex-reply
+
+T,269,Blast4-finish-params-reply,/Blast4-parameters
+
+T,271,Blast4-get-windowmasked-taxids-reply,SEQUENCE INTEGER
+
+T,273,Blast4-get-databases-reply,SEQUENCE /Blast4-database-info
+
+T,274,Blast4-get-databases-ex-reply,SEQUENCE /Blast4-database-info
+
+T,276,Blast4-get-matrices-reply,SEQUENCE /Blast4-matrix-id
+
+T,278,Blast4-get-parameters-reply,SEQUENCE /Blast4-parameter-info
+
+T,283,Blast4-get-paramsets-reply,SEQUENCE /Blast4-task-info
+-- Note: Paramsets and tasks represent the same concept: a human readable
+-- description that represents a set of parameters with specific values 
+-- to accomplish a given task
+
+T,285,Blast4-get-programs-reply,SEQUENCE /Blast4-program-info
+
+T,287,Blast4-get-search-results-reply,SEQUENCE
+  F,288,Blast4-get-search-results-reply:alignments,/Seq-align-set,OPTIONAL
+  F,289,Blast4-get-search-results-reply:phi-alignments,/Blast4-phi-alignments,OPTIONAL
+  F,293,Blast4-get-search-results-reply:masks,SEQUENCE /Blast4-mask,OPTIONAL
+  -- Masking locations for the query sequence(s). Each element of this set
+  -- corresponds to a single query's translation frame as appropriate.
+  F,295,Blast4-get-search-results-reply:ka-blocks,SEQUENCE /Blast4-ka-block,OPTIONAL
+  F,296,Blast4-get-search-results-reply:search-stats,SEQUENCE VisibleString,OPTIONAL
+  F,297,Blast4-get-search-results-reply:pssm,/PssmWithParameters,OPTIONAL
+  F,298,Blast4-get-search-results-reply:simple-results,/Blast4-simple-results,OPTIONAL
+
+T,301,Blast4-get-sequences-reply,SEQUENCE /Bioseq
+
+T,304,Blast4-seq-part-data,SEQUENCE
+-- Bundles Seq-ids and sequence data to fulfill requests of type
+-- Blast4-get-seq-parts-request
+  F,306,Blast4-seq-part-data:id,/Seq-id
+  -- Sequence identifier
+  F,308,Blast4-seq-part-data:data,/Seq-data
+  -- Its sequence data (may be partial)
+
+T,310,Blast4-get-seq-parts-reply,SEQUENCE /Blast4-seq-part-data
+
+T,312,Blast4-queue-search-reply,SEQUENCE
+  F,313,Blast4-queue-search-reply:request-id,VisibleString,OPTIONAL
+
+T,316,Blast4-get-queries-reply,SEQUENCE
+  F,317,Blast4-get-queries-reply:queries,/Blast4-queries
+
+T,320,Blast4-get-protocol-info-reply,/Blast4-parameters
+
+T,322,Blast4-get-search-info-reply,SEQUENCE
+  F,323,Blast4-get-search-info-reply:request-id,VisibleString
+  F,324,Blast4-get-search-info-reply:info,/Blast4-parameters,OPTIONAL
+
+T,332,Blast4-error,SEQUENCE
+--  
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--  Errors
+--
+--  
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+  F,335,Blast4-error:code,INTEGER
+  -- This is an integer to allow for flexibility, but the values assigned
+  -- should be of type Blast4-error-code
+  F,336,Blast4-error:message,VisibleString,OPTIONAL
+
+T,342,Blast4-error-flags,ENUMERATED
+-- This enumeration defines values that are intended to be used with the
+-- Blast4-error::code in a logical AND operation to easily determine whether a
+-- given Blast4-error object contains either a warning or an error
+  V,343,Blast4-error-flags:warning,1024
+  V,344,Blast4-error-flags:error,2048
+
+T,350,Blast4-error-code,INTEGER
+-- Defines values for use in Blast4-error::code.
+-- Note: warnings should have values greater than 1024 and less than 2048,
+-- errors should have values greater than 2048.
+  V,353,Blast4-error-code:conversion-warning,1024
+  -- A conversion issue was found when converting to/from blast3 from/to 
+  -- blast4 protocol in the blast4 server
+  V,356,Blast4-error-code:internal-error,2048
+  -- Indicates internal errors in the blast4 server
+  V,358,Blast4-error-code:not-implemented,2049
+  -- Request type is not implemented in the blast4 server
+  V,360,Blast4-error-code:not-allowed,2050
+  -- Request type is not allowed in the blast4 server
+  V,362,Blast4-error-code:bad-request,2051
+  -- Malformed/invalid requests (e.g.: parsing errors or invalid data in request)
+  V,364,Blast4-error-code:bad-request-id,2052
+  -- The RID requested is unknown or it has expired
+  V,366,Blast4-error-code:search-pending,2053
+  -- The search is pending
+
+T,375,Blast4-cutoff,CHOICE
+--  
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--  Other types in alphabetical order
+--
+--  
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+--
+  F,376,Blast4-cutoff:e-value,REAL
+  F,377,Blast4-cutoff:raw-score,INTEGER
+
+T,380,Blast4-database,SEQUENCE
+  F,381,Blast4-database:name,VisibleString
+  F,382,Blast4-database:type,/Blast4-residue-type
+
+T,387,Blast4-seqtech,INTEGER
+-- Borrowed from seq.asn
+  V,388,Blast4-seqtech:unknown,0
+  V,389,Blast4-seqtech:standard,1
+  -- standard sequencing
+  V,390,Blast4-seqtech:est,2
+  -- Expressed Sequence Tag
+  V,391,Blast4-seqtech:sts,3
+  -- Sequence Tagged Site
+  V,392,Blast4-seqtech:survey,4
+  -- one-pass genomic sequence
+  V,393,Blast4-seqtech:genemap,5
+  -- from genetic mapping techniques
+  V,394,Blast4-seqtech:physmap,6
+  -- from physical mapping techniques
+  V,395,Blast4-seqtech:derived,7
+  -- derived from other data, not a primary entity
+  V,396,Blast4-seqtech:concept-trans,8
+  -- conceptual translation
+  V,397,Blast4-seqtech:seq-pept,9
+  -- peptide was sequenced
+  V,398,Blast4-seqtech:both,10
+  -- concept transl. w/ partial pept. seq.
+  V,399,Blast4-seqtech:seq-pept-overlap,11
+  -- sequenced peptide, ordered by overlap
+  V,400,Blast4-seqtech:seq-pept-homol,12
+  -- sequenced peptide, ordered by homology
+  V,401,Blast4-seqtech:concept-trans-a,13
+  -- conceptual transl. supplied by author
+  V,402,Blast4-seqtech:htgs-1,14
+  -- unordered High Throughput sequence contig
+  V,403,Blast4-seqtech:htgs-2,15
+  -- ordered High Throughput sequence contig
+  V,404,Blast4-seqtech:htgs-3,16
+  -- finished High Throughput sequence
+  V,405,Blast4-seqtech:fli-cdna,17
+  -- full length insert cDNA
+  V,406,Blast4-seqtech:htgs-0,18
+  -- single genomic reads for coordination
+  V,407,Blast4-seqtech:htc,19
+  -- high throughput cDNA
+  V,408,Blast4-seqtech:wgs,20
+  -- whole genome shotgun sequencing
+  V,409,Blast4-seqtech:other,255
+  -- use Source.techexp
+
+T,412,Blast4-database-info,SEQUENCE
+  F,413,Blast4-database-info:database,/Blast4-database
+  F,414,Blast4-database-info:description,VisibleString
+  F,415,Blast4-database-info:last-updated,VisibleString
+  F,416,Blast4-database-info:total-length,BigInt
+  F,417,Blast4-database-info:num-sequences,BigInt
+  F,418,Blast4-database-info:seqtech,/Blast4-seqtech
+  F,419,Blast4-database-info:taxid,INTEGER
+  F,420,Blast4-database-info:extended,/Blast4-parameters,OPTIONAL
+
+T,423,Blast4-frame-type,ENUMERATED
+  V,424,Blast4-frame-type:notset,0
+  V,425,Blast4-frame-type:plus1,1
+  V,426,Blast4-frame-type:plus2,2
+  V,427,Blast4-frame-type:plus3,3
+  V,428,Blast4-frame-type:minus1,4
+  V,429,Blast4-frame-type:minus2,5
+  V,430,Blast4-frame-type:minus3,6
+
+T,433,Blast4-ka-block,SEQUENCE
+  F,434,Blast4-ka-block:lambda,REAL
+  F,435,Blast4-ka-block:k,REAL
+  F,436,Blast4-ka-block:h,REAL
+  F,437,Blast4-ka-block:gapped,BOOLEAN
+
+T,454,Blast4-mask,SEQUENCE
+-- Masking locations for a query's frame. The locations field is a single
+-- Seq-loc of type Packed-int, which contains all the masking locations for the
+-- translation frame specified by the frame field.
+-- Notes:
+-- On input (i.e.: when the client specifies masking locations as a
+-- Blast4-parameter), in the case of protein queries, the frame field must 
+-- always be notset, in the case of nucleotide queries (regardless of whether 
+-- the search will translate these or not), the frame must be plus1. Masking 
+-- locations in the translated encoding are not permitted.
+-- On output (i.e.: when blast 4 server encodes these as part of the 
+-- Blast4-get-search-results-reply), the same conventions as above apply for
+-- non-translated protein and nucleotide queries, but in the case of translated
+-- nucleotide queries, the frame field can be specified in any of the
+-- translation frames as appropriate.
+  F,455,Blast4-mask:locations,SEQUENCE /Seq-loc
+  F,456,Blast4-mask:frame,/Blast4-frame-type
+
+T,459,Blast4-matrix-id,SEQUENCE
+  F,460,Blast4-matrix-id:residue-type,/Blast4-residue-type
+  F,461,Blast4-matrix-id:name,VisibleString
+
+T,464,Blast4-parameter,SEQUENCE
+  F,465,Blast4-parameter:name,VisibleString
+  F,466,Blast4-parameter:value,/Blast4-value
+
+T,469,Blast4-parameter-info,SEQUENCE
+  F,470,Blast4-parameter-info:name,VisibleString
+  F,471,Blast4-parameter-info:type,VisibleString
+
+T,475,Blast4-task-info,SEQUENCE
+-- Self documenting task structure
+  F,477,Blast4-task-info:name,VisibleString
+  -- Name of this task
+  F,479,Blast4-task-info:documentation,VisibleString
+  -- Description of the task
+
+T,482,Blast4-program-info,SEQUENCE
+  F,483,Blast4-program-info:program,VisibleString
+  F,484,Blast4-program-info:services,SEQUENCE VisibleString
+
+T,487,Blast4-residue-type,ENUMERATED
+  V,488,Blast4-residue-type:unknown,0
+  V,489,Blast4-residue-type:protein,1
+  V,490,Blast4-residue-type:nucleotide,2
+
+T,493,Blast4-strand-type,ENUMERATED
+  V,494,Blast4-strand-type:forward-strand,1
+  V,495,Blast4-strand-type:reverse-strand,2
+  V,496,Blast4-strand-type:both-strands,3
+
+T,499,Blast4-subject,CHOICE
+  F,500,Blast4-subject:database,VisibleString
+  F,501,Blast4-subject:sequences,SEQUENCE /Bioseq
+  F,502,Blast4-subject:seq-loc-list,SEQUENCE /Seq-loc
+
+T,505,Blast4-parameters,SEQUENCE /Blast4-parameter
+
+T,507,Blast4-phi-alignments,SEQUENCE
+  F,508,Blast4-phi-alignments:num-alignments,INTEGER
+  F,509,Blast4-phi-alignments:seq-locs,SEQUENCE /Seq-loc
+
+T,512,Blast4-value,CHOICE
+  F,515,Blast4-value:big-integer,BigInt
+  -- scalar types
+  F,516,Blast4-value:bioseq,/Bioseq
+  F,517,Blast4-value:boolean,BOOLEAN
+  F,518,Blast4-value:cutoff,/Blast4-cutoff
+  F,519,Blast4-value:integer,INTEGER
+  F,520,Blast4-value:matrix,/PssmWithParameters
+  F,521,Blast4-value:real,REAL
+  F,522,Blast4-value:seq-align,/Seq-align
+  F,523,Blast4-value:seq-id,/Seq-id
+  F,524,Blast4-value:seq-loc,/Seq-loc
+  F,525,Blast4-value:strand-type,/Blast4-strand-type
+  F,526,Blast4-value:string,VisibleString
+  F,529,Blast4-value:big-integer-list,SEQUENCE BigInt
+  -- lists of scalar types
+  F,530,Blast4-value:bioseq-list,SEQUENCE /Bioseq
+  F,531,Blast4-value:boolean-list,SEQUENCE BOOLEAN
+  F,532,Blast4-value:cutoff-list,SEQUENCE /Blast4-cutoff
+  F,533,Blast4-value:integer-list,SEQUENCE INTEGER
+  F,534,Blast4-value:matrix-list,SEQUENCE /PssmWithParameters
+  F,535,Blast4-value:real-list,SEQUENCE REAL
+  F,536,Blast4-value:seq-align-list,SEQUENCE /Seq-align
+  F,537,Blast4-value:seq-id-list,SEQUENCE /Seq-id
+  F,538,Blast4-value:seq-loc-list,SEQUENCE /Seq-loc
+  F,539,Blast4-value:strand-type-list,SEQUENCE /Blast4-strand-type
+  F,540,Blast4-value:string-list,SEQUENCE VisibleString
+  F,543,Blast4-value:bioseq-set,/Bioseq-set
+  -- imported collection types
+  F,544,Blast4-value:seq-align-set,/Seq-align-set
+  F,550,Blast4-value:query-mask,/Blast4-mask
+  -- Intended to represent user-provided masking locations for a single query
+  -- sequence (name field in Blast4-parameter should be "LCaseMask").
+  -- Multiple Blast4-parameters of this type are needed to specify masking
+  -- locations for multiple queries.
+
+T,554,Blast4-simple-results,SEQUENCE
+-- Complete set of simple Blast results
+  F,555,Blast4-simple-results:all-alignments,SEQUENCE /Blast4-alignments-for-query
+
+T,559,Blast4-alignments-for-query,SEQUENCE
+-- Alignments for one query, compiled from the raw SeqAlign results
+  F,563,Blast4-alignments-for-query:query-id,VisibleString
+  -- Query sequence identifier
+  -- (present if query is not a local id in the SeqAlign)
+  F,566,Blast4-alignments-for-query:alignments,SEQUENCE /Blast4-simple-alignment
+  -- All the alignments for this query
+
+T,570,Blast4-simple-alignment,SEQUENCE
+-- A single alignment
+  F,574,Blast4-simple-alignment:subject-id,VisibleString
+  -- Subject sequence identifier
+  -- (normally a GI from the SeqAlign)
+  F,577,Blast4-simple-alignment:e-value,REAL
+  -- E-Value
+  F,580,Blast4-simple-alignment:bit-score,REAL
+  -- Bit score
+  F,583,Blast4-simple-alignment:num-identities,INTEGER,OPTIONAL
+  -- Number of identities
+  F,586,Blast4-simple-alignment:num-indels,INTEGER,OPTIONAL
+  -- Number of insertions/deletions
+  F,589,Blast4-simple-alignment:full-query-range,/Blast4-range
+  -- Full query range covered by this HSP
+  F,592,Blast4-simple-alignment:full-subject-range,/Blast4-range
+  -- Full subject range covered by this HSP
+
+T,596,Blast4-range,SEQUENCE
+-- Range on a sequence - zero offset
+  F,597,Blast4-range:start,INTEGER,OPTIONAL
+  F,598,Blast4-range:end,INTEGER,OPTIONAL
+  F,601,Blast4-range:strand,INTEGER,OPTIONAL
+  -- The frame of the range (absent for proteins; -1/1 for nucleotides;
+  -- -1,-2,-3,1,2,3 for translated sequences)

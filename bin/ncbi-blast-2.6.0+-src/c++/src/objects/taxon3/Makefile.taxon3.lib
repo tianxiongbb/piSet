@@ -1,0 +1,12 @@
+# $Id: Makefile.taxon3.lib 473759 2015-07-22 14:02:22Z holmesbr $
+
+LIB = taxon3
+SRC = taxon3__ taxon3___ taxon3 cached_taxon3
+
+DLL_LIB = xconnect
+
+WATCHERS = bollin holmesbr
+
+
+USES_LIBRARIES =  \
+    $(SEQ_LIBS) pub xconnect

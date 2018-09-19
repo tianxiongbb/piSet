@@ -1,0 +1,76 @@
+M,25,blastdb.asn:NCBI-BlastDL
+--$Id: blastdb.asn 451801 2014-11-12 15:05:39Z camacho $
+--
+-- Notes:
+--
+-- taxonomy: an integer is proposed, which would require some sort of 
+-- table (or network connection) to do the conversions from integer 
+-- to various names.  This could save quite a bit of space for databases 
+-- that are predominantly of one organism (e.g., human in htgs).
+-- I've proposed here that table contain scientific-, common-, and 
+-- blast-names at the advice of Scott Federhen.  Scott also was in 
+-- favor of having the complete lineage in the file, but it seems like 
+-- this would be seldom used and we could have a view with a link back 
+-- to the taxonomy page for anyone needing it. Since one file would 
+-- suffice for all blast databases, it seems like this should be a new file.
+--
+-- memberships: a sequence of integers is proposed.  Each bit of an integer 
+-- would indicate membership in some (virtual) blast database (e.g., pdb, 
+-- swissprot) or some classification (e.g., mRNA, genomic).
+--
+-- links: a sequence of integers is proposed.  Each bit of an integer would 
+-- indicate a link that could be established based upon the gi of the 
+-- database sequence.
+--
+  T,32,NCBI-BlastDL:Blast-def-line-set
+  T,34,NCBI-BlastDL:Blast-def-line
+  T,51,NCBI-BlastDL:Blast-filter-program
+  T,61,NCBI-BlastDL:Blast-mask-list
+  T,70,NCBI-BlastDL:Blast-db-mask-info
+
+T,32,Blast-def-line-set,SEQUENCE /Blast-def-line
+-- all deflines for an entry
+
+T,34,Blast-def-line,SEQUENCE
+  F,35,Blast-def-line:title,VisibleString,OPTIONAL
+  -- simple title
+  F,36,Blast-def-line:seqid,SEQUENCE /Seq-id
+  -- Regular NCBI Seq-Id
+  -- taxonomy id, should not be set if multiple taxids are available 
+  -- (see links below)
+  F,39,Blast-def-line:taxid,INTEGER,OPTIONAL
+  F,40,Blast-def-line:memberships,SEQUENCE INTEGER,OPTIONAL
+  -- bit arrays
+  -- Repurposed to store the (multiple) taxIDs associated with WP proteins. 
+  F,42,Blast-def-line:links,SEQUENCE INTEGER,OPTIONAL
+  F,46,Blast-def-line:other-info,SEQUENCE INTEGER,OPTIONAL
+  -- In proteins this stores the PIG, in nucleotides this stores the "origin
+  -- GIs" (if one sequence is described in the ASN.1 as an identical copy of
+  -- another)
+
+T,51,Blast-filter-program,INTEGER
+-- This defines the possible sequence filtering algorithms to be used in a
+-- BLAST database
+  V,52,Blast-filter-program:not-set,0
+  V,53,Blast-filter-program:dust,10
+  V,54,Blast-filter-program:seg,20
+  V,55,Blast-filter-program:windowmasker,30
+  V,56,Blast-filter-program:repeat,40
+  V,57,Blast-filter-program:other,100
+  V,58,Blast-filter-program:max,255
+
+T,61,Blast-mask-list,SEQUENCE
+  F,63,Blast-mask-list:masks,SEQUENCE /Seq-loc
+  -- masks for a single sequence should be grouped in a Packed-seqint
+  F,66,Blast-mask-list:more,BOOLEAN
+  -- as of 01/21/2010, this field is set to false always, indicating that the
+  -- entire object (set of Seq-loc) is contained in this object
+
+T,70,Blast-db-mask-info,SEQUENCE
+-- Defines the masking information for a set of sequences
+  F,71,Blast-db-mask-info:algo-id,INTEGER
+  F,72,Blast-db-mask-info:algo-program,/Blast-filter-program
+  F,73,Blast-db-mask-info:algo-options,VisibleString
+  F,76,Blast-db-mask-info:masks,/Blast-mask-list
+  -- This object was originally created to allow pagination of the sequence
+  -- masks, but this feature was discontinued in 01/21/2010

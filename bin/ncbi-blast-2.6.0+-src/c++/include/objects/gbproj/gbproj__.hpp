@@ -1,0 +1,14 @@
+#include <objects/gbproj/AbstractProjectItem.hpp>
+#include <objects/gbproj/DummyObsoleteType.hpp>
+#include <objects/gbproj/FolderInfo.hpp>
+#include <objects/gbproj/GBProject_ver2.hpp>
+#include <objects/gbproj/LoaderDescriptor.hpp>
+#include <objects/gbproj/ProjectAnnot.hpp>
+#include <objects/gbproj/ProjectDescr.hpp>
+#include <objects/gbproj/ProjectFolder.hpp>
+#include <objects/gbproj/ProjectHistoryItem.hpp>
+#include <objects/gbproj/ProjectItem.hpp>
+#include <objects/gbproj/ViewDataLink.hpp>
+#include <objects/gbproj/ViewDescriptor.hpp>
+#include <objects/gbproj/ViewMemento.hpp>
+#include <objects/gbproj/NCBI_GBProject_module.hpp>

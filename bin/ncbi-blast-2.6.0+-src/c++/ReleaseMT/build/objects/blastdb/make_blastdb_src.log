@@ -1,0 +1,4 @@
+/usr/bin/make -w -f /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/build-system/Makefile.module MODULE=blastdb MODULE_PATH=objects/blastdb MODULE_ASN=blastdb.asn MODULE_IMPORT='objects/seqloc/seqloc' IMPDEPS='/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objects/seqloc/seqloc.asn' IMPFILES='objects/seqloc/seqloc.asn' top_srcdir=/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++ DATATOOL=/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/bin/datatool MODULE_SEARCH=/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src all
+make[4]: Entering directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objects/blastdb'
+make[4]: Nothing to be done for 'all'.
+make[4]: Leaving directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/objects/blastdb'

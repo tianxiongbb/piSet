@@ -1,0 +1,11 @@
+.cvsignore
+Byte_graph_.hpp
+Int_graph_.hpp
+Real_graph_.hpp
+Seq_graph_.hpp
+Byte_graph.hpp
+Int_graph.hpp
+Real_graph.hpp
+NCBI_Seqres_module.hpp
+seqres__.hpp
+seqres.dump

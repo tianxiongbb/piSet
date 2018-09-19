@@ -1,0 +1,1 @@
+../opt/trinity-2.5.1/util/SAM_nameSorted_to_uniq_count_stats.pl

@@ -1,0 +1,15 @@
+make[5]: Entering directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/build/algo/blast/igblast'
+Updating dependency information for /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/algo/blast/igblast/igblast.cpp.
+/usr/bin/ccache /usr/bin/g++  -std=gnu++11 -c  -Wall -Wno-format-y2k  -pthread -fopenmp -fPIC   -O3 -finline-functions -fstrict-aliasing -fomit-frame-pointer  -DNDEBUG -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE   -D_MT -D_REENTRANT -D_THREAD_SAFE -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/inc -I/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/include  -fdiagnostics-color=always /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/src/algo/blast/igblast/igblast.cpp -o igblast.o 
+pString, ncbi::CTempString, std::vector<std::__cxx11::basic_string<char> >&, ncbi::NStr::EMergeDelims, std::vector<long unsigned int>*)s);
+      pString  str,
+pString, ncbi::CTempString, std::vector<std::__cxx11::basic_string<char> >&, ncbi::NStr::EMergeDelims, std::vector<long unsigned int>*)s);
+      pString  str,
+ember function 'parison between signed and unsigned integer expressions [-Wsign-compare]
+                 if((*it)->GetAlignLength() - (*it)->GetTotalGapCount(0) < length){
+/bin/rm -f libigblast.a .libigblast.a.stamp
+ar cr libigblast.a igblast.o  
+/bin/bash /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/scripts/common/impl/if_diff.sh /bin/ln -f libigblast.a /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib
+/bin/ln -f libigblast.a /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/lib/libigblast.a
+/bin/ln -f .igblast.dep /data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/status/.igblast.dep
+make[5]: Leaving directory '/data/tusers/yutianx/tongji2/Software/ncbi-blast-2.6.0+-src/c++/ReleaseMT/build/algo/blast/igblast'
