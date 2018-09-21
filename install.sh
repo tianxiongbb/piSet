@@ -4,7 +4,7 @@ PATH_PRO=$(dirname `readlink -f $0`)
 
 # write program path in PATH
 [ ! `which piSet_srnaseq` ] >/dev/null && echo -e "# added by piSet installer\nexport PATH=${PATH_PRO}/bin:\$PATH" >> ~/.bashrc
-! python -c "import bb_basic" 2>/dev/null && echo -e "# added by piSet installer\nexport PYTHONPATH=${PATH_PRO}/bin/lib_python:\$PYTHONPATH" >> ~/.bashrc
+! python -c "import bb_basic" 2>/dev/null && echo -e "# added by piSet installer\nexport PYTHONPATH=${PATH_PRO}/lib_python:\$PYTHONPATH" >> ~/.bashrc
 
 # configure RepeatMasker
 #awk -v pt=${PATH_PRO}/bin \
