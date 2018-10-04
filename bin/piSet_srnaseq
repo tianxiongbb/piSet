@@ -122,13 +122,13 @@ for SRNA in ${FILE_IN}
 do
 	echo0 4 "------ analysizing ${SRNA} ------"
 	# get file format
-	[ "${SRNA%.f*q*}" != "${SRNA}" ] && IF_FASTQ=1
+	[ "${SRNA%.f*q[.][g][z]}" != "${SRNA}" ] && IF_FASTQ=1
 	# get sample name
 	PREFIX=${OUTDIR}/`basename ${SRNA}`
 	if [ -z ${IF_FASTQ} ];then
 		PREFIX=${PREFIX%.insert}
 	else
-		PREFIX=${PREFIX%.f*q*}
+		PREFIX=${PREFIX%.f*q[.][g][z]}
 	fi
 	SAMPLE_NAME=`basename ${PREFIX}`
 	PREFIX_TEMP=${PREFIX}
@@ -347,13 +347,13 @@ if [ -z ${IF_NOT_BED2SUMMARY} ];then
 	for SRNA in ${FILE_IN}
 	do
 		# get file format
-		[ "${SRNA%.f*q}" != "${SRNA}" ] && IF_FASTQ=1
+		[ "${SRNA%.f*q[.][g][z]}" != "${SRNA}" ] && IF_FASTQ=1
 		# get sample name
 		PREFIX=${OUTDIR}/`basename ${SRNA}`
 		if [ -z ${IF_FASTQ} ];then
 			PREFIX=${PREFIX%.insert}
 		else
-			PREFIX=${PREFIX%.f*q}
+			PREFIX=${PREFIX%.f*q[.][g][z]}
 		fi
 		ALL_PREFIX=${ALL_PREFIX}" "${PREFIX%/*}/bed2_summary/${PREFIX##*/}
 		FACTOR=`cat ${PREFIX}.factor.norBy_${NOR_METHOD}`
