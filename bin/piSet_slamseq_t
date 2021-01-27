@@ -1,0 +1,25 @@
+#!/bin/bash
+
+if [ $# -lt 1 ];then
+	echo0 5 "$0 outdir/prefix(like piSet_rnaseq) tc.snp CPU tc.te.snp genome quality_cutoff(suggest:30)"
+	exit 1
+fi
+
+GENOME=$5
+QLT=$6
+OUTDIR=`dirname $1`
+PREFIX1=`basename $1`
+SNP_GENOME=`readlink -f $2`
+SNP_TE=`readlink -f $4`
+QUALITY=$6
+cd ${OUTDIR} && OUTDIR=`pwd ${OUTDIR}`
+[ ! -d TtoC ] && mkdir -p TtoC
+[ ! -d TtoC_transposon ] && mkdir -p TtoC_transposon
+FACTOR=`cat STAR/${PREFIX1}.factor`
+# calculate T > C for genome mapping reads
+cd TtoC
+# calculate signal
+intersectBed -a ${PREFIX1}.tc.bed12 -b /data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/${GENOME}/${GENOME}.gene+picluster.bed -wo -split | awk -v f=${FACTOR} 'BEGIN{FS=OFS="\t"} {if(NR==FNR){a[$4]=$3-$2}else{if($5==0){s0[$16]+=1/$4}else if($5==1){s1[$16]+=1/$4}else{s2[$16]+=1/$4}}} END{print "geneName\t0TC\t1TC\t2TC";for(i in a){print i,s0[i]/a[i]*1000*f,s1[i]/a[i]*1000*f,s2[i]/a[i]*1000*f}}' /data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/${GENOME}/${GENOME}.gene+picluster.bed - > ${PREFIX1}.tc.rpkm
+# calculate signal
+cd ../TtoC_transposon
+awk -v f=${FACTOR} 'BEGIN{FS=OFS="\t"} {if(NR==FNR){a[$1]=$2}else{if($5==0){s0[$1]+=1/$4}else if($5==1){s1[$1]+=1/$4}else{s2[$1]+=1/$4}}} END{print "transposonName\t0TC\t1TC\t2TC";for(i in a){print i,s0[i]/a[i]*1000*f,s1[i]/a[i]*1000*f,s2[i]/a[i]*1000*f}}' /data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/${GENOME}/${GENOME}.transposon.size ${PREFIX1}.transposon.tc.bed12 > ${PREFIX1}.transposon.tc.rpkm

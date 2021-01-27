@@ -33,7 +33,7 @@ else
 fi
 
 if [ -f ${MAPPING_UNALIGN} ];then
-	READS_UNALIGN=`awk '{sum+=$4/$5} END{print sum}' ${MAPPING_SNCRNA}`
+	READS_UNALIGN=`awk '{sum+=$2} END{print sum}' ${MAPPING_UNALIGN}`
 else
 	echo0 0 "no unaligned insert file found, abort!" && exit 1
 fi

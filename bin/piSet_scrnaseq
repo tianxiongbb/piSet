@@ -1,0 +1,189 @@
+#!/bin/bash
+
+##----INTRO-----------##
+# Name=BB_rnaseq_pipeline
+VERSION=1.20
+# Date=Apr20 ,2016
+# Update=Jan 15, 2017
+# Update information:
+# Update=Oct 27, 2017
+# Update information: 1. add CPU for htseq; 2. use BB_bamtobw to make bigWig files for visualizing. 3. add a choice for repbase mapping.
+
+########################
+# Purpose
+#This file is for doing some pre-analysis for each RNA-seq samples
+#1.Mapping: bowtie2 + STAR
+#2.Count Feature Signal: htseq-count
+#3.Plot Results: to do
+
+#######--Arguments--#######
+help_info(){
+echo -e "\033[32;1m"
+cat << EOF
+Author: Tianxiong (Bear) Yu
+usage:
+piSet_scrnaseq <option>* (-l input_left.fq) (-r input_right.fq) (-g genome) (-x technology)
+EOF
+echo -e "\033[33;1m"
+cat << EOF
+
+Options:
+
+    Input:
+	-l left scRNA-seq fastq file.
+	-r right scRNA-seq fastq file.
+	-g genome used for this pipeline. eg: hg38 or mm10
+	-w whitelist of barcodes. If not specified, bustools will generate a whitelist based on the input data.
+    Output:
+	-o output directory. Please use different output directory for different runs. default: sample name
+	-p prefix of barcodes. default: sample name
+    mapping:
+	-x technology used for Single-Cell. Please use kallisto bus -l to check supported technoogies. default: DropSeq.
+	-i kallisto index for pseudo alignment. default: genome/Kallisto/transcriptome.idx
+	-t transcript to gene file. default: genome/genome.t2g.txt
+    performance:
+	-c CPU. default: 8
+	-m memory. default: 64G
+EOF
+echo -e "\033[0m"
+}
+
+
+if [ $# -lt 1 ];then
+	help_info
+	exit 1
+fi
+
+PATH_PROG=`dirname $0` && PATH_ANNO=${PATH_PROG%/bin}/annotation
+CPU=8
+MEMORY=64G
+
+echo0 1 "Command:"
+COMMAND="piSet_scrnaseq "$*
+echo0 3 "$COMMAND"
+echo ""
+
+ARGS=`getopt -a -o l:r:g:p:o:i:c:x:m:w:t: -- "$@"`
+[ $? -ne 0 ] && usage
+eval set -- "${ARGS}"
+while true
+do
+	case "$1" in
+		-h)	help_info && exit 0;;
+		-v)	echo0 1 "piSet_scrnaseq"${VERSION} && exit 0;;
+		-l)	LEFT=($2) && shift 2;;
+		-r)	RIGHT=($2) && shift 2;;
+		-g)	GENOME=$2 && shift 2;;
+		-p)	PREFIX=($2) && shift 2;;
+		-o)	OUTDIR=$2 && shift 2;;
+		-c)	CPU=$2 && shift 2;;
+		-i)	INDEX=$2 && shift 2;;
+		-t)	T2G=$2 && shift 2;;
+		-x)	TECH=$2 && shift 2;;
+		-m)	MEMORY=$2 && shift 2;;
+		-w)	WHITELIST=$2 && shift 2;;
+		--)	shift && break;;
+		*)	help_info && exit 1;;
+	esac
+done
+
+######Configure Tools########
+function checkTools(){
+	if [ `which $1` ];then
+		echo0 3 `which $1`
+	else
+		echo0 0 $1" not found, please install it or add it into your PATH!"
+		exit 1
+	fi
+}
+
+echo0 1 "tools used:"
+checkTools kallisto
+checkTools bustools
+
+######Configure Parameters########
+echo0 1 "configuring parameters......"
+[ -z ${LEFT} ] && echo0 0 "Error: Please input left.fq via -l" && exit 1
+[ -z ${RIGHT} ] && echo0 0 "Error: Please input right.fq via -r" && exit 1
+
+[ ! -f "${LEFT}" ] && echo0 0 "Error: No fastq file in ${LEFT}" && exit 1
+[ ! -f "${RIGHT}" ] && echo0 0 "Error: No fastq file in ${RIGHT}" && exit 1
+
+if [ -z ${PREFIX} ];then
+	PREFIX=`basename ${LEFT%[._]1.f*q*}`
+	echo0 4 "WARNING: no PREFIX name. set "${PREFIX}" as PREFIX name"
+fi
+
+if [ -z ${OUTDIR} ];then
+	OUTDIR=`basename ${LEFT%[._]1.f*q*}`
+	echo0 4 "WARNING: no output directory. set "${PREFIX}" as output derectory"
+fi
+
+if [ ! -n "$GENOME" ];then
+	echo0 0 "Error: please use -g to specify genome used"
+	exit 1
+fi
+
+if [ ! -d "$OUTDIR" ];then
+	echo0 4 "WARNING: output path not found, create one"
+	mkdir -p ${OUTDIR}
+fi
+
+if [ -z $INDEX ];then
+	INDEX=${PATH_ANNO}/${GENOME}/KallistoIndex/transcriptome.idx
+fi
+
+if [ -z $T2G ];then
+	T2G=${PATH_ANNO}/${GENOME}/${GENOME}.t2g.txt
+fi
+
+###########
+# process #
+###########
+
+
+###############
+# Preparation #
+###############
+
+###make directories
+[ ! -d ${OUTDIR}/${PREFIX} ] && mkdir ${OUTDIR}/${PREFIX}
+
+###################################################
+### pseudo align to transcriptome with kallisto ###
+###   and then process bus file via bustools    ###
+###################################################
+
+# align via kallisto bus
+echo0 2 "pseudo align via kallisto bus..."
+kallisto bus -i ${INDEX} -t ${CPU} -o ${OUTDIR} -x ${TECH} ${LEFT} ${RIGHT} > ${OUTDIR}/log.kallisto.bus 2>&1
+BUSFILE=${OUTDIR}/output.bus
+# get whitelist of barcodes (for DROPseq)
+if [ -z ${WHITELIST} ];then
+	echo0 2 "get whitelist of barcodes..."
+	bustools sort -t ${CPU} -m ${MEMORY} -o ${OUTDIR}/output.sorted.bus ${BUSFILE}
+	BUSFILE=${OUTDIR}/output.sorted.bus
+	bustools whitelist -o ${OUTDIR}/whitelist ${BUSFILE} > ${OUTDIR}/log.bustools.whitelist 2>&1
+	WHITELIST=${OUTDIR}/whitelist
+fi
+# correct bus file using whitelist and sort
+echo0 2 "correct bus file using whitelist and sort..."
+bustools correct -p -w ${WHITELIST} ${BUSFILE} | bustools sort -T ${OUTDIR}/tmp/ -t ${CPU} -m ${MEMORY} -o ${OUTDIR}/output.sorted.corrected.bus -
+BUSFILE=${OUTDIR}/output.sorted.corrected.bus 
+# get statistics of alignment
+echo0 2 "get statistics of alignment..."
+bustools inspect -o ${OUTDIR}/out.statistics ${BUSFILE}
+# count UMIs in each gene
+echo0 2 "count UMIs in each gene..."
+bustools count -o ${OUTDIR}/count_matrix -g ${T2G} -e ${OUTDIR}/matrix.ec -t ${OUTDIR}/transcripts.txt --genecounts -m ${BUSFILE}
+# add gene symbols to gene.txt
+awk 'BEGIN{FS=OFS="\t"} {if(NR==FNR){a[$2]=$3}else{print $1,a[$1]}}' ${T2G} ${OUTDIR}/count_matrix.genes.txt > ${OUTDIR}/${PREFIX}/genes.tsv
+# slight modify the format of matrix.mtx to fit seurat input format
+awk 'BEGIN{FS=OFS=" "} {if(NR<3){print $0}else if(NR>3){print $2,$1,$3}}' ${OUTDIR}/count_matrix.mtx > ${OUTDIR}/${PREFIX}/matrix.mtx
+# use barcode prefix "_1/2/3" as barcode name
+awk -v p=${PREFIX} '{k++;print p"_"k}' ${OUTDIR}/count_matrix.barcodes.txt > ${OUTDIR}/${PREFIX}/barcodes.tsv
+# remove tmp/
+rm -rf ${OUTDIR}/tmp/
+
+###finished
+echo0 4 "------finished🍺🍺🍺------"

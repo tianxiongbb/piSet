@@ -1,0 +1,33 @@
+#!/bin/bash
+
+if [ $# -lt 2 ];then
+	echo0 5 "$0 in.goldstandard.bed in.verified.bed"
+	exit 1
+fi
+
+bedtools window -w 50 -a $1 -b $2 | awk '
+BEGIN{FS=OFS="\t"}
+{
+	split($4,gs,":");gs_name=gs[1];gs_strand=$6;
+	split($10,vfs,",");
+	for(i in vfs){
+		split(vfs[i],vf,":");vf_name=vf[1];vf_strand=vf[4];
+		if((vf_name==gs_name && vf_strand==gs_strand) || (vf_name=="FBgn0000638_FB" && gs_name=="FBgn0000638_FB")){
+			print $0;
+			next;
+		}
+	}
+}' - | awk '
+BEGIN{FS=OFS="\t"}
+{
+	n=$1";"$2";"$3";"$4";"$6;
+	if(ARGIND==1){
+		a[n]=$0
+	}else{
+		if(!a[n]){
+			print $0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+		}else{
+			print a[n]
+		}
+	}	
+}' - $1

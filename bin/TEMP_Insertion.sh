@@ -179,26 +179,33 @@ awk -v inst=${INSERT} 'BEGIN{FS=OFS="\t"} \
 			$5=on;print $0\
 		}\
 	}}' ${TE_SIZE} $i.unpair.uniq.transposons.bed > $i.unpair.uniq.transposons.filtered.bed
+# get unpaired.genome.bam for genome browser visulization
+awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){if(substr($4,length($4))==1){a[substr($4,1,length($4)-2)]=64}else{a[substr($4,1,length($4)-2)]=128}}else{if($1~/^@/){print $0}else if(and($2,a[$1])){print $0}}}' $i.unpair.uniq.transposons.filtered.bed $i.unpair.sam > $i.unpair.genome.sam
+samtools view -@ ${CPU} -bhS $i.unpair.genome.sam > $i.unpair.genome.bam
+samtools index $i.unpair.genome.bam
+#rm $i.unpair.genome.sam 
 # get unpaired.transposon.bam for genome browser visulization
-awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){if(substr($4,length($4))==1){a[substr($4,1,length($4)-2)]=64}else{a[substr($4,1,length($4)-2)]=128}}else{if($1~/^@/){print $0}else if(and($2,a[$1])){print $0}}}' $i.unpair.uniq.transposons.filtered.bed $i.unpair.sam > $i.unpair.transposon.sam
+samtools view -@ ${CPU} -F 0X4 -hS $i.unpair.uniq.transposons.sam > $i.t && mv $i.t $i.unpair.uniq.transposons.sam
+awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){rn=substr($4,1,length($4)-2);if(substr($4,length($4))==1){a[rn]=128}else{a[rn]=64};split($5,ttt,";");split(ttt[1],info,",");st[rn]=substr(info[2],1,1);pos[rn]=substr(info[2],2,length(info)-1);te[rn]=info[1]}else{if($1~/^@/){print $0}else if(and($2,a[$1])){if(((st[$1]=="+" && !and($2,16)) || (st[$1]=="-" && and($2,16))) && $3==te[$1]){print $0}}}}' $i.unpair.uniq.transposons.filtered.bed $i.unpair.uniq.transposons.sam > $i.unpair.transposon.sam
 samtools view -@ ${CPU} -bhS $i.unpair.transposon.sam > $i.unpair.transposon.bam
-samtools index $i.unpair.transposon.bam
-rm $i.unpair.transposon.sam 
+samtools sort -@ ${CPU} $i.unpair.transposon.bam -o $i.unpair.transposon.sort.bam
+samtools index $i.unpair.transposon.sort.bam
+#rm $i.unpair.transposon.sam $i.unpair.transposon.bam 
 #awk -v fl=$INSERT 'BEGIN{FS=OFS="\t"} {if(NR==FNR){tl[$1]=$2}else{o="";split($5,a,";");for(i in a){split(a[i],b,",");if(b[1]){if((b[2]<0 && (b[2]>-fl || b[2]<(fl-tl[b[1]]))) || (b[2]>0 && (b[2]>(tl[b[1]]-fl) || b[2]<fl))){o=o""a[i]";"}}};if(o){$5=o;print $0}}}' tmp.te.size $i.unpair.uniq.transposons.bed > $i.unpair.uniq.transposons.filtered.bed
 
 #Prepare for insertion breakpoints identification
 awk -F "\t" -v sample=$i '{OFS="\t"; print $1,$2,$3,sample,$5,$6}' $i.unpair.uniq.transposons.filtered.bed >> tmp
 perl $BINDIR/mergeTagsWithoutGap.pl tmp > $i.uniq.transposons.filtered.woGap.bed
 perl $BINDIR/mergeTagsWithGap.pl $i.uniq.transposons.filtered.woGap.bed $INSERT > $i.uniq.transposons.filtered.wGap.bed
-rm tmp
+#rm tmp
 perl $BINDIR/get_class.pl $i.uniq.transposons.filtered.wGap.bed $i > $i.uniq.transposons.filtered.wGap.class.bed
 perl $BINDIR/make.bp.bed.pl $i.uniq.transposons.filtered.wGap.class.bed $ANNO $FAMI
 
 ### preserve $i.unpair.sam for TEMP_Absence.sh. Also preserve $1.unpair.uniq.*.fastq and $1.unpair.uniq.bed to save time for the next running
 #rm $i.unpair.sam
 #rm $i.unpair.uniq.?.fastq $i.unpair.uniq.bed 
-rm  $i.unpair.uniq.?.sai 
-rm $i.unpair.uniq.transposons.sam $i.unpair.uniq.transposons.unpair.sam $i.uniq.transposons.filtered.woGap.bed $i.uniq.transposons.filtered.wGap.bed
+#rm  $i.unpair.uniq.?.sai 
+#rm $i.unpair.uniq.transposons.sam $i.unpair.uniq.transposons.unpair.sam $i.uniq.transposons.filtered.woGap.bed $i.uniq.transposons.filtered.wGap.bed
 
 
 #Detect insertion breakpoints using soft-clipping information

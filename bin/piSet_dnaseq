@@ -179,6 +179,7 @@ if [ ! -z ${IF_TEMP} ];then
 	echo0 2 "run TEMP_Absence to get transposon deletion......"
 	TEMP_Absence.sh -i ${PREFIX}.sorted.bam -s ${PATH_PROG}/ -o ${OUTDIR} -r ${TE_BED} -t ${GENOME_2BIT} -f ${FRAGMENT_SIZE} -x 5 -c ${CPU} > ${PREFIX}.TEMP_Absence.log 2>&1
 	awk 'BEGIN{FS=OFS="\t"} {if(NR==FNR){ab[$4]+=$9}else{print $1,ab[$1]/1}}' ${PREFIX}.absence.refined.bp.summary ${OUTDIR}/temp.te.size > ${PREFIX}.deletion.result
+	awk 'BEGIN{FS=OFS="\t"} {if(NR>1){print $1,$2,$3,$4,$9,".",$7"/"$8}}' ${PREFIX}.absence.refined.bp.summary > ${PREFIX}.deletion.bed
 	rm ${OUTDIR}/temp.te.size
 	TIME_TEMP_DELETION=${SECONDS} && SECONDS=0
 fi
@@ -187,4 +188,4 @@ echo0 4 "------ finished, congras🍺🍺🍺 ------"
 echo0 3 "Genome mapping:\t$((${TIME_GENOME_MAPPING} / 3600))h $((${TIME_GENOME_MAPPING} / 60))m" 2>/dev/null
 echo0 3 "Sam to sorted bam:\t$((${TIME_SAM_TO_SORTED_BAM} / 3600))h $((${TIME_SAM_TO_SORTED_BAM} / 60))m" 2>/dev/null
 [ ! -z ${TIME_TEMP_INSERTION} ] && echo0 3 "Transposon insertion:\t$((${TIME_TEMP_INSERTION} / 3600))h $((${TIME_TEMP_INSERTION} / 60))m" 2>/dev/null
-[ ! -Z ${TIME_TEMP_DELETION} ] && echo0 3 "Transposon deletion:\t$((${TIME_TEMP_DELETION} / 3600))h $((${TIME_TEMP_DELETION} / 60))m" 2>/dev/null
+[ ! -z ${TIME_TEMP_DELETION} ] && echo0 3 "Transposon deletion:\t$((${TIME_TEMP_DELETION} / 3600))h $((${TIME_TEMP_DELETION} / 60))m" 2>/dev/null

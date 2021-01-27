@@ -17,9 +17,10 @@ do
 	echo -e "samtools mpileup -f $3 -v -I -t DP,AD -A ${1} -r ${chrom} | bcftools call -mv | bcftools view -v snps > ${4}.temp.${chrom}.snps" >> ${ParaFile}
 done
 ParaFly -c ${ParaFile} -CPU $5 && rm ${ParaFile}*
-cat ${4}.temp.*.snps > $4
+grep "^#" ${4}.temp.${chrom}.snps > ${4}.temp.header
+grep -v "^#" ${4}.temp.*.snps | cat ${4}.temp.header -  > $4
 TIME_SNP=${SECONDS}
-rm ${4}.temp.*.snps 
+rm ${4}.temp.*.snps ${4}.temp.header
 
 # finished
 echo0 3 "Time used for calling snps: $(( $TIME_SNP / 3600 ))h, $(( $TIME_SNP / 60 ))m"

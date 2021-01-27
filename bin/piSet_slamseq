@@ -1,0 +1,80 @@
+#!/bin/bash
+
+if [ $# -lt 1 ];then
+	echo0 5 "$0 outdir/prefix(like piSet_rnaseq) tc.snp CPU tc.te.snp genome quality_cutoff(suggest:30)"
+	exit 1
+fi
+
+GENOME=$5
+QLT=$6
+OUTDIR=`dirname $1`
+PREFIX1=`basename $1`
+SNP_GENOME=`readlink -f $2`
+SNP_TE=`readlink -f $4`
+QUALITY=$6
+cd ${OUTDIR} && OUTDIR=`pwd ${OUTDIR}`
+[ ! -d TtoC ] && mkdir -p TtoC
+[ ! -d TtoC_transposon ] && mkdir -p TtoC_transposon
+FACTOR=`cat STAR/${PREFIX1}.factor`
+# calculate T > C for genome mapping reads
+cd STAR
+[ ! -f ${PREFIX1}.rmdup.sam ] && samtools view -@ $3 -h ${PREFIX1}.rmdup.bam > ${PREFIX1}.rmdup.sam
+piSet_slamseq_process_sam ${PREFIX1}.rmdup.sam ${PREFIX1}.tc.sam ${SNP_GENOME} ${PREFIX1}.tc.conversion.stats ${QUALITY}
+samtools view -@ $3 -bhS ${PREFIX1}.tc.sam > ${PREFIX1}.tc.bam 
+# make a new bed12 file include map times in 4th column and T>C conversion number in 5th column
+bedtools bamtobed -i ${PREFIX1}.tc.bam -tag TC -split -bed12 | awk 'BEGIN{FS=OFS="\t"} {if(substr($4,length($4))=="1"){if($6=="+"){$6="-"}else{$6="+"}};split($4,a,"/");$4=a[1];print $0}' > ${PREFIX1}.tc.bed12.temp
+# fix T>C per read to per fragment
+awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){split($4,a,";;");if(a[2]==1){tc1[a[1]]=$5}else{tc2[a[1]]=$5}}else{split($4,a,";;");$4=a[3];$5=tc1[a[1]]+tc2[a[1]];print $0}}' ${PREFIX1}.tc.bed12.temp ${PREFIX1}.tc.bed12.temp > ${PREFIX1}.tc.bed12 && rm ${PREFIX1}.tc.bed12.temp 
+#rm ${PREFIX1}.tc.bed12.temp 
+awk -v f=${FACTOR} '{if($5>6){$5=6};a[$5]+=1/$4} END{print "#T>C_number","read_counts";for(i=0;i<=6;i++){print i,a[i]*f}}' ${PREFIX1}.tc.bed12 > ${PREFIX1}.tc.stats
+# factor to normalize to total nascent transcript read depth (reads with more than 2 T>C)
+#FACTOR2=`awk '{if($5>=2){s+=1/$4}} END{print 1000000/s}' ${PREFIX1}.tc.bed12`
+# calculate signal
+intersectBed -a ${PREFIX1}.tc.bed12 -b /data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/${GENOME}/${GENOME}.gene+picluster.bed -wo -split | awk -v f=${FACTOR} 'BEGIN{FS=OFS="\t"} {if(NR==FNR){a[$4]=$3-$2}else{if($5==0){s0[$16]+=1/$4}else if($5==1){s1[$16]+=1/$4}else{s2[$16]+=1/$4}}} END{print "geneName\t0TC\t1TC\t2TC";for(i in a){print i,s0[i]/a[i]*1000*f,s1[i]/a[i]*1000*f,s2[i]/a[i]*1000*f}}' /data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/${GENOME}/${GENOME}.gene+picluster.bed - > ${PREFIX1}.tc.rpkm
+# seperate mapping information and signal track for more than 0;1;2 T>C reads
+awk '$5==0' ${PREFIX1}.tc.bed12 > ${PREFIX1}.tc.0.bed12
+awk '$5==1' ${PREFIX1}.tc.bed12 > ${PREFIX1}.tc.1.bed12
+awk '$5>=2' ${PREFIX1}.tc.bed12 > ${PREFIX1}.tc.2.bed12
+for i in 0 1 2
+do
+	bed12ToBed6 ${PREFIX1}.tc.${i}.bed12 > ${PREFIX1}.tc.${i}.bed6
+	awk -v f=$FACTOR 'BEGIN{FS=OFS="\t"} {if($6=="+"){print $1,$2,$3,1/$4*f}}' ${PREFIX1}.tc.${i}.bed6 | sort -k1,1 -k2,2n > ${PREFIX1}.tc.${i}.bed6.sense
+	awk -v f=$FACTOR 'BEGIN{FS=OFS="\t"} {if($6=="-"){print $1,$2,$3,1/$4*f}}' ${PREFIX1}.tc.${i}.bed6 | sort -k1,1 -k2,2n > ${PREFIX1}.tc.${i}.bed6.anti
+	mergeOverlappedBdg ${PREFIX1}.tc.${i}.bed6.sense > ${PREFIX1}.tc.${i}.sense.bdg
+	mergeOverlappedBdg ${PREFIX1}.tc.${i}.bed6.anti > ${PREFIX1}.tc.${i}.anti.bdg
+	bedGraphToBigWig ${PREFIX1}.tc.${i}.sense.bdg /data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/${GENOME}/${GENOME}.chrom.size ${PREFIX1}.tc.${i}.sense.bw
+	bedGraphToBigWig ${PREFIX1}.tc.${i}.anti.bdg /data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/${GENOME}/${GENOME}.chrom.size ${PREFIX1}.tc.${i}.anti.bw
+	rm ${PREFIX1}.tc.${i}.bed6.sense ${PREFIX1}.tc.${i}.bed6.anti ${PREFIX1}.tc.${i}.sense.bdg ${PREFIX1}.tc.${i}.anti.bdg ${PREFIX1}.tc.${i}.bed6
+done
+mv ${PREFIX1}.tc.* ../TtoC/
+
+# calculate T > C for transposon mapping reads
+cd ${OUTDIR}/bowtie2
+[ ! -f ${PREFIX1}.transposon.rmdup.sam ] && samtools view -@ $3 -h ${PREFIX1}.transposon.rmdup.bam > ${PREFIX1}.transposon.rmdup.sam
+piSet_slamseq_process_sam ${PREFIX1}.transposon.rmdup.sam ${PREFIX1}.transposon.tc.sam ${SNP_TE} ${PREFIX1}.transposon.tc.conversion.stats ${QUALITY}
+samtools view -@ $3 -bhS ${PREFIX1}.transposon.tc.sam > ${PREFIX1}.transposon.tc.bam 
+# make a new bed12 file include map times in 4th column and T>C conversion number in 5th column
+bedtools bamtobed -i ${PREFIX1}.transposon.tc.bam -tag TC -split -bed12 | awk 'BEGIN{FS=OFS="\t"} {if(substr($4,length($4))=="1"){if($6=="+"){$6="-"}else{$6="+"}};split($4,a,"/");$4=a[1];print $0}' > ${PREFIX1}.transposon.tc.bed12.temp
+# fix T>C per read to per fragment
+awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){split($4,a,";;");if(a[2]==1){tc1[a[1]]=$5}else{tc2[a[1]]=$5}}else{split($4,a,";;");$4=a[3];$5=tc1[a[1]]+tc2[a[1]];print $0}}' ${PREFIX1}.transposon.tc.bed12.temp ${PREFIX1}.transposon.tc.bed12.temp > ${PREFIX1}.transposon.tc.bed12 && rm ${PREFIX1}.transposon.tc.bed12.temp 
+awk -v f=${FACTOR} '{if($5>6){$5=6};a[$5]+=1/$4} END{print "#T>C_number","read_counts";for(i=0;i<=6;i++){print i,a[i]*f}}' ${PREFIX1}.transposon.tc.bed12 > ${PREFIX1}.transposon.tc.stats
+# calculate signal
+awk -v f=${FACTOR} 'BEGIN{FS=OFS="\t"} {if(NR==FNR){a[$1]=$2}else{if($5==0){s0[$1]+=1/$4}else if($5==1){s1[$1]+=1/$4}else{s2[$1]+=1/$4}}} END{print "transposonName\t0TC\t1TC\t2TC";for(i in a){print i,s0[i]/a[i]*1000*f,s1[i]/a[i]*1000*f,s2[i]/a[i]*1000*f}}' /data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/${GENOME}/${GENOME}.transposon.size ${PREFIX1}.transposon.tc.bed12 > ${PREFIX1}.transposon.tc.rpkm
+# seperate mapping information and signal track for 0;1;2;3;>4 T>C reads
+awk '$5==0' ${PREFIX1}.transposon.tc.bed12 > ${PREFIX1}.transposon.tc.0.bed12
+awk '$5==1' ${PREFIX1}.transposon.tc.bed12 > ${PREFIX1}.transposon.tc.1.bed12
+awk '$5>=2' ${PREFIX1}.transposon.tc.bed12 > ${PREFIX1}.transposon.tc.2.bed12
+for i in 0 1 2
+do
+	bed12ToBed6 ${PREFIX1}.transposon.tc.${i}.bed12 > ${PREFIX1}.transposon.tc.${i}.bed6
+	awk -v f=$FACTOR 'BEGIN{FS=OFS="\t"} {if($6=="+"){print $1,$2,$3,1/$4*f}}' ${PREFIX1}.transposon.tc.${i}.bed6 | sort -k1,1 -k2,2n > ${PREFIX1}.transposon.tc.${i}.bed6.sense
+	awk -v f=$FACTOR 'BEGIN{FS=OFS="\t"} {if($6=="-"){print $1,$2,$3,1/$4*f}}' ${PREFIX1}.transposon.tc.${i}.bed6 | sort -k1,1 -k2,2n > ${PREFIX1}.transposon.tc.${i}.bed6.anti
+	mergeOverlappedBdg ${PREFIX1}.transposon.tc.${i}.bed6.sense > ${PREFIX1}.transposon.tc.${i}.sense.bdg
+	mergeOverlappedBdg ${PREFIX1}.transposon.tc.${i}.bed6.anti > ${PREFIX1}.transposon.tc.${i}.anti.bdg
+	bedGraphToBigWig ${PREFIX1}.transposon.tc.${i}.sense.bdg /data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/${GENOME}/${GENOME}.transposon.size ${PREFIX1}.transposon.tc.${i}.sense.bw
+	bedGraphToBigWig ${PREFIX1}.transposon.tc.${i}.anti.bdg /data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/${GENOME}/${GENOME}.transposon.size ${PREFIX1}.transposon.tc.${i}.anti.bw
+	rm ${PREFIX1}.transposon.tc.${i}.bed6.sense ${PREFIX1}.transposon.tc.${i}.bed6.anti ${PREFIX1}.transposon.tc.${i}.sense.bdg ${PREFIX1}.transposon.tc.${i}.anti.bdg ${PREFIX1}.transposon.tc.${i}.bed6
+done
+mv ${PREFIX1}.transposon.tc.* ../TtoC_transposon/
+
+

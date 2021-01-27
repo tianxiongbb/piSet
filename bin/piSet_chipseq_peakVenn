@@ -1,0 +1,23 @@
+#!/bin/bash
+
+if [ $# -lt 2 ];then
+	echo0 5 "$0 out.prefix \"peak1.bed peak2.bed peak3.bed ...\""
+	exit 1
+fi
+
+for f in $2
+do
+	p=${f%.bed}
+	awk -v p=${p} 'BEGIN{FS=OFS="\t"} {$5=p;print $0}' $f >> $1.t
+done
+sort -k1,1 -k2,2n $1.t | bedtools merge -i - -o distinct -c 5 | awk 'BEGIN{FS=OFS="\t"} {k++;print $1,$2,$3,"mergedPeak_"k,$4,"."}'> $1.mergedPeak.bed
+rm $1.t
+awk -v p=$1 'BEGIN{FS=OFS="\t"} {split($5,a,",");for(i in a){print $4>p".tlist."a[i]}}' $1.mergedPeak.bed
+DP=`readlink -f $1`
+DIR=`dirname $DP`
+PREFIX=`basename $DP`
+piSet_chipseq_peakVenn.R ${DIR} ${PREFIX}
+rm $1.tlist.*
+
+
+

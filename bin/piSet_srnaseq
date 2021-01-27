@@ -18,9 +18,11 @@ help_info(){
 	echo0 4 "output:"
 	echo0 4 "\t-o <dir>\toutput directory. default: ./"
 	echo0 4 "\t-p <string>\tprefix for all figures. default: result"
+	echo0 4 "\t-I <index>\tbowtie index for spike-in (only used when spike-in is available; when set, the default normalization method will be spikein)"
 	echo0 4 "\t-E \t\tset -E to enable using EM algorithm to assign multiple mappers. default: not set"
-	echo0 4 "\t-N <miRNA|uniq|all|uniqS|uniqM|uniqSM|allS|allM|allSM>\tdefault: miRNA"
+	echo0 4 "\t-N <miRNA|uniq|all|uniqS|uniqM|uniqSM|allS|allM|allSM|interQrtMi|uniPi|flam|spikein>\tdefault: miRNA"
 	echo0 4 "\t\t\t\tnormalize signal to miRNA or unique/all genome mapping reads (including S: sncRNA or/and M: miRNA)"
+	echo0 4 "\t\t\t\tyou can also normalize signal to 1~3 quart miRNAs (interQrtMi) or unistrand piClusters (uniPi; only works for dm6 now) or only normalize to flam (only works for dm3 and dm6)."
 	echo0 1 "bed2_summary:"
 	echo0 1 "\t-D \t\tset -D to skip downstream analysis for piRNA signal calculation, figure making as so on."
 	echo0 0 "mapping:"
@@ -47,6 +49,7 @@ fi
 
 # parameters
 CPU=1
+MISMATCH_SPIKEIN=1
 MISMATCH_RRNA=1
 MISMATCH_HAIRPIN=1
 MISMATCH_SNCRNA=1
@@ -57,14 +60,14 @@ CUTADAPT_e=0.15
 CUTADAPT_O=7
 CUTADAPT_m=18
 CUTADAPT_M=35
-NOR_METHOD="miRNA"
 OUTDIR=./
 FIGURE_PREFIX=result
 
-while getopts "hi:g:o:ER:H:S:G:P:T:a:e:O:m:M:c:N:p:D" OPTION; do
+while getopts "hi:g:o:ER:H:S:G:P:T:a:e:O:m:M:c:N:p:DI:" OPTION; do
 	case $OPTION in
 		i)	FILE_IN=${OPTARG};;
 		g)	GENOME=${OPTARG};;
+		I)	SPIKEIN=${OPTARG};;
 		E)	IF_EM=1;;
 		o)	OUTDIR=${OPTARG};;
 		p)	FIGURE_PREFIX=${OPTARG};;
@@ -88,14 +91,21 @@ while getopts "hi:g:o:ER:H:S:G:P:T:a:e:O:m:M:c:N:p:D" OPTION; do
 done
 
 # check parameters
+if [ -z ${NOR_METHOD} ];then
+	if [ ! -z ${SPIKEIN} ];then
+		NOR_METHOD="spikein"
+	else
+		NOR_METHOD="miRNA"
+	fi
+fi
 [ -z "${FILE_IN}" ] && echo0 0 "please input srna sequencing file via -i" && exit 1
 for SRNA in ${FILE_IN}
 do
-	[ ! -f ${SRNA} ] && echo0 "no srna sequencing file in ${SRNA}" && exit 1
+	[ ! -f ${SRNA} ] && echo0 0 "no srna sequencing file in ${SRNA}" && exit 1
 done
 [ -z ${GENOME} ] && echo0 0 "please input genome via -g" && exit 1
 PATH_PROG=`dirname $0` && PATH_ANNO=${PATH_PROG%/bin}/annotation/${GENOME}
-[ ! -d ${PATH_ANNO} ] && echo0 "genome not found in ${PATH_ANNO}, maybe not installed. please install ${GENOME} via piSet_install_genome" && exit 1
+[ ! -d ${PATH_ANNO} ] && echo0 0 "genome not found in ${PATH_ANNO}, maybe not installed. please install ${GENOME} via piSet_install_genome" && exit 1
 [ ! -d ${OUTDIR} ] && echo0 4 "make output directory ${OUTDIR}" && mkdir -p ${OUTDIR} && echo0 3 "all output will be in ${OUTDIR}"
 PARA_EM=${OUTDIR}/${RANDOM}.${RANDOM}.${RANDOM}.${RANDOM}.EM
 PARA_BW=${OUTDIR}/${RANDOM}.${RANDOM}.${RANDOM}.${RANDOM}.BW
@@ -122,7 +132,8 @@ for SRNA in ${FILE_IN}
 do
 	echo0 4 "------ analysizing ${SRNA} ------"
 	# get file format
-	[ "${SRNA%.f*q[.][g][z]}" != "${SRNA}" ] && IF_FASTQ=1
+	[ "${SRNA%.f*q.gz}" != "${SRNA}" ] && IF_FASTQ=1
+	[ "${SRNA%.f*q}" != "${SRNA}" ] && IF_FASTQ=1
 	# get sample name
 	PREFIX=${OUTDIR}/`basename ${SRNA}`
 	if [ -z ${IF_FASTQ} ];then
@@ -153,6 +164,28 @@ do
 	fi
 	READ_ALL=`awk '{sum+=$2} END{print sum}' ${SRNA}`
 	
+	# mapping to spikein first
+	if [ -f ${SPIKEIN}.1.ebwt ];then
+		if [ -f ${PREFIX}.spikein.bed2 ];then
+			echo0 4 "spikein mapping file exists, skip mapping to spikein"
+		else
+			echo0 2 "mapping to spikein, allow ${MISMATCH_SPIKEIN} mismatch......"
+			bowtie -r -S -v ${MISMATCH_SPIKEIN} -k 1 -p ${CPU} --un ${PREFIX}.x_spikein.insert \
+				${SPIKEIN} ${SRNA} \
+				2>${PREFIX}.spikein.log | \
+				samtools view -bhSF 0x4 - 2>/dev/null | \
+				bedtools bamtobed -i - > ${PREFIX}.temp.bed && \
+				insertBed_to_bed2 ${SRNA} ${PREFIX}.temp.bed > ${PREFIX}.spikein.bed2 && \
+				rm -rf ${PREFIX}.temp.bed
+		fi
+		READ_SPIKEIN=`awk '{sum+=$4/$5} END{print sum}' ${PREFIX}.spikein.bed2`
+		SRNA=${PREFIX}.x_spikein.insert
+		PREFIX=${PREFIX}.x_spikein
+	else
+		echo0 4 "no spikein set or spikein index not found, skip mapping to spikein......"
+		READ_SPIKEIN=0
+	fi
+
 	# mapping to rRNA
 	if [ -f ${PATH_ANNO}/BowtieIndex/rRNA.1.ebwt ];then
 		if [ -f ${PREFIX}.rRNA.bed2 ];then
@@ -193,6 +226,10 @@ do
 		[ "${NOR_METHOD}" == "miRNA" -o "${NOR_METHOD}" == "uniqM" -o "${NOR_METHOD}" == "uniqSM" -o "${NOR_METHOD}" == "allM" -o "${NOR_METHOD}" == "allSM"  ] && NORFILE=$NORFILE" "${PREFIX}.hairpin.bed2
 		SRNA=${PREFIX}.x_hairpin.insert
 		PREFIX=${PREFIX}.x_hairpin
+		if [ ! -f ${PATH_ANNO}/${GENOME}.hairpin.size ];then
+			faToChromSize ${PATH_ANNO}/${GENOME}.hairpin.fa > ${PATH_ANNO}/${GENOME}.hairpin.size 
+			awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){if($5==1){a[$1]+=$4}}else{print $1,a[$1]/1}}' ${PREFIX}.hairpin.bed2 ${PATH_ANNO}/${GENOME}.hairpin.size > ${PREFIX}.hairpin.readCount
+		fi
 	else
 		echo0 4 "no hairpin  index found, skip mapping to hairpin......"
 		READ_MIRNA=0
@@ -217,7 +254,7 @@ do
 		SRNA=${PREFIX}.x_sncRNA.insert
 		PREFIX=${PREFIX}.x_sncRNA
 	else
-		echo0 4 "no sncRNA  index found, skip mapping to sncRNA......"
+		echo0 4 "no sncRNA index found, skip mapping to sncRNA......"
 		READ_SNCRNA=0
 	fi
 	
@@ -240,24 +277,6 @@ do
 		echo0 0 "no genome index found, corrupt" && exit 1
 	fi
 	
-	# calculate factor
-	echo0 2 "calculate factor......"
-	FILE_NOR_FACTOR=${PREFIX_TEMP}.factor.norBy_${NOR_METHOD}
-	if [ -f ${FILE_NOR_FACTOR} ];then
-		echo0 4 "factor file exists, skip calculating factor"
-		FACTOR=(`cat ${FILE_NOR_FACTOR}`)
-	else
-		# make a simple file to preserve factor used
-		touch ${PREFIX_TEMP}.factor.norBy_${NOR_METHOD}  
-		if [ "${NOR_METHOD}" == "uniq" -o "${NOR_METHOD}" == "uniqM" -o "${NOR_METHOD}" == "uniqS" -o "${NOR_METHOD}" == "uniqSM" ];then
-			FACTOR=`awk '{if($5==1){sum+=$4}} END{print sum/1000000}' ${NORFILE}`
-		else
-			FACTOR=`awk '{sum+=$4/$5} END{print sum/1000000}' ${NORFILE}`
-		fi
-	fi
-	echo0 3 "factor: ${FACTOR}"
-	NORFILE=""
-	
 	# mapping to pilcuster
 	if [ -f ${PATH_ANNO}/BowtieIndex/picluster.1.ebwt ];then
 		if [ -f ${PREFIX}*.picluster.bed2 ];then
@@ -275,6 +294,42 @@ do
 	else
 		echo0 4 "no pilcuster index found, skip mapping to picluster"
 	fi
+	
+	# calculate factor
+	echo0 2 "calculate factor......"
+	FILE_NOR_FACTOR=${PREFIX_TEMP}.factor.norBy_${NOR_METHOD}
+	if [ -f ${FILE_NOR_FACTOR} ];then
+		echo0 4 "factor file exists, skip calculating factor"
+		FACTOR=(`cat ${FILE_NOR_FACTOR}`)
+	else
+		# make a simple file to preserve factor used
+		if [ "${NOR_METHOD}" == "interQrtMi" ];then
+			TWC=(`wc -l ${PREFIX}.hairpin.readCount`)
+			FACTOR=`sort -k2,2n ${PREFIX}.hairpin.readCount | awk -v twc=$TWC '{if(NR>TWC/4 && NR<TWC/4*3){sum+=$2}} END{print sum/1000000}'`
+			if [ $FACTOR -eq 0 ];then
+				echo0 1 "interquart miRNA abundance is 0, please use other normalization methods. Abort!"
+				exit 1
+			fi
+		elif [ "${NOR_METHOD}" == "spikein" ];then
+			FACTOR=`awk 'BEGIN{FS=OFS="\t"} {s+=$4/$5} END{print s/1000000}' ${PREFIX_TEMP}.spikein.bed2`
+		elif [ "${NOR_METHOD}" == "uniPi" ];then
+			FACTOR=`awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){if($6!="."){up[$4]=1}}else{if(up[$1]){sum+=$4/$5}}} END{print sum/1000000}' ${PATH_ANNO}/${PREFIX}.picluster.bed ${PREFIX}.picluster.bed2`
+		elif [ "${NOR_METHOD}" == "flam" ];then
+			if [ "${GENOME}" == "dm6" -o "${GENOME}" == "dm3" ];then
+				FACTOR=`awk 'BEGIN{FS=OFS="\t"} {if($1=="flam"){sum+=$4/$5}} END{print sum/100000}' ${PREFIX}.picluster.bed2`
+			else
+				echo0 1 "only dm3 or dm6 genome support normalizing to flamenco, please use other normalization methods. Abort!"
+				exit 1
+			fi
+		elif [ "${NOR_METHOD}" == "uniq" -o "${NOR_METHOD}" == "uniqM" -o "${NOR_METHOD}" == "uniqS" -o "${NOR_METHOD}" == "uniqSM" ];then
+			FACTOR=`awk '{if($5==1){sum+=$4}} END{print sum/1000000}' ${NORFILE}`
+		else
+			FACTOR=`awk '{sum+=$4/$5} END{print sum/1000000}' ${NORFILE}`
+		fi
+		echo ${FACTOR} > ${PREFIX_TEMP}.factor.norBy_${NOR_METHOD}
+	fi
+	echo0 3 "factor: ${FACTOR}"
+	NORFILE=""
 	
 	# mapping to transposon
 	if [ -f ${PATH_ANNO}/BowtieIndex/transposon.1.ebwt ];then
@@ -369,8 +424,10 @@ SECONDS=0
 if [ -z ${IF_NOT_BED2SUMMARY} ];then
 	echo0 2 "plot summary and bucket figures......"
 	plot_bed2_summary_autoScale.R ${CPU} ${OUTDIR}/figures/${FIGURE_PREFIX}.autoScale ${ALL_PREFIX}
+	plot_bed2_summary_halfAutoScale.R ${CPU} ${OUTDIR}/figures/${FIGURE_PREFIX}.halfAutoScale ${ALL_PREFIX}
 	plot_bed2_summary.R ${CPU} ${OUTDIR}/figures/${FIGURE_PREFIX} ${ALL_PREFIX}
 	plot_bed2_summary_for_gene_autoScale.R ${CPU} ${OUTDIR}/figures/${FIGURE_PREFIX}.autoScale ${ALL_PREFIX}
+	piSet_srnaseq_merge_files.sh ${OUTDIR}/bed2_summary
 fi
 TIME_PLOT=${SECONDS}
 

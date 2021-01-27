@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if [ $# -lt 1 ];then
+	echo0 5 "$0 in.sorted.bam out.rmdup.bam"
+	echo0 5 "this script will use picard to remove pcr duplicates"
+	[ `which picard` ] || echo0 4 "picard are not in your PATH, please install it or add it into your PATH"
+	exit 1
+fi
+
+[ `which picard` ] || echo0 4 "picard are not in your PATH, please install it or add it into your PATH"
+picard MarkDuplicates INPUT=$1 OUTPUT=$2 METRICS_FILE=${1/.bam/.dup.info} ASSUME_SORTED=true

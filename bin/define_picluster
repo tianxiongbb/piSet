@@ -12,7 +12,8 @@ function checkTools(){
 
 # help information
 help_info(){
-	echo0 4 `basename $0`
+	TS=$0
+	echo0 4 $0
 	echo0 4 "\t-i <file>\tin.bed2 for picluster define"
 	echo0 4 "\t-C <file>\tchrom.size file"
 	echo0 4 "\t-p <path/text>\tprefix for output."
@@ -35,7 +36,7 @@ help_info(){
 	echo0 3 "\t-E <file>\tcrick strand bigWig file for species, use with -e. default: make from bed2 file"
 	echo0 3 "\t-P \tpreserve tmp files."
 	echo0 1 ""
-	echo0 1 "Before run `basename $0`, please first mapping smallRNAseq data to genome with rRNA, miRNA, sncRNA removed using srna_map."
+	echo0 1 "Before running `basename $0`, please first mapping smallRNAseq data to genome with rRNA, miRNA, sncRNA removed using srna_map."
 }
 
 if [ $# -lt 1 ];then
@@ -253,14 +254,15 @@ awk -v cr=${CUTOFF_RPM} -v cs=${CUTOFF_SEQ} \
 		if($5==1){tcr=cr/2;tcs=cs/4}else{tcr=cr;tcs=cs/2};\
 		if((s[1]+s[2])>=tcr && (s[3]+s[4])>=tcs){\
 			print $1,$2,$3,$4,a[$4],$6}\
-		}}' ${PREFIX}.tmp.piC.strand.trim.rpm ${PREFIX}.tmp.piC.strand.trim.bed > ${PREFIX}.tmp.piC2.bed
+		}}' ${PREFIX}.tmp.piC.strand.trim.rpm ${PREFIX}.tmp.piC.strand.trim.bed | sort -k1,1 -k2,2n > ${PREFIX}.tmp.piC2.bed
 echo0 2 "filter piRNA clusters without enough 1U or 10A percentage and enough unique mapped reads......"
-bedtools intersect -a ${PREFIX}.tmp.piC2.bed -b ${BED2_IN} -wo -nonamecheck > ${PREFIX}.tmp.intersect
+bedtools intersect -sorted -a ${PREFIX}.tmp.piC2.bed -b ${BED2_IN} -wo -nonamecheck > ${PREFIX}.tmp.intersect
 awk -v prefix=${PREFIX_NAME} -v cr=${CUTOFF_RPM} -v cs=${CUTOFF_SEQ} -v up=${UNIQ_PERCENT} 'BEGIN{FS=OFS="\t"} \
 	{if(NR==FNR){a[$4]+=$10/$11;as[$4]+=1/$11;if(substr($13,1,1)=="T" || substr($13,10,1=="A")){t[$4]+=$10/$11;ts[$4]+=1/$11};if($11==1){u[$4]+=$10;us[$4]+=1}}\
 	else{if(a[$4]>0 && u[$4]>cr*up && us[$4]>cs*up){k++;name="pi-"prefix"-"k;print $1,$2,$3,name,$5,$6,t[$4]/a[$4],ts[$4]/as[$4]}}}' \
 	${PREFIX}.tmp.intersect ${PREFIX}.tmp.piC2.bed > ${PREFIX}.tmp.piC2.ATp.bed 
 awk -v pt=${ONEU_PERCENT} -v prefix=${PREFIX_NAME} 'BEGIN{FS=OFS="\t"} {if($7>pt || $8>pt){k++;$4="pi-"prefix"-"k;print $1,$2,$3,$4,$5,$6}}' ${PREFIX}.tmp.piC2.ATp.bed > ${PREFIX}.piC.bed 
+mv ${PREFIX}.tmp.piC2.ATp.bed ${PREFIX}.piC.ATp.bed 
 
 # remove tmp files
 [ -z ${CLOSE_REMOVE} ] && echo0 2 "remove tmp files" && rm ${PREFIX}.tmp*

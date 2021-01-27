@@ -1,0 +1,167 @@
+#!/bin/bash
+
+# function
+function checkTools(){
+	if [ `which $1` ];then
+		echo0 3 "$1: `which $1`"
+	else
+		echo0 0 "$1 not found, please install it or add it into your PATH!"
+		exit 1
+	fi
+}
+
+function delet(){
+	[ -f $1 ] && rm -rf $1
+}
+
+# help information
+help_info(){
+	echo0 4 "$0"
+	echo0 1 "\t-l <file>\tleft DNA sequencing reads in fastq or fastq.gz"
+	echo0 1 "\t-r <file>\tright DNA sequencing reads in fastq or fastq.gz"
+	echo0 1 "\t-D <file>\tdbSNP.vcf used for quality recalibration."
+	echo0 1 "\t-p <file>\tprefix name for output. eg: sample1. default: sample name"
+	echo0 1 "\t-o <dir>\tdirectory for output. eg: /data/dnaseq_pipeline. default: ./"
+	echo0 1 "\t-g <genome>\tgenome used. eg: dm3, mm10. default: dm3"
+	echo0 4 "transposon insertion and deletion (please run via TEMP2 indipendently)"
+	echo0 4 "mapping:"
+	echo0 1 "\t-B <index>\tbwa index used for genome mapping. default: genome/BWAIndex/genome"
+	echo0 4 "other:"
+	echo0 1 "\t-c <int>\tCPU number used in this pipeline. default: 1"
+}
+
+if [ $# -lt 1 ];then
+	help_info && exit 1
+fi
+
+# parameters
+FRAGMENT_SIZE=300
+CPU=1
+OUTDIR=./
+GENOME=dm3
+SWITCH_SOFT_CLIP=1
+MISMATCH_CONSENSUS=3
+
+while getopts "hl:r:p:g:Ts:f:b:B:Y:c:m:t:S:o:D:" OPTION; do
+	case $OPTION in
+		l)	LEFT=`readlink -f ${OPTARG}`;;
+		r)	RIGHT=`readlink -f ${OPTARG}`;;
+		p)	PREFIX=${OPTARG};;
+		o)	OUTDIR=${OPTARG%\/};;
+		g)	GENOME=${OPTARG};;
+		T)	IF_TEMP2=1;;
+		s)	FRAGMENT_SIZE=${OPTARG};;
+		f)	TE_FA=`readlink -f ${OPTARG}`;;
+		b)	TE_BED=`readlink -f ${OPTARG}`;;
+		m)	MISMATCH_CONSENSUS=${OPTARG};;
+		B)	BWA_INDEX=`readlink -f ${OPTARG}`;;
+		t)	GENOME_2BIT=`readlink -f ${OPTARG}`;;
+		S)	GENOME_SIZE=`readlink -f ${OPTARG}`;;
+		D)	DBSNP=`readlink -f ${OPTARG}`;;
+		c)	CPU=${OPTARG};;
+		h)	help_info && exit 1;;
+		*)	help_info && exit 1;;
+	esac
+done
+
+PATH_ANNO=`dirname ${0}` && PATH_ANNO=${PATH_ANNO%/bin}/annotation/${GENOME}
+PATH_PROG=`dirname ${0}`
+[ -z ${TE_FA} ] && TE_FA=${PATH_ANNO}/${GENOME}.transposon.fa
+[ -z ${TE_BED} ] && TE_BED=${PATH_ANNO}/${GENOME}.rmsk.bed
+[ -z ${BWA_INDEX} ] && BWA_INDEX=${PATH_ANNO}/BWAIndex/genome
+[ -z ${GENOME_2BIT} ] && GENOME_2BIT=${PATH_ANNO}/${GENOME}.2bit
+[ -z ${GENOME_FASTA} ] && GENOME_FASTA=${PATH_ANNO}/${GENOME}.fa
+[ -z ${GENOME_SIZE} ] && GENOME_SIZE=${PATH_ANNO}/${GENOME}.chrom.size
+
+# check tools
+echo0 1 "check tools......"
+checkTools bwa
+checkTools samtools
+#checkTools picard
+checkTools gatk
+checkTools TEMP_Insertion.sh
+checkTools TEMP_Absence.sh
+echo0 1 "OK"
+
+# check parameters
+echo0 1 "check parameters......"
+[ ! -f ${LEFT} ] && echo0 0 "no left.fastq file ${LEFT}" && exit 1
+[ ! -f ${RIGHT} ] && echo0 0 "no right.fastq file ${RIGHT}" && exit 1
+[ ! -d ${PATH_ANNO} ] && echo0 4 "genome ${GENOME} not installed, please make sure you have give all the annotation files via -f -b and -B"
+! [ ${FRAGMENT_SIZE} -gt 0 ] 2>/dev/null && echo0 0 "-s must be interger" && exit 1
+! [ ${MISMATCH_CONSENSUS} -ge 0 ] 2>/dev/null && echo0 0 "-m must be interger" && exit 1
+[ ! -z ${IF_TEMP} ] && [ ! -f ${TRANSPOSON_FASTA} ] && echo0 0 "no transposon.fa file ${TRANSPOSON_FASTA}" && exit 1
+[ ! -z ${IF_TEMP} ] && [ ! -f ${TRANSPOSON_BED} ] && echo0 0 "no rmsk.bed file ${TRANSPOSON_BED}" && exit 1
+[ ! -f ${BWA_INDEX}.amb ] && echo0 0 "no bwa index ${BWA_INDEX}" && exit 1
+[ -z ${PREFIX} ] && PREFIX=`basename ${LEFT}` && PREFIX=${PREFIX%.1.f*q*} && PREFIX=${PREFIX%_R1.f*q*} && echo0 4 "no prefix is set via -p, set to ${PREFIX}"
+echo0 1 "OK"
+
+###############
+### process ###
+###############
+
+# mkdir
+[ ! -d ${OUTDIR} ] && mkdir ${OUTDIR}
+[ ! -d ${OUTDIR}/bwa ] && mkdir ${OUTDIR}/bwa
+[ ! -d ${OUTDIR}/TEMP2 ] && mkdir ${OUTDIR}/TEMP2
+[ ! -d ${OUTDIR}/gatk ] && mkdir ${OUTDIR}/gatk
+[ ! -d ${OUTDIR}/LiRA ] && mkdir ${OUTDIR}/LiRA
+[ ! -d ${OUTDIR}/log ] && mkdir ${OUTDIR}/log
+
+# genome alignement using bwa mem
+#if [ ! -f ${OUTDIR}/bwa/${PREFIX}.sorted.bam ];then # skip this step if already mapped
+#	# map DNAseq to genome via bwa mem
+#	echo0 2 "map to genome via bwa mem......"
+#	[ ! -f ${OUTDIR}/bwa/${PREFIX}.sam ] && bwa mem -R "@RG\tID:"${PREFIX}"\tLB:${PREFIX}\tPL:illumina\tSM:"${PREFIX}"\tPU:unit" -t ${CPU} ${BWA_INDEX} ${LEFT} ${RIGHT} > ${OUTDIR}/bwa/${PREFIX}.sam 2>${OUTDIR}/log/${PREFIX}.bwamem.log
+#	TIME_GENOME_MAPPING=${SECONDS} && SECONDS=0
+#	# sam to sorted.bam
+#	echo0 2 "sam to mkdup.bam......"
+#	samtools view -bhS -@ ${CPU} ${OUTDIR}/bwa/${PREFIX}.sam > ${OUTDIR}/bwa/${PREFIX}.bam
+#	samtools sort -@ ${CPU} -o ${OUTDIR}/bwa/${PREFIX}.sorted.bam ${OUTDIR}/bwa/${PREFIX}.bam
+#	rm ${OUTDIR}/bwa/${PREFIX}.sam ${OUTDIR}/bwa/${PREFIX}.bam
+#	TIME_SAM_TO_SORTED_BAM=${SECONDS} && SECONDS=0
+#else
+#	echo0 4 "already mapped to genome and converted mapping files to sorted.bam, skip"
+#fi
+#
+#if [ ! -f ${OUTDIR}/bwa/${PREFIX}.mkdup.bam ];then # skip this step if already mapped
+#	# sorted.bam to mkdup.bam
+#	java -jar -Xmx16g /data/tusers/yutianx/tongji2/DailyCode/picard.jar MarkDuplicates I=${OUTDIR}/bwa/${PREFIX}.sorted.bam O=${OUTDIR}/bwa/${PREFIX}.mkdup.bam M=${OUTDIR}/bwa/${PREFIX}.metrics.txt
+#	TIME_BAM_TO_MKDUP_BAM=${SECONDS} && SECONDS=0
+#else
+#	echo0 4 "already mark duplicates, skip"
+#fi
+#
+## make index for sorted.bam
+#[ ! -f ${OUTDIR}/bwa/${PREFIX}.sorted.bam.bai ] && samtools index -@ ${CPU} ${OUTDIR}/bwa/${PREFIX}.sorted.bam
+#[ ! -f ${OUTDIR}/bwa/${PREFIX}.mkdup.bam.bai ] && samtools index -@ ${CPU} ${OUTDIR}/bwa/${PREFIX}.mkdup.bam
+#
+## quality recalibration
+#gatk BaseRecalibrator --java-options "-Xmx16g" -I ${OUTDIR}/bwa/${PREFIX}.mkdup.bam -R ${GENOME_FASTA} --known-sites ${DBSNP} -O ${OUTDIR}/gatk/${PREFIX}.recal_data.tables
+#gatk ApplyBQSR --java-options "-Xmx16g" -R ${GENOME_FASTA} -I ${OUTDIR}/bwa/${PREFIX}.mkdup.bam --bqsr-recal-file ${OUTDIR}/gatk/${PREFIX}.recal_data.tables -O ${OUTDIR}/gatk/${PREFIX}.recal.bam
+#TIME_RECALIBRATION=${SECONDS} && SECONDS=0
+#
+# call variance using HaplotypeCaller and GenotypeGVCFs
+mkdir ${OUTDIR}/gatk/tmp.${PREFIX}
+while read chrom l
+do
+	echo -e "gatk HaplotypeCaller --java-options "-Xmx4g" -R ${GENOME_FASTA} -I ${OUTDIR}/gatk/${PREFIX}.recal.bam -O ${OUTDIR}/gatk/tmp.${PREFIX}/${chrom}.g.vcf.gz -ERC GVCF -L ${chrom}" >> ${OUTDIR}/gatk/tmp.${PREFIX}.parafile
+done < ${GENOME_SIZE}
+ParaFly -c ${OUTDIR}/gatk/tmp.${PREFIX}.parafile -CPU ${CPU}
+cat ${OUTDIR}/gatk/tmp.${PREFIX}/*.gz > ${OUTDIR}/gatk/${PREFIX}.tmp.vcf.gz
+zcat ${OUTDIR}/gatk/${PREFIX}.tmp.vcf.gz | awk 'BEGIN{FS=OFS="\t"} {if($1!~/^#/){k=1};if(k==1 && $1~/^#/){next};print $0}' > ${OUTDIR}/gatk/${PREFIX}.tmp.vcf
+bcftools sort -o ${OUTDIR}/gatk/${PREFIX}.g.vcf.gz -O z -m 32G ${OUTDIR}/gatk/${PREFIX}.tmp.vcf
+#rm ${OUTDIR}/gatk/${PREFIX}.tmp.vcf ${OUTDIR}/gatk/${PREFIX}.tmp.vcf.gz
+tabix ${OUTDIR}/gatk/${PREFIX}.g.vcf.gz
+gatk GenotypeGVCFs --java-options "-Xmx16g" -R ${GENOME_FASTA} -V ${OUTDIR}/gatk/${PREFIX}.g.vcf.gz -O ${OUTDIR}/gatk/${PREFIX}.vcf.gz 
+rm -rf ${OUTDIR}/gatk/tmp.${PREFIX} ${OUTDIR}/gatk/tmp.${PREFIX}.parafile* 
+TIME_VARIANCE=${SECONDS} && SECONDS=0
+
+# TEMP2 (skipped, please run TEMP2 directly)
+
+echo0 4 "------ finished, congras🍺🍺🍺 ------"
+echo0 3 "Genome mapping:\t$((${TIME_GENOME_MAPPING} / 3600))h $(((${TIME_GENOME_MAPPING} % 3600) / 60))m" 2>/dev/null
+echo0 3 "Sam to sorted bam:\t$((${TIME_SAM_TO_SORTED_BAM} / 3600))h $(((${TIME_SAM_TO_SORTED_BAM} % 3600) / 60))m" 2>/dev/null
+echo0 3 "Mark duplicates:\t$((${TIME_BAM_TO_MKDUP_BAM} / 3600))h $(((${TIME_BAM_TO_MKDUP_BAM} % 3600) / 60))m" 2>/dev/null
+echo0 3 "Base quality recalibration:\t$((${TIME_RECALIBRATION} / 3600))h $(((${TIME_RECALIBRATION} % 3600) / 60))m" 2>/dev/null
+echo0 3 "Variance calling:\t$((${TIME_VARIANCE} / 3600))h $(((${TIME_VARIANCE} % 3600) / 60))m" 2>/dev/null

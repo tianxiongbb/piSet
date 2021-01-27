@@ -378,141 +378,31 @@ SAMPLE_INDEX=0
 for TEMP_LEFT in ${LEFT[*]}
 do
 	echo0 4 "------ analysis ${PREFIX[${SAMPLE_INDEX}]} ------"
-	#if [ -z ${RIGHT} ] || [ "${RIGHT[${SAMPLE_INDEX}]}" == "none" ];then
-	#	###single-end mode
-	#	# bowtie2 remove rRNA
-	#	if [ -z ${IF_NOT_RRNA} ];then
-	#		echo0 2 "---remove rRNA via bowtie2......"
-	#		set -x
-	#		bowtie2 --very-fast -p ${CPU} -q -x ${INDEX_RRNA} -U ${TEMP_LEFT} -S ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}_rRNA.sam \
-	#			--un ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}_RNAseq-rRNA.fq --no-unal > ${OUTPATH}/log_file/${PREFIX[${SAMPLE_INDEX}]}.rRNA_removing.log 2>&1
-	#		set +x
-	#		TEMP_LEFT="${OUTPATH}/bowtie2/"${PREFIX[${SAMPLE_INDEX}]}"_RNAseq-rRNA.fq"
-	#	fi
-	#	# STAR map
-	#	echo0 2 "---align via STAR......"
-	#	set -x
-	#	STAR 	--genomeDir ${INDEX_STAR} \
-	#		--runThreadN ${CPU} \
-	#		--readFilesIn ${TEMP_LEFT} \
-	#		--outFileNamePrefix ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]} \
-	#		${MIS_PARAMETER} \
-	#		--outFilterMultimapNmax ${MAPNUM} \
-	#		--limitOutSAMoneReadBytes ${BUFFER_MAPNUM} \
-	#		--outSAMattributes All \
-	#		--outFilterIntronMotifs RemoveNoncanonicalUnannotated \
-	#	set +x
-	#else
-	#	###pair-end mode
-	#	# bowtie2 remove rRNA
-	#	if [ -z ${IF_NOT_RRNA} ];then
-	#		echo0 2 "---remove rRNA via bowtie2......"
-	#		set -x
-	#		bowtie2 --very-fast -p ${CPU} -q -x ${INDEX_RRNA} -1 ${TEMP_LEFT} -2 ${RIGHT[${SAMPLE_INDEX}]} \
-	#			-S ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}_rRNA.sam --un-conc ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}_RNAseq-rRNA.fq \
-	#			--no-unal --no-discordant --no-mixed > ${OUTPATH}/log_file/${PREFIX[${SAMPLE_INDEX}]}.rRNA_removing.log 2>&1
-	#		set +x
-	#		TEMP_LEFT="${OUTPATH}/bowtie2/"${PREFIX[${SAMPLE_INDEX}]}"_RNAseq-rRNA.1.fq"
-	#		RIGHT[${SAMPLE_INDEX}]="${OUTPATH}/bowtie2/"${PREFIX[${SAMPLE_INDEX}]}"_RNAseq-rRNA.2.fq"
-	#	fi
-	#	echo0 2 "---align via STAR......"
-	#	set -x
-	#	STAR 	--genomeDir ${INDEX_STAR} \
-	#		--runThreadN ${CPU} \
-	#		--readFilesIn ${TEMP_LEFT} ${RIGHT[${SAMPLE_INDEX}]} \
-	#		--outFileNamePrefix ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]} \
-	#		${MIS_PARAMETER} \
-	#		--outFilterMultimapNmax ${MAPNUM} \
-	#		--limitOutSAMoneReadBytes ${BUFFER_MAPNUM} \
-	#		--outSAMattributes All \
-	#		--outFilterIntronMotifs RemoveNoncanonicalUnannotated
-	#	set +x
-	#fi
-	###########################################################
-	####alignment sort, visualization and signal calculation###
-	###########################################################
-	####samtools
-	#echo0 2 "---sam to indexed bam via samtools......" # now use STAR to directly get sorted.bam
-	#samtools view -@ ${CPU} -bhS -o ${OUTPATH}/STAR/${PREFIX}.bam ${OUTPATH}/STAR/${PREFIX}Aligned.out.sam
-	##mv ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}Aligned.sortedByCoord.out.bam ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.sort.bam
-	#if [ -z ${IF_NOT_RMDUP} ];then
-	#	if [ -z ${RIGHT} ] || [ "${RIGHT[${SAMPLE_INDEX}]}" == "none" ];then
-	#		samtools sort -@ ${CPU} -o ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.sort.bam ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bam
-	#		samtools markdup -@ ${CPU} -r ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.sort.bam ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.rmdup.bam 
-	#		BAM=${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.rmdup.bam
-	#	else
-	#		samtools sort -n -@ ${CPU} -o ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.sortByName.bam ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bam
-	#		samtools fixmate -@ ${CPU} -m ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.sortByName.bam ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.fixmate.bam 
-	#		samtools sort -@ ${CPU} -o ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.fixmate.sort.bam ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.fixmate.bam && rm ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.fixmate.bam && mv ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.fixmate.sort.bam ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.sort.bam 
-	#		samtools markdup -@ ${CPU} -r ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.sort.bam ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.rmdup.bam 
-	#		samtools view -bf 1 ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.rmdup.bam > ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.rmdup.bam.fixed && mv ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.rmdup.bam.fixed ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.rmdup.bam
-	#		BAM=${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.rmdup.bam
-	#	fi
-	#else
-	#	samtools sort -@ ${CPU} -o ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.sort.bam ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bam
-	#	BAM=${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.sort.bam
-	#fi
-	#samtools index ${BAM}
-	#if [ -f ${BAM} ];then
-	#	rm -rf ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bam ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}Aligned.out.sam
-	#fi
-	##rm -rf bowtie2/${PREFIX}_RNAseq-rRNA.*
-	##rm -rf bowtie2/${PREFIX}_rRNA.sam
-	####if -L=miss, judge the library type
-	#if [ "$LIBRARY" == "miss" ];then
-	#	infer_experiment.py -i ${BAM} -r ${ANNOTATION_BED12} > ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}_exp_type.txt
-	#	CHANCE_YES=`head -5 ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}_exp_type.txt | tail -1 | awk '{print $7}'`
-	#	CHANCE_REVERSE=`head -6 ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}_exp_type.txt | tail -1 | awk '{print $7}'`
-	#	LIBRARY=`awk -v CY=$CHANCE_YES -v CR=$CHANCE_REVERSE 'BEGIN{if(CY>0.6) {print "yes"} else if(CR>0.6) {print "reverse"} else {print "no"}}'`
-	#	echo0 4 "WARNING: library is set to missing, guess is "$LIBRARY"......"
-	#fi
-	####make bed12 file for all mapped reads with strand information and mapped times for per reads in 5th column
-	#echo0 2 "---bam to bed via bedtools......"
-	#if [ -z ${RIGHT} ] || [ "${RIGHT[${SAMPLE_INDEX}]}" == "none" ];then
-	#	if [ "${LIBRARY}" = "yes" ];then
-	#		bedtools bamtobed -i ${BAM} -bed12 -tag NH > ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12
-	#	else
-	#		bedtools bamtobed -i ${BAM} -bed12 -tag NH| awk 'BEGIN{FS=OFS="\t"} {$6=($6=="+"?"-":"+");print $0}' > ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12
-	#	fi
-	#else
-	#	if [ "${LIBRARY}" = "yes" ];then
-	#		bedtools bamtobed -i ${BAM} -bed12 -tag NH | awk 'BEGIN{FS=OFS="\t"} {if(substr($4,length($4))=="2"){if($6=="+"){$6="-"}else{$6="+"}};print $0}' > ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12
-	#	else
-	#		bedtools bamtobed -i ${BAM} -bed12 -tag NH | awk 'BEGIN{FS=OFS="\t"} {if(substr($4,length($4))=="1"){if($6=="+"){$6="-"}else{$6="+"}};print $0}' > ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12
-	#	fi
-	#fi
-	####confirm the normalize factor for density
-	##NUM_UNIQ_READ=`grep "Uniquely mapped reads number" STAR/${PREFIX[${SAMPLE_INDEX}]}Log.final.out | awk 'BEGIN{FS="\t"} {print $2}'`
+	##########################################################
+	###alignment sort, visualization and signal calculation###
+	##########################################################
+	###samtools
+	echo0 2 "---sam to indexed bam via samtools......" # now use STAR to directly get sorted.bam
+	samtools view -@ ${CPU} -bhS -o ${OUTPATH}/STAR/${PREFIX}.bam ${OUTPATH}/STAR/${PREFIX}Aligned.out.sam
+	#mv ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}Aligned.sortedByCoord.out.bam ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.sort.bam
+	if [ -z ${IF_NOT_RMDUP} ];then
+		if [ -z ${RIGHT} ] || [ "${RIGHT[${SAMPLE_INDEX}]}" == "none" ];then
+			BAM=${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.rmdup.bam
+		else
+			BAM=${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.rmdup.bam
+		fi
+	else
+		BAM=${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.sort.bam
+	fi
+	###make bed12 file for all mapped reads with strand information and mapped times for per reads in 5th column
+	###confirm the normalize factor for density
+	#NUM_UNIQ_READ=`grep "Uniquely mapped reads number" STAR/${PREFIX[${SAMPLE_INDEX}]}Log.final.out | awk 'BEGIN{FS="\t"} {print $2}'`
 	#awk '$5==1' ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12 > ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.uniq.bed12 
-	#NUM_UNIQ_READ=(`wc -l ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.uniq.bed12`)
-	#FACTOR=(`awk -v num=$NUM_UNIQ_READ 'BEGIN{factor=1000000/num;print factor}'`)
-	#echo -e "${FACTOR}" > ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.factor
-	FACTOR=`cat ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.factor`
+	NUM_UNIQ_READ=(`wc -l ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.uniq.bed12`)
+	FACTOR=(`awk -v num=$NUM_UNIQ_READ 'BEGIN{factor=1000000/num;print factor}'`)
+	echo -e "${FACTOR}" > ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.factor
 	echo0 3 "---normalized to unique mapped reads per million, factor = ${FACTOR}"
 	
-	###make bigWig and normalize
-	echo0 2 "---make signal files......"
-	#if [ "${LIBRARY}" = "no" ];then
-	#	#bed12_to_bw.py ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12 ${CHROMSIZE} ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]} ${FACTOR} 0
-	#	echo "bedtools genomecov -scale ${FACTOR} -split -bg -i ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.uniq.bed12 -g ${CHROMSIZE} | sort -k1,1 -k2,2n > ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.uniq.bdg && bedGraphToBigWig ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.uniq.bdg ${CHROMSIZE} ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.uniq.bw" >> ${PARA_BEDTOBW} && echo "bedtools genomecov -scale ${FACTOR} -split -bg -i ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12 -g ${CHROMSIZE} | sort -k1,1 -k2,2n > ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.bdg && bedGraphToBigWig ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.bdg ${CHROMSIZE} ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.bw" >> ${PARA_BEDTOBW}
-	#else
-	#	#bed12_to_bw.py ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12 ${CHROMSIZE} ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]} ${FACTOR} ${CPU}
-	#	echo "bedtools genomecov -scale ${FACTOR} -split -bg -strand + -i ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.uniq.bed12 -g ${CHROMSIZE} | sort -k1,1 -k2,2n > ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.uniq.watson.bdg && bedGraphToBigWig ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.uniq.watson.bdg ${CHROMSIZE} ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.uniq.watson.bw" >> ${PARA_BEDTOBW} && echo "bedtools genomecov -scale ${FACTOR} -split -bg -strand - -i ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.uniq.bed12 -g ${CHROMSIZE} | sort -k1,1 -k2,2n | awk 'BEGIN{FS=OFS=\"\t\"} {\$4=-\$4;print \$0}' > ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.uniq.crick.bdg && bedGraphToBigWig ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.uniq.crick.bdg ${CHROMSIZE} ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.uniq.crick.bw" >> ${PARA_BEDTOBW} && echo "bedtools genomecov -scale ${FACTOR} -split -bg -strand + -i ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12 -g ${CHROMSIZE} | sort -k1,1 -k2,2n > ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.watson.bdg && bedGraphToBigWig ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.watson.bdg ${CHROMSIZE} ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.watson.bw" >> ${PARA_BEDTOBW} && echo "bedtools genomecov -scale ${FACTOR} -split -bg -strand - -i ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12 -g ${CHROMSIZE} | sort -k1,1 -k2,2n | awk 'BEGIN{FS=OFS=\"\t\"} {\$4=-\$4;print \$0}' > ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.crick.bdg && bedGraphToBigWig ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.crick.bdg ${CHROMSIZE} ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.crick.bw" >> ${PARA_BEDTOBW}
-	#fi
-	###htseq-count
-	if [ "$HTSEQ" != "0" ];then
-		echo0 2 "---signal calculation via htseq for"${HTSEQ}"......"
-		#echo -e "htseq-count -m ${HTSEQ_MODE} -f bam -s ${LIBRARY} -t exon -i ${ATTRIBUTE} --nonunique ${NONUNIQUE} -q ${BAM} ${HTSEQ} > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.temp1.sig 2>/dev/null" >> ${PARA_HTSEQ}
-		#if [ ! -z ${HTSEQ1} ];then
-		#	[ "${LIBRARY}" == "yes" -o "${LIBRARY}" == "reverse" ] && echo -e "bedtools intersect -wo -s -split -b ${RMSK} -a ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12 | cut -f 1-12,16 | sort -u | awk 'BEGIN{FS=OFS=\"\\\t\"} {if(NR==FNR){a[\$13]+=1/\$5}else{print \$1,a[\$1]/1}}' - ${SIZE_TRANSPOSON} > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.temp2.sig" >> ${PARA_HTSEQ}
-		#	[ "${LIBRARY}" == "no" ] && echo -e "bedtools intersect -wo -split -b ${RMSK} -a ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12 | cut -f 1-12,16 | sort -u | awk 'BEGIN{FS=OFS=\"\\\t\"} {if(NR==FNR){a[\$13]+=1/\$5}else{print \$1,a[\$1]/1}}' - ${SIZE_TRANSPOSON} > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.temp2.sig" >> ${PARA_HTSEQ}
-		#fi
-		#if [ ! -z ${HTSEQ1} ];then
-		#	echo -e "cat ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.temp1.sig ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.temp2.sig > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.sig && rm ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.temp1.sig ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.temp2.sig && awk -v factor=${FACTOR} 'BEGIN{FS=OFS=\"\\\t\"} {if(NR==FNR){a[\$1]=\$2}else{print \$1,a[\$1]*1000/\$2*factor}}' ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.sig ${ALL_SIZE} > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.gene+picluster+rmsk.rpkm && awk -v factor=${FACTOR} 'BEGIN{FS=OFS=\"\\\t\"} {if(NR==FNR){a[\$1]=\$2}else{print \$1,a[\$1]}}' ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.sig ${ALL_SIZE} > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.gene+picluster+rmsk.readCount && rm ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.sig" >> ${PARA_HTSEQ1}
-		#else
-		#	echo -e "mv ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.temp1.sig ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.sig && awk -v factor=${FACTOR} 'BEGIN{FS=OFS=\"\\\t\"} {if(NR==FNR){a[\$1]=\$2}else{print \$1,a[\$1]*1000/\$2*factor}}' ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.sig ${ALL_SIZE} > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.gene+picluster+rmsk.rpkm && awk -v factor=${FACTOR} 'BEGIN{FS=OFS=\"\\\t\"} {if(NR==FNR){a[\$1]=\$2}else{print \$1,a[\$1]}}' ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.sig ${ALL_SIZE} > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.gene+picluster+rmsk.readCount && rm ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.sig" >> ${PARA_HTSEQ1}
-		#fi
-	fi
 	#########################
 	###transposon analysis###
 	#########################
@@ -522,53 +412,47 @@ do
 		echo0 2 "---mapping to transposon consensus sequences via hisat2......"
 		if [ -z ${RIGHT} ] || [ "${RIGHT[${SAMPLE_INDEX}]}" == "none" ];then
 			set -x
-			hisat2 -x ${INDEX_TRANSPOSON} -U ${TEMP_LEFT} -k 100 -p ${CPU} --no-mixed --no-discordant -S ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sam --novel-splicesite-outfile ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.hisat2.SJ > ${OUTPATH}/log_file/${PREFIX[${SAMPLE_INDEX}]}.transposon.log 2>&1
+			hisat2 -x ${INDEX_TRANSPOSON} -U ${TEMP_LEFT} -k 100 -p ${CPU} --no-mixed --no-discordant -S ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sam > ${OUTPATH}/log_file/${PREFIX[${SAMPLE_INDEX}]}.transposon.log 2>&1
 			set +x
 		else
 			set -x
-			hisat2 -x ${INDEX_TRANSPOSON} -1 ${TEMP_LEFT} -2 ${RIGHT[${SAMPLE_INDEX}]} -k 100 -p ${CPU} -S ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sam --no-mixed --no-discordant --novel-splicesite-outfile ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.hisat2.SJ > ${OUTPATH}/log_file/${PREFIX[${SAMPLE_INDEX}]}.transposon.log 2>&1
+			hisat2 -x ${INDEX_TRANSPOSON} -1 ${TEMP_LEFT} -2 ${RIGHT[${SAMPLE_INDEX}]} -k 100 -p ${CPU} -S ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sam --no-mixed --no-discordant > ${OUTPATH}/log_file/${PREFIX[${SAMPLE_INDEX}]}.transposon.log 2>&1
 			set +x
 		fi
-		exit 0
-		####samtools
-		#echo0 2 "---sam to indexed bam via samtools......"
-		#if [ -z ${RIGHT} ] || [ "${RIGHT[${SAMPLE_INDEX}]}" == "none" ];then
-		#	samtools view -F 0X4 -@ ${CPU} -bhS ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sam > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bam 
-		#else
-		#	samtools view -f 0X2 -@ ${CPU} -bhS ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sam > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bam 
-		#fi
-		#samtools sort -@ ${CPU} -o ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sort.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bam 
-		#if [ ! -z ${IF_NOT_RMDUP} ];then
-		#	BAM=${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sort.bam 
-		#elif [ -z ${RIGHT} ] || [ "${RIGHT[${SAMPLE_INDEX}]}" == "none" ];then
-		#	samtools markdup -@ ${CPU} -r ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sort.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.rmdup.bam
-		#	BAM=${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.rmdup.bam
-		#else
-		#	samtools sort -n -@ ${CPU} -o ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sortByName.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sort.bam
-		#	samtools fixmate -@ ${CPU} -m ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sortByName.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.fixmate.bam 
-		#	samtools sort -@ ${CPU} -o ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.fixmate.sort.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.fixmate.bam && rm ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.fixmate.bam && mv ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.fixmate.sort.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sort.bam 
-		#	samtools markdup -@ ${CPU} -r ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sort.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.rmdup.bam
-		#	BAM=${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.rmdup.bam
-		#fi
-		#if [ -f ${BAM} ];then
-		#	rm -rf ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sam
-		#fi
+		###samtools
+		echo0 2 "---sam to indexed bam via samtools......"
+		samtools view -f 0X2 -@ ${CPU} -bhS ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sam > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bam 
+		samtools sort -@ ${CPU} -o ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sort.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bam 
+		if [ ! -z ${IF_NOT_RMDUP} ];then
+			BAM=${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sort.bam 
+		elif [ -z ${RIGHT} ] || [ "${RIGHT[${SAMPLE_INDEX}]}" == "none" ];then
+			samtools markdup -@ ${CPU} -r ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sort.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.rmdup.bam
+			BAM=${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.rmdup.bam
+		else
+			samtools sort -n -@ ${CPU} -o ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sortByName.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sort.bam
+			samtools fixmate -@ ${CPU} -m ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sortByName.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.fixmate.bam 
+			samtools sort -@ ${CPU} -o ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.fixmate.sort.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.fixmate.bam && rm ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.fixmate.bam && mv ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.fixmate.sort.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sort.bam 
+			samtools markdup -@ ${CPU} -r ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sort.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.rmdup.bam
+			BAM=${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.rmdup.bam
+		fi
+		if [ -f ${BAM} ];then
+			rm -rf ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sam
+		fi
 		###make bed12 file for all mapped reads
-		#BAM=${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.rmdup.bam
-		#echo0 2 "---bam to bed12 via bedtools......"
-		#if [ -z ${RIGHT} ] || [ "${RIGHT[${SAMPLE_INDEX}]}" == "none" ];then
-		#	if [ "${LIBRARY}" = "yes" ];then
-		#		bedtools bamtobed -i ${BAM} -bed12 -tag NH > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed12
-		#	else
-		#		bedtools bamtobed -i ${BAM} -bed12 -tag NH | awk 'BEGIN{FS=OFS="\t"} {$6=($6=="+"?"-":"+");print $0}' > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed12
-		#	fi
-		#else
-		#	if [ "${LIBRARY}" = "yes" ];then
-		#		bedtools bamtobed -i ${BAM} -bed12 -tag NH | awk 'BEGIN{FS=OFS="\t"} {if(substr($4,length($4))=="2"){if($6=="+"){$6="-"}else{$6="+"}};print $0}' > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed12
-		#	else
-		#		bedtools bamtobed -i ${BAM} -bed12 -tag NH | awk 'BEGIN{FS=OFS="\t"} {if(substr($4,length($4))=="1"){if($6=="+"){$6="-"}else{$6="+"}};print $0}' > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed12
-		#	fi
-		#fi
+		echo0 2 "---bam to bed12 via bedtools......"
+		if [ -z ${RIGHT} ] || [ "${RIGHT[${SAMPLE_INDEX}]}" == "none" ];then
+			if [ "${LIBRARY}" = "yes" ];then
+				bedtools bamtobed -i ${BAM} -bed12 -tag NH > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed12
+			else
+				bedtools bamtobed -i ${BAM} -bed12 -tag NH | awk 'BEGIN{FS=OFS="\t"} {$6=($6=="+"?"-":"+");print $0}' > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed12
+			fi
+		else
+			if [ "${LIBRARY}" = "yes" ];then
+				bedtools bamtobed -i ${BAM} -bed12 -tag NH | awk 'BEGIN{FS=OFS="\t"} {if(substr($4,length($4))=="2"){if($6=="+"){$6="-"}else{$6="+"}};print $0}' > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed12
+			else
+				bedtools bamtobed -i ${BAM} -bed12 -tag NH | awk 'BEGIN{FS=OFS="\t"} {if(substr($4,length($4))=="1"){if($6=="+"){$6="-"}else{$6="+"}};print $0}' > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed12
+			fi
+		fi
 		###make signal files and buckets
 		echo0 2 "---make signal files and buckets......"
 		if [ "$LIBRARY" = "no" ];then
@@ -580,7 +464,7 @@ do
 			rm ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6.bdg 
 			piSet_rnaseq_te_bucket.R ${SIZE_TRANSPOSON} ${OUTPATH}/bucket/${PREFIX[${SAMPLE_INDEX}]}.transposon.bucket.pdf ${OUTPATH}/bucket/${PREFIX[${SAMPLE_INDEX}]}.transposon.bdg
 		else
-			#bed12ToBed6 ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed12 > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6 
+			bed12ToBed6 ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed12 > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6 
 			awk -v factor=${FACTOR} 'BEGIN{FS=OFS="\t"} {if(NR==FNR){a1[$1]=0;a2[$1]=0;a3[$1]=0}else{a1[$1]+=(1/$5);if($6=="+"){a2[$1]+=(1/$5)}else{a3[$1]+=(1/$5)}}} END{for(i in a1){print i,a1[i],a2[i],a3[i]}}' ${SIZE_TRANSPOSON} ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6 | sort -k1,1 > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.transposon.readCount
 			awk -v factor=${FACTOR} 'BEGIN{FS=OFS="\t"} {if(NR==FNR){b[$1]=$2;a1[$1]=0;a2[$1]=0;a3[$1]=0}else{a1[$1]+=(1/$5);if($6=="+"){a2[$1]+=(1/$5)}else{a3[$1]+=(1/$5)}}} END{for(i in a1){print i,a1[i]*factor*1000/b[i],a2[i]*factor*1000/b[i],a3[i]*factor*1000/b[i]}}' ${SIZE_TRANSPOSON} ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6 | sort -k1,1 > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.transposon.rpkm
 			awk '$6=="+"' ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6 > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6.sense
@@ -595,12 +479,6 @@ do
 	fi
 	SAMPLE_INDEX=$((${SAMPLE_INDEX} + 1))
 done
-# run pooled bedTobw
-echo0 2 "run pooled bed to bigWig commands......"
-#ParaFly -c ${PARA_BEDTOBW} -CPU ${CPU} -failed_cmds ${PARA_BEDTOBW}.failed_cmds 2>/dev/null && rm ${PARA_BEDTOBW}*
-#echo0 2 "run pooled htseq commands......"
-#ParaFly -c ${PARA_HTSEQ} -CPU ${CPU} -failed_cmds ${PARA_HTSEQ}.failed_cmds 2>/dev/null && rm ${PARA_HTSEQ}*
-#ParaFly -c ${PARA_HTSEQ1} -CPU ${CPU} -failed_cmds ${PARA_HTSEQ1}.failed_cmds 2>/dev/null && rm ${PARA_HTSEQ1}*
-#
+
 ###finished
 echo0 4 "------finished🍺🍺🍺------"

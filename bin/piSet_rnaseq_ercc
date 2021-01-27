@@ -1,0 +1,17 @@
+#!/bin/bash
+
+if  [ $# -lt 1 ];then
+	echo0 5 "$0 output_prefix_of_piSet output_dir_of_piSet genome cpu"
+	echo0 5 "suppose paired-end data"
+	exit 1
+fi
+
+OUTDIR=${2%/}
+echo0 2 "align to ERCC spike-ins......"
+
+echo -e "bowtie2 -1 ${OUTDIR}/bowtie2/${1}_RNAseq-rRNA.1.fq -2 ${OUTDIR}/bowtie2/${1}_RNAseq-rRNA.2.fq -p $4 --no-unal --no-discordant -X 800 -x /data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/${3}/Bowtie2Index/ERCC -S ${OUTDIR}/bowtie2/${1}.ERCC.sam > ${OUTDIR}/log_file/${1}.ERCC.log 2>&1"
+bowtie2 -1 ${OUTDIR}/bowtie2/${1}_RNAseq-rRNA.1.fq -2 ${OUTDIR}/bowtie2/${1}_RNAseq-rRNA.2.fq -p $4 --no-unal --no-discordant -X 800 -x /data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/${3}/Bowtie2Index/ERCC -S ${OUTDIR}/bowtie2/${1}.ERCC.sam > ${OUTDIR}/log_file/${1}.ERCC.log 2>&1
+echo0 2 "calculate ERCC read counts......"
+awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){if($1!~/@/ && $5>5){a[$3]++}}else{print $1,a[$1]/1}}' ${OUTDIR}/bowtie2/${1}.ERCC.sam /data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/${3}/${3}.ERCC.size > ${OUTDIR}/signal/${1}.ERCC.readcount
+awk '{s+=$2} END{print s}' ${OUTDIR}/signal/${1}.ERCC.readcount > ${OUTDIR}/signal/${1}.ERCC.totalRead 
+echo0 2 "finished!!!"

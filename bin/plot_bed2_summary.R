@@ -16,10 +16,10 @@ fun_zscore=function(x){
 }
 fun_plot_lendis=function(x1, x2, m){
 	par(mar=c(0,2,2,0.5))
-	barplot(x1,space=0,border="white",col="#e41a1c",ylim=c(0,max(x1,x2)),xaxt="n")
+	barplot(x1,space=0,border="white",col="#377eb8",ylim=c(0,max(x1,x2)),xaxt="n")
 	mtext(m,3,font=2)
 	par(mar=c(2,2,0,0.5))
-	barplot(-x2,space=0,border="white",col="#377eb8",ylim=c(-max(x1,x2),0),xaxt="n")
+	barplot(-x2,space=0,border="white",col="#e41a1c",ylim=c(-max(x1,x2),0),xaxt="n")
 	axis(1,1:21-0.5,label=15:35,lwd=0,padj=-0.3)
 }
 fun_plot_pp=function(x){
@@ -32,13 +32,13 @@ fun_plot_pp=function(x){
 fun_plot_bucket=function(x){
 	m=max(c(x[,3],-x[,4])); h=signif(m/4,1)
 	par(mar=c(0,2,2,0.5))
-	barplot(as.vector(x[,3]),col="#fcbba1",border="#fcbba1",xaxt="n",space=0,yaxt="n",ylim=c(0,m))
-	barplot(as.vector(x[,5]),col="#a50f15",border="#a50f15",xaxt="n",space=0,yaxt="n",add=T)
+	barplot(as.vector(x[,3]),col="#a50f15",border="#a50f15",xaxt="n",space=0,yaxt="n",ylim=c(0,m))
+	barplot(as.vector(x[,5]),col="#fcbba1",border="#fcbba1",xaxt="n",space=0,yaxt="n",add=T)
 	axis(2,h*(0:4),label=h*(0:4))
 	legend(dim(x)[1]/3,m*1.1,legend=c("uniqReads","allReads"),fill=c("#a50f15","#fcbba1"),xpd=T,ncol=2,bty="n")
 	par(mar=c(2,2,0,0.5))
-	barplot(as.vector(x[,4]),col="#9ecae1",border="#9ecae1",xaxt="n",space=0,yaxt="n",ylim=c(-m,0))
-	barplot(as.vector(x[,6]),col="#08519c",border="#08519c",xaxt="n",space=0,yaxt="n",add=T)
+	barplot(as.vector(x[,4]),col="#08519c",border="#08519c",xaxt="n",space=0,yaxt="n",ylim=c(-m,0))
+	barplot(as.vector(x[,6]),col="#9ecae1",border="#9ecae1",xaxt="n",space=0,yaxt="n",add=T)
 	axis(2,-h*(0:4),label=c("",-h*(1:4)))
 	axis(1,c(1,floor(dim(x)[1]/4*(1:4)))-0.5,label=c(1,x[dim(x)[1]/4*(1:4),2]))
 }
@@ -48,20 +48,20 @@ fun_plot_lendis2=function(l1, l2, rn, m){
 		for(sn in names(l1)){maxN=max(maxN, max(l1[[sn]][,rn]), max(l2[[sn]][,rn]))}
 		for(sn in names(l1)){
 			par(mar=c(0,2,2,0.5))
-			barplot(l1[[sn]][,rn],space=0,border="white",col="#e41a1c",xaxt="n",ylim=c(0,maxN))
+			barplot(l1[[sn]][,rn],space=0,border="white",col="#377eb8",xaxt="n",ylim=c(0,maxN))
 			if(sn==names(l1)[1]){mtext(m,3,font=2)}
 			par(mar=c(2,2,0,0.5))
-			barplot(-l2[[sn]][,rn],space=0,border="white",col="#377eb8",xaxt="n",ylim=c(-maxN,0))
+			barplot(-l2[[sn]][,rn],space=0,border="white",col="#e41a1c",xaxt="n",ylim=c(-maxN,0))
 			axis(1,1:21-0.5,label=15:35,lwd=0,padj=-0.3)
 		}
 	}else{
 		for(sn in names(l1)){maxN=max(maxN, max(apply(l1[[sn]],1,sum)), max(apply(l2[[sn]],1,sum)))}
 		for(sn in names(l1)){
 			par(mar=c(0,2,2,0.5))
-			barplot(apply(l1[[sn]],1,sum),space=0,border="white",col="#e41a1c",xaxt="n",ylim=c(0,maxN))
+			barplot(apply(l1[[sn]],1,sum),space=0,border="white",col="#377eb8",xaxt="n",ylim=c(0,maxN))
 			mtext(m,3,font=2)
 			par(mar=c(2,2,0,0.5))
-			barplot(-apply(l2[[sn]],1,sum),space=0,border="white",col="#377eb8",xaxt="n",ylim=c(-maxN,0))
+			barplot(-apply(l2[[sn]],1,sum),space=0,border="white",col="#e41a1c",xaxt="n",ylim=c(-maxN,0))
 			axis(1,1:21-0.5,label=15:35,lwd=0,padj=-0.3)
 		}
 	}
@@ -100,14 +100,14 @@ fun_plot_bucket2=function(l, rn){
 	for(sn in names(l)){
 		x=l[[sn]][which(l[[sn]][,1]==rn),]
 		par(mar=c(0,2,2,0.5))
-		barplot(as.vector(x[,3]),col="#fcbba1",border="#fcbba1",xaxt="n",space=0,yaxt="n",ylim=c(0,maxN))
-		barplot(as.vector(x[,5]),col="#a50f15",border="#a50f15",xaxt="n",space=0,yaxt="n",add=T)
+		barplot(as.vector(x[,3]),col="#a50f15",border="#a50f15",xaxt="n",space=0,yaxt="n",ylim=c(0,maxN))
+		barplot(as.vector(x[,5]),col="#fcbba1",border="#fcbba1",xaxt="n",space=0,yaxt="n",add=T)
 		h=signif(maxN/4,1)
 		axis(2,h*(0:4),label=h*(0:4))
 		mtext(sn,3,font=2)
 		par(mar=c(2,2,0,0.5))
-		barplot(as.vector(x[,4]),col="#9ecae1",border="#9ecae1",xaxt="n",space=0,yaxt="n",ylim=c(-maxN,0))
-		barplot(as.vector(x[,6]),col="#08519c",border="#08519c",xaxt="n",space=0,yaxt="n",add=T)
+		barplot(as.vector(x[,4]),col="#08519c",border="#08519c",xaxt="n",space=0,yaxt="n",ylim=c(-maxN,0))
+		barplot(as.vector(x[,6]),col="#9ecae1",border="#9ecae1",xaxt="n",space=0,yaxt="n",add=T)
 		axis(2,-h*(0:4),label=c("",-h*(1:4)))
 		axis(1,c(1,floor(dim(x)[1]/4*(1:4)))-0.5,label=c(1,x[dim(x)[1]/4*(1:4),2]))
 	}

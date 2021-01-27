@@ -1,0 +1,43 @@
+#!/bin/bash
+
+if [ $# -lt 2 ];then
+	echo0 5 "$0 in.bw(in.bdg) out.bw(out.bdg) sliding_window_size chrom_size"
+        exit 1
+fi
+
+if [ ${1%.bw} != $1 -o ${1%.bigWig} != $1 ];then
+	bigWigToBedGraph $1 $1.tmp.bdg
+	BDG=$1.tmp.bdg
+else
+	BDG=$1
+fi
+sort -k1,1 -k2,2n ${BDG} | awk -v ws=$3 'BEGIN{FS=OFS="\t"} 
+{
+	if(ARGIND==1){cs[$1]=$2}
+	else{
+		for(i=int($2/ws);i<=int(($3-1)/ws);i++){
+			if($2>i*ws){s=$2}else{i=i*ws};
+			if($3<(i+1)*ws){e=$3}else{e=(i+1)*ws};
+			bdg[$1][i]+=$4*(e-s)
+		}
+	}
+}
+END{
+	for(i in bdg){
+		for(j in bdg[i]){
+			if(j*ws>=cs[i]){
+				continue
+			}else if((j+1)*ws>cs[i]){
+				print i,j*ws,cs[i],bdg[i][j]/(cs[i]-j*ws)
+			}else{
+				print i,j*ws,(j+1)*ws,bdg[i][j]/ws
+			}
+		}
+	}
+}' $4 - | sort -k1,1 -k2,2n > $1.tmp.smooth.bdg
+#for(j=0;j<length(bdg[i]);j++){
+if [ ${2%.bw} != $2 -o ${2%.bigWig} != $2 ];then
+	bedGraphToBigWig $1.tmp.smooth.bdg $4 $2 && rm $1.tmp.bdg $1.tmp.smooth.bdg
+else
+	mv $1.tmp.smooth.bdg $2
+fi

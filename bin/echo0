@@ -17,6 +17,6 @@ case $1 in
 	4)	echo -e "\033[33;1m"$2"\033[0m";;
 	5)	echo -e "\033[32;1m"$2"\033[0m";;
 	6)	echo -e "\033[35;1m"$2"\033[0m";;
-	*)	uasge && exit 1;;
+	*)	usage && exit 1;;
 esac
 

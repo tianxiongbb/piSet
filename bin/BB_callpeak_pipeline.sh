@@ -98,15 +98,15 @@ fi
 if [ -n "${TREAT_FILE2}" ];then
 	echo0 1 "run macs2 callpeak for rep1 + rep2\t"`date`
 	set -x
-	macs2 callpeak -q ${QVALUE} -t ${TREAT_FILE1} ${TREAT_FILE2} -c ${CONTROL_FILE1} ${CONTROL_FILE2} -f ${FILE_FORMAT} -g ${GENOME} --keep-dup 1 --outdir ${OUT_DIR} -n ${OUT_NAME}_rep0 -B --buffer-size ${BUFF_SIZE} > ${LOG_DIR}/macs2_callpeak_rep0.log 2>&1
+	macs2 callpeak -q ${QVALUE} -t ${TREAT_FILE1} ${TREAT_FILE2} -c ${CONTROL_FILE1} ${CONTROL_FILE2} -f ${FILE_FORMAT} -g ${GENOME} --keep-dup all --outdir ${OUT_DIR} -n ${OUT_NAME}_rep0 -B --buffer-size ${BUFF_SIZE} > ${LOG_DIR}/macs2_callpeak_rep0.log 2>&1
 	set +x
 	echo0 1 "run macs2 callpeak for rep1\t"`date`
 	set -x
-	macs2 callpeak -q ${QVALUE} -t ${TREAT_FILE1} -c ${CONTROL_FILE1} -f ${FILE_FORMAT} -g ${GENOME} --keep-dup 1 --outdir ${OUT_DIR} -n ${OUT_NAME}_rep1 -B --buffer-size ${BUFF_SIZE} > ${LOG_DIR}/macs2_callpeak_rep1.log 2>&1
+	macs2 callpeak -q ${QVALUE} -t ${TREAT_FILE1} -c ${CONTROL_FILE1} -f ${FILE_FORMAT} -g ${GENOME} --keep-dup all --outdir ${OUT_DIR} -n ${OUT_NAME}_rep1 -B --buffer-size ${BUFF_SIZE} > ${LOG_DIR}/macs2_callpeak_rep1.log 2>&1
 	set +x
 	echo0 1 "run macs2 callpeak for rep2\t"`date`
 	set -x
-	macs2 callpeak -q ${QVALUE} -t ${TREAT_FILE2} -c ${CONTROL_FILE2} -f ${FILE_FORMAT} -g ${GENOME} --keep-dup 1 --outdir ${OUT_DIR} -n ${OUT_NAME}_rep2 -B --buffer-size ${BUFF_SIZE} > ${LOG_DIR}/macs2_callpeak_rep2.log 2>&1
+	macs2 callpeak -q ${QVALUE} -t ${TREAT_FILE2} -c ${CONTROL_FILE2} -f ${FILE_FORMAT} -g ${GENOME} --keep-dup all --outdir ${OUT_DIR} -n ${OUT_NAME}_rep2 -B --buffer-size ${BUFF_SIZE} > ${LOG_DIR}/macs2_callpeak_rep2.log 2>&1
 	set +x
 	# overlap peaks for rep1-rep2-rep0
 	echo0 1 "call coordance peask\t"`date`
@@ -165,7 +165,7 @@ EOF
 else
 	echo0 1 "run macs2 callpeak for rep1\t"`date`
 	set -x
-	macs2 callpeak -q ${QVALUE} -t ${TREAT_FILE1} -c ${CONTROL_FILE1} -f ${FILE_FORMAT} -g ${GENOME} --keep-dup 1 --outdir ${OUT_DIR} -n ${OUT_NAME} -B --buffer-size ${BUFF_SIZE} > ${LOG_DIR}/macs2_callpeak_${OUT_NAME}.log 2>&1
+	macs2 callpeak -q ${QVALUE} -t ${TREAT_FILE1} -c ${CONTROL_FILE1} -f ${FILE_FORMAT} -g ${GENOME} --keep-dup all --outdir ${OUT_DIR} -n ${OUT_NAME} -B --buffer-size ${BUFF_SIZE} > ${LOG_DIR}/macs2_callpeak_${OUT_NAME}.log 2>&1
 	set +x
 	# make bigBed files for visulization
 	echo0 1 "make bigBed files for visulization\t"`date`

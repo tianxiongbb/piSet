@@ -1,0 +1,157 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+import subprocess
+import sys
+import re
+import os
+import argparse
+import bb_basic as bb
+
+
+def main():
+    print_help()
+    # args
+    fi = bb.fun_open_file(sys.argv[1], "r")
+    fo = bb.fun_open_file(sys.argv[2], "w")
+    f_snp = bb.fun_open_file(sys.argv[3], "r")
+    fo1 = bb.fun_open_file(sys.argv[4], "w")
+    global qlt
+    qlt = int(sys.argv[5])
+    global dict_conversion, dict_conversion_del, dict_conversion_lowq, dict_nucl
+    dict_conversion = {}
+    for i in ["A", "T", "C", "G"]:
+        for j in ["A", "T", "C", "G"]:
+            if i != j:
+                dict_conversion[i+">"+j] = 0
+    dict_conversion_del = dict_conversion.copy()
+    dict_conversion_lowq = dict_conversion.copy()
+    dict_nucl = {"A":"T","C":"G","G":"C","T":"A", "N":"N"}
+    print "reading T>C snp......"
+    dict_tc_snp = read_snp(f_snp)
+    print "processing sam file into T>C sam file and calculate numbers for each convertion......"
+    process_sam(fi, fo, fo1, dict_tc_snp)
+
+
+# --------functions--------
+def process_sam(fi, fo, fo1, dict_tc_snp):
+    n = 0
+    for l in fi:
+        n += 1
+        if n%100000 == 0:
+            print "%sM reads processed......"%(float(n)/1000000)
+        if re.search("^@", l):
+            fo.write(l)
+            continue
+        line = l.rstrip().split("\t")
+        chrom = line[2]
+        flag = line[1]
+        start = line[3]
+        cigar = line[5]
+        seq = line[9]
+        qual = line[10]
+        nh = l.rstrip().split("NH:i:")[1].split("\t")[0]
+        if int(flag)&64 == 64:
+            tn = line[0] + ";;1;;"
+        else:
+            tn = line[0] + ";;2;;"
+        line[0] = tn + nh
+        try:
+            md = l.split("MD:Z:")[1].split("\t")[0]
+        except IndexError:
+            bb.fun_print_error("no MD tag found, please use samtools calmd to generate MD tag!!!")
+        ntc = calculate_tc(flag, chrom, start, cigar, seq, qual, md, dict_tc_snp, nh)
+        fo.write("\t".join(line[:11]) + "\tTC:i:" + str(ntc) + "\n")
+    fo1.write("#conversion\tfinal\tsnp\tlow_quality\n")
+    for key in dict_conversion.keys():
+        fo1.write("%s\t%s\t%s\t%s\n"%(key, dict_conversion[key], dict_conversion_del[key], dict_conversion_lowq[key]))
+    fo.close()
+    fo1.close()
+
+
+def read_snp(fi):
+    dict_tc_snp = {}
+    for l in fi:
+        if l[0] == "#":
+            continue
+        line = l.split("\t")
+        dict_tc_snp["\t".join(line[:2])] = line[3:5]
+    return dict_tc_snp
+
+
+def calculate_tc(flag, chrom, start, cigar, seq, qual, md, dict_tc_snp, nh):
+    number_tc = 0
+    number_mut = 0
+    md1 = re.split("[A-Z\^]+", md)
+    md1 = map(int, md1)
+    md2 = re.split("[0-9]+", md)[1:-1]
+    cigar1 = re.split("[A-Z]+", cigar)[:-1]
+    cigar1 = map(int, cigar1)
+    cigar2 = re.split("[0-9]+", cigar)[1:]
+    # get final sequence and quality correspond to reference genome
+    p=0;fseq="";fqual=""
+    for i in range(len(cigar2)):
+        if cigar2[i] == "M":
+            fseq = fseq + seq[p:(p+cigar1[i])]
+            fqual = fqual + qual[p:(p+cigar1[i])]
+            p += cigar1[i]
+        elif cigar2[i] in ["S", "I"]:
+            p += cigar1[i]
+    # get variants and their position
+    p1=0;p2=0
+    for i in range(len(md2)):
+        if re.search("\^", md2[i]):
+            p1 += md1[i]
+            p2 += (md1[i] + len(md2[i]) - 1)
+        else:
+            p1 += (md1[i] + 1)
+            p2 += (md1[i] + 1)
+            # remove SNP variants
+            snp_pos = "%s\t%s"%(chrom, int(start)+p2-1)
+            # RNA in crick strand: R1 +; R2 -
+            if (int(flag)&64 == 64 and int(flag)&16 == 0) or (int(flag)&64 == 0 and int(flag)&16 == 16):
+                convt1 = dict_nucl[md2[i]]
+                convt2 = dict_nucl[fseq[p1-1]]
+            # RNA in crick strand: R2 +; R1 -
+            else:
+                convt1 = md2[i]
+                convt2 = fseq[p1-1]
+            if convt1 == "N" or convt2 == "N": # skip N mutation
+                continue
+            if snp_pos in dict_tc_snp:
+                if md2[i] == dict_tc_snp[snp_pos][0] and fseq[p1-1] == dict_tc_snp[snp_pos][1]:
+                    dict_conversion_del[convt1+">"+convt2] += 1/float(nh)
+                    continue
+            # remove nucleotides with quality less than threshold
+            if ord(fqual[p1-1]) < (qlt + 33):
+                dict_conversion_lowq[convt1+">"+convt2] += 1/float(nh)
+                continue
+            # judge RNA strand; suppose library is fr-firststrand
+            number_mut += 1
+            dict_conversion[convt1+">"+convt2] += 1/float(nh)
+            if convt1 == "T" and convt2 == "C": #T to C
+                number_tc += 1
+    if number_tc >= float(number_mut)/3:
+        return number_tc
+    else:
+        return 0
+
+
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--version", action="version", version="%(prog)s 1.0")
+    parser.add_argument("args", help="", nargs="*")
+    args = parser.parse_args()
+    return args
+
+
+def print_help():
+    if len(sys.argv) < 2:
+        bb.fun_print_help("in.sam", "out.sam", "tc.snp.vcf", "out.conversion.stats", "quality cutoff")
+
+# --------process--------
+if __name__ == '__main__':
+    try:
+        main()
+    except KeyboardInterrupt:
+        bb.fun_print_error("user interrupted, abort!")
+        sys.exit(0)

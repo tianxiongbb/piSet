@@ -97,7 +97,7 @@ NONUNIQUE=all
 HTSEQ_MODE=intersection-nonempty
 
 echo0 1 "Command:"
-COMMAND="BB_rnaseq_pipeline "$*
+COMMAND="piSet_rnaseq "$*
 echo0 3 "$COMMAND"
 echo ""
 
@@ -433,7 +433,7 @@ do
 	##########################################################
 	###samtools
 	echo0 2 "---sam to indexed bam via samtools......" # now use STAR to directly get sorted.bam
-	samtools view -@ ${CPU} -bhS -o ${OUTPATH}/STAR/${PREFIX}.bam ${OUTPATH}/STAR/${PREFIX}Aligned.out.sam
+	samtools view -@ ${CPU} -bhS -o ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bam ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}Aligned.out.sam
 	#mv ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}Aligned.sortedByCoord.out.bam ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.sort.bam
 	if [ -z ${IF_NOT_RMDUP} ];then
 		if [ -z ${RIGHT} ] || [ "${RIGHT[${SAMPLE_INDEX}]}" == "none" ];then
@@ -530,7 +530,11 @@ do
 		fi
 		###samtools
 		echo0 2 "---sam to indexed bam via samtools......"
-		samtools view -f 0X2 -@ ${CPU} -bhS ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sam > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bam 
+		if [ -z ${RIGHT} ] || [ "${RIGHT[${SAMPLE_INDEX}]}" == "none" ];then
+			samtools view -F 0X4 -@ ${CPU} -bhS ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sam > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bam 
+		else
+			samtools view -f 0X2 -@ ${CPU} -bhS ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sam > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bam 
+		fi
 		samtools sort -@ ${CPU} -o ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sort.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bam 
 		if [ ! -z ${IF_NOT_RMDUP} ];then
 			BAM=${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sort.bam 
@@ -568,7 +572,7 @@ do
 			bed12ToBed6 ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed12 > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6 
 			awk -v factor=${FACTOR} 'BEGIN{FS=OFS="\t"} {if(NR==FNR){a[$1]=0}else{a[$1]+=(1/$5)}} END{for(i in a){print i,a[i]}}' ${SIZE_TRANSPOSON} ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed12 | sort -k1,1 > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.transposon.readCount
 			awk -v factor=${FACTOR} 'BEGIN{FS=OFS="\t"} {if(NR==FNR){b[$1]=$2;a[$1]=0}else{a[$1]+=(1/$5)}} END{for(i in a){print i,a[i]*factor*1000/b[i]}}' ${SIZE_TRANSPOSON} ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed12 | sort -k1,1 > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.transposon.rpkm
-			awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,1/$5}' ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6 | sort -k1,1 -k2,2n > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6.bdg 
+			awk -v factor=${FACTOR} 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,factor/$5}' ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6 | sort -k1,1 -k2,2n > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6.bdg 
 			mergeOverlappedBdg ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6.bdg > ${OUTPATH}/bucket/${PREFIX[${SAMPLE_INDEX}]}.transposon.bdg
 			rm ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6.bdg 
 			piSet_rnaseq_te_bucket.R ${SIZE_TRANSPOSON} ${OUTPATH}/bucket/${PREFIX[${SAMPLE_INDEX}]}.transposon.bucket.pdf ${OUTPATH}/bucket/${PREFIX[${SAMPLE_INDEX}]}.transposon.bdg

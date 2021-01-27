@@ -92,6 +92,11 @@ while (my $line=<input>) {
             elsif ($as > 0) {$xt="U";}
         }
 	
+	## discard supplementary alignment
+	if (($f[1] & 2048) == 2048)
+	{
+		next;
+	}
 	## Coordinate
 	my $coor=$f[3];
 	if (($f[1] & 16) == 16)
@@ -125,7 +130,7 @@ while (my $line=<input>) {
 	
 	if ((defined $me{$id})&&((defined $uniqp{$id})||(defined $uniqm{$id})))
 	{	    
-            if (((($ps{$id}+5)<=$right)&&($me{$id}>$right)&&($uniqm{$id}==1)) || ((($me{$id}-5)>=$left)&&($ps{$id}<$left)&&($uniqp{$id}==1))) {	    
+            if (((($ps{$id}+5)<=$right)&&($me{$id}>=($right+5))&&($uniqm{$id}==1)) || ((($me{$id}-5)>=$left)&&($ps{$id}<=($left-5))&&($uniqp{$id}==1))) {	    
 		$ref_sup++;
 	    }
 	}

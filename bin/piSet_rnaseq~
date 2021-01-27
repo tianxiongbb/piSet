@@ -44,7 +44,7 @@ Options:
     Output:
 	-o output directory. --default: ./
 	-p PREFIX for each sample. if you want to set -p in multiple sample mode, plesae use like -p "prefix1 prefix2 prefix3" and keep coordinate with sample_prefix_name in sample information file. --default: sample name
-    DEseq2:
+    DEseq2 (DEseq2 module is not available now):
 	--no-deseq2 do not apply DEseq2 in multiple sample mode. Useful if you are not sure which replicates is good enough for differential expression analysis. default: applied in multiple sample mode
     rRNA removing:
 	--no-rRNA-removing do not remove rRNA. default: remove rRNA
@@ -64,7 +64,7 @@ cat << EOF
     htseq readCounts calcultating:
 	-H gtf file for htseq-count, htseq will use id for feature name; set to 0 if do not calculate feature signal; if have several gtf for htseq count, use like this: "a.gtf b.gtf c.gtf". default: genome/genome.gene+picluster+rmsk.gtf
 	-S length of each feature in gtf for rpkm calculation. Please use and be in consistence with -H
-	-i attribute for htseq feature id. --default: gene_id
+	-i attribute for htseq feature id. --default: gene_name
 	--nonunique [none|all] whether to score reads that are not uniquely aligned or ambiguously assigned to features for htseq. default: all
 	--htseq-mode [union|intersection-strict|intersection-nonempty] mode for htseq, see htseq-count document for more detail. default: intersection-nonempty
 EOF
@@ -92,7 +92,7 @@ OUTPATH=./
 LIBRARY=reverse
 MAPNUM=10000
 MISMATCH=0.02
-ATTRIBUTE=gene_id
+ATTRIBUTE=gene_name
 NONUNIQUE=all
 HTSEQ_MODE=intersection-nonempty
 
@@ -199,8 +199,8 @@ if [ ! -n "$GENOME" ];then
 	exit 1
 fi
 
-ALL_SIZE=${PATH_ANNO}/${GENOME}/${GENOME}.gene+picluster+rmsk.size
-ALL_SIZE1=${PATH_ANNO}/${GENOME}/${GENOME}.transposon.size
+[ -z ${ALL_SIZE} ] && ALL_SIZE=${PATH_ANNO}/${GENOME}/${GENOME}.gene+picluster+rmsk.size
+[ -z ${ALL_SIZE1} ] && ALL_SIZE1=${PATH_ANNO}/${GENOME}/${GENOME}.transposon.size
 
 if [ ! -d "$OUTPATH" ];then
 	echo0 4 "WARNING: output path not found, create one"
@@ -232,8 +232,7 @@ if [ -z ${SIZE_TRANSPOSON} ];then
 fi
 
 if [ ! -f ${SIZE_TRANSPOSON} ];then
-	echo0 0 "Error: no repbase chrom.size data in "${SIZE_TRANSPOSON}", please download via fetchChromSize"
-	exit 1
+	[ ! -z ${IF_TRANSPOSON} ] && echo0 0 "Error: no repbase chrom.size data in "${SIZE_TRANSPOSON}", please download via fetchChromSize" && exit 1
 fi
 
 if [ "$LIBRARY" = "miss" ];then
@@ -368,7 +367,7 @@ else
 	MIS_PARAMETER="--outFilterMismatchNoverReadLmax ${MISMATCH}"
 fi
 ### check STAR limitOutSAMoneReadBytes
-BUFFER_MAPNUM=`awk -v mn=${MAPNUM} 'BEGIN{print 600*mn}'`
+BUFFER_MAPNUM=`awk -v mn=${MAPNUM} 'BEGIN{if(mn*600<100000){print 100000}else{print 600*mn}}'`
 
 ####################################################
 ###align to rRNA and genome with bowtie2 and STAR###
@@ -379,7 +378,7 @@ SAMPLE_INDEX=0
 for TEMP_LEFT in ${LEFT[*]}
 do
 	echo0 4 "------ analysis ${PREFIX[${SAMPLE_INDEX}]} ------"
-	if [ -z ${RIGHT} -o "${RIGHT[${SAMPLE_INDEX}]}" == "none" ];then
+	if [ -z ${RIGHT} ] || [ "${RIGHT[${SAMPLE_INDEX}]}" == "none" ];then
 		###single-end mode
 		# bowtie2 remove rRNA
 		if [ -z ${IF_NOT_RRNA} ];then
@@ -422,7 +421,7 @@ do
 			--runThreadN ${CPU} \
 			--readFilesIn ${TEMP_LEFT} ${RIGHT[${SAMPLE_INDEX}]} \
 			--outFileNamePrefix ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]} \
-			--outFilterMismatchNmax ${MISMATCH} \
+			${MIS_PARAMETER} \
 			--outFilterMultimapNmax ${MAPNUM} \
 			--limitOutSAMoneReadBytes ${BUFFER_MAPNUM} \
 			--outSAMattributes All \
@@ -437,7 +436,7 @@ do
 	samtools view -@ ${CPU} -bhS -o ${OUTPATH}/STAR/${PREFIX}.bam ${OUTPATH}/STAR/${PREFIX}Aligned.out.sam
 	#mv ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}Aligned.sortedByCoord.out.bam ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.sort.bam
 	if [ -z ${IF_NOT_RMDUP} ];then
-		if [ -z ${RIGHT} -o "${RIGHT[${SAMPLE_INDEX}]}" == "none" ];then
+		if [ -z ${RIGHT} ] || [ "${RIGHT[${SAMPLE_INDEX}]}" == "none" ];then
 			samtools sort -@ ${CPU} -o ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.sort.bam ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bam
 			samtools markdup -@ ${CPU} -r ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.sort.bam ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.rmdup.bam 
 			BAM=${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.rmdup.bam
@@ -469,7 +468,7 @@ do
 	fi
 	###make bed12 file for all mapped reads with strand information and mapped times for per reads in 5th column
 	echo0 2 "---bam to bed via bedtools......"
-	if [ -z ${RIGHT[${SAMPLE_INDEX}]} ];then
+	if [ -z ${RIGHT} ] || [ "${RIGHT[${SAMPLE_INDEX}]}" == "none" ];then
 		if [ "${LIBRARY}" = "yes" ];then
 			bedtools bamtobed -i ${BAM} -bed12 -tag NH > ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12
 		else
@@ -487,6 +486,7 @@ do
 	awk '$5==1' ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12 > ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.uniq.bed12 
 	NUM_UNIQ_READ=(`wc -l ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.uniq.bed12`)
 	FACTOR=(`awk -v num=$NUM_UNIQ_READ 'BEGIN{factor=1000000/num;print factor}'`)
+	echo -e "${FACTOR}" > ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.factor
 	echo0 3 "---normalized to unique mapped reads per million, factor = ${FACTOR}"
 	
 	###make bigWig and normalize
@@ -503,13 +503,13 @@ do
 		echo0 2 "---signal calculation via htseq for"${HTSEQ}"......"
 		echo -e "htseq-count -m ${HTSEQ_MODE} -f bam -s ${LIBRARY} -t exon -i ${ATTRIBUTE} --nonunique ${NONUNIQUE} -q ${BAM} ${HTSEQ} > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.temp1.sig 2>/dev/null" >> ${PARA_HTSEQ}
 		if [ ! -z ${HTSEQ1} ];then
-			[ "${LIBRARY}" == "yes" -o "${LIBRARY}" == "reverse" ] && echo -e "bedtools intersect -wo -s -b ${RMSK} -a ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12 | cut -f 1-12,16 | sort -u | awk 'BEGIN{FS=OFS=\"\\\t\"} {if(NR==FNR){a[\$13]+=1/\$5}else{print \$13,a[\$13]/1}}' - ${SIZE_TRANSPOSON} > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.temp2.sig" >> ${PARA_HTSEQ}
-			[ "${LIBRARY}" == "no" ] && echo -e "bedtools intersect -wo -b ${RMSK} -a ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12 | cut -f 1-12,16 | sort -u | awk 'BEGIN{FS=OFS=\"\\\t\"} {if(NR==FNR){a[\$13]+=1/\$5}else{print \$13,a[\$13]/1}}' - ${SIZE_TRANSPOSON} > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.temp2.sig" >> ${PARA_HTSEQ}
+			[ "${LIBRARY}" == "yes" -o "${LIBRARY}" == "reverse" ] && echo -e "bedtools intersect -wo -s -split -b ${RMSK} -a ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12 | cut -f 1-12,16 | sort -u | awk 'BEGIN{FS=OFS=\"\\\t\"} {if(NR==FNR){a[\$13]+=1/\$5}else{print \$1,a[\$1]/1}}' - ${SIZE_TRANSPOSON} > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.temp2.sig" >> ${PARA_HTSEQ}
+			[ "${LIBRARY}" == "no" ] && echo -e "bedtools intersect -wo -split -b ${RMSK} -a ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12 | cut -f 1-12,16 | sort -u | awk 'BEGIN{FS=OFS=\"\\\t\"} {if(NR==FNR){a[\$13]+=1/\$5}else{print \$1,a[\$1]/1}}' - ${SIZE_TRANSPOSON} > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.temp2.sig" >> ${PARA_HTSEQ}
 		fi
 		if [ ! -z ${HTSEQ1} ];then
-			echo -e "cat ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.temp1.sig ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.temp2.sig > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.sig && rm ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.temp1.sig ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.temp2.sig && awk -v factor=${FACTOR} 'BEGIN{FS=OFS=\"\\\t\"} {if(NR==FNR){a[\$1]=\$2}else{print \$1,a[\$1]*1000/\$2*factor}}' ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.sig ${ALL_SIZE} > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.rpkm && awk -v factor=${FACTOR} 'BEGIN{FS=OFS=\"\\\t\"} {if(NR==FNR){a[\$1]=\$2}else{print \$1,a[\$1]}}' ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.sig ${ALL_SIZE} > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.readCount && rm ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.sig" >> ${PARA_HTSEQ1}
+			echo -e "cat ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.temp1.sig ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.temp2.sig > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.sig && rm ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.temp1.sig ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.temp2.sig && awk -v factor=${FACTOR} 'BEGIN{FS=OFS=\"\\\t\"} {if(NR==FNR){a[\$1]=\$2}else{print \$1,a[\$1]*1000/\$2*factor}}' ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.sig ${ALL_SIZE} > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.gene+picluster+rmsk.rpkm && awk -v factor=${FACTOR} 'BEGIN{FS=OFS=\"\\\t\"} {if(NR==FNR){a[\$1]=\$2}else{print \$1,a[\$1]}}' ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.sig ${ALL_SIZE} > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.gene+picluster+rmsk.readCount && rm ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.sig" >> ${PARA_HTSEQ1}
 		else
-			echo -e "mv ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.temp1.sig ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.sig && awk -v factor=${FACTOR} 'BEGIN{FS=OFS=\"\\\t\"} {if(NR==FNR){a[\$1]=\$2}else{print \$1,a[\$1]*1000/\$2*factor}}' ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.sig ${ALL_SIZE} > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.rpkm && awk -v factor=${FACTOR} 'BEGIN{FS=OFS=\"\\\t\"} {if(NR==FNR){a[\$1]=\$2}else{print \$1,a[\$1]}}' ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.sig ${ALL_SIZE} > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.readCount && rm ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.sig" >> ${PARA_HTSEQ1}
+			echo -e "mv ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.temp1.sig ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.sig && awk -v factor=${FACTOR} 'BEGIN{FS=OFS=\"\\\t\"} {if(NR==FNR){a[\$1]=\$2}else{print \$1,a[\$1]*1000/\$2*factor}}' ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.sig ${ALL_SIZE} > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.gene+picluster+rmsk.rpkm && awk -v factor=${FACTOR} 'BEGIN{FS=OFS=\"\\\t\"} {if(NR==FNR){a[\$1]=\$2}else{print \$1,a[\$1]}}' ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.sig ${ALL_SIZE} > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.gene+picluster+rmsk.readCount && rm ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.sig" >> ${PARA_HTSEQ1}
 		fi
 	fi
 	#########################
@@ -519,7 +519,7 @@ do
 		echo0 1 "---start transposon analysis---"
 		###mapping with hisat2
 		echo0 2 "---mapping to transposon consensus sequences via hisat2......"
-		if [ -z ${RIGHT} -o "${RIGHT[${SAMPLE_INDEX}]}" == "none" ];then
+		if [ -z ${RIGHT} ] || [ "${RIGHT[${SAMPLE_INDEX}]}" == "none" ];then
 			set -x
 			hisat2 -x ${INDEX_TRANSPOSON} -U ${TEMP_LEFT} -k 100 -p ${CPU} --no-mixed --no-discordant -S ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sam > ${OUTPATH}/log_file/${PREFIX[${SAMPLE_INDEX}]}.transposon.log 2>&1
 			set +x
@@ -530,18 +530,22 @@ do
 		fi
 		###samtools
 		echo0 2 "---sam to indexed bam via samtools......"
-		samtools view -f 0X2 -@ ${CPU} -bhS ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sam > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bam 
+		if [ -z ${RIGHT} ] || [ "${RIGHT[${SAMPLE_INDEX}]}" == "none" ];then
+			samtools view -F 0X4 -@ ${CPU} -bhS ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sam > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bam 
+		else
+			samtools view -f 0X2 -@ ${CPU} -bhS ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sam > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bam 
+		fi
 		samtools sort -@ ${CPU} -o ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sort.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bam 
-		if [ -z ${IF_NOT_RMDUP} ];then
+		if [ ! -z ${IF_NOT_RMDUP} ];then
 			BAM=${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sort.bam 
-		elif [ -z ${RIGHT} -o "${RIGHT[${SAMPLE_INDEX}]}" == "none" ];then
-			samtools markdup -@ ${CPU} -r ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sort.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.rmdup.bam
+		elif [ -z ${RIGHT} ] || [ "${RIGHT[${SAMPLE_INDEX}]}" == "none" ];then
+			samtools markdup -@ ${CPU} -r ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sort.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.rmdup.bam
 			BAM=${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.rmdup.bam
 		else
 			samtools sort -n -@ ${CPU} -o ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sortByName.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sort.bam
 			samtools fixmate -@ ${CPU} -m ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sortByName.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.fixmate.bam 
 			samtools sort -@ ${CPU} -o ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.fixmate.sort.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.fixmate.bam && rm ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.fixmate.bam && mv ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.fixmate.sort.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sort.bam 
-			samtools markdup -@ ${CPU} -r ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sort.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.rmdup.bam
+			samtools markdup -@ ${CPU} -r ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.sort.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.rmdup.bam
 			BAM=${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.rmdup.bam
 		fi
 		if [ -f ${BAM} ];then
@@ -549,7 +553,7 @@ do
 		fi
 		###make bed12 file for all mapped reads
 		echo0 2 "---bam to bed12 via bedtools......"
-		if [ -z ${RIGHT[${SAMPLE_INDEX}]} ];then
+		if [ -z ${RIGHT} ] || [ "${RIGHT[${SAMPLE_INDEX}]}" == "none" ];then
 			if [ "${LIBRARY}" = "yes" ];then
 				bedtools bamtobed -i ${BAM} -bed12 -tag NH > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed12
 			else
@@ -568,7 +572,7 @@ do
 			bed12ToBed6 ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed12 > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6 
 			awk -v factor=${FACTOR} 'BEGIN{FS=OFS="\t"} {if(NR==FNR){a[$1]=0}else{a[$1]+=(1/$5)}} END{for(i in a){print i,a[i]}}' ${SIZE_TRANSPOSON} ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed12 | sort -k1,1 > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.transposon.readCount
 			awk -v factor=${FACTOR} 'BEGIN{FS=OFS="\t"} {if(NR==FNR){b[$1]=$2;a[$1]=0}else{a[$1]+=(1/$5)}} END{for(i in a){print i,a[i]*factor*1000/b[i]}}' ${SIZE_TRANSPOSON} ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed12 | sort -k1,1 > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.transposon.rpkm
-			awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,1/$5}' ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6 | sort -k1,1 -k2,2n > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6.bdg 
+			awk -v factor=${FACTOR} 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,factor/$5}' ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6 | sort -k1,1 -k2,2n > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6.bdg 
 			mergeOverlappedBdg ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6.bdg > ${OUTPATH}/bucket/${PREFIX[${SAMPLE_INDEX}]}.transposon.bdg
 			rm ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6.bdg 
 			piSet_rnaseq_te_bucket.R ${SIZE_TRANSPOSON} ${OUTPATH}/bucket/${PREFIX[${SAMPLE_INDEX}]}.transposon.bucket.pdf ${OUTPATH}/bucket/${PREFIX[${SAMPLE_INDEX}]}.transposon.bdg

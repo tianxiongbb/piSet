@@ -32,12 +32,14 @@ while (my $line=<input>) {
     chomp($line);
     my @a=split(/\s+/, $line);
 
-    my $lower=$a[3]-20;
-    my $upper=$a[4]+20;
+    my $leftlower=$a[3]-20;
+    my $leftupper=$a[3]+20;
+    my $rightlower=$a[4]-20;
+    my $rightupper=$a[4]+20;
     my $chr_num=$a[2];
     $chr_num =~ s/chr//;
     if (($chrs{$a[2]} == 1) && (! defined $chrs{$chr_num})) {$chr_num=$a[2];}
-    system("samtools view -bu $title $chr_num\:$lower\-$upper > temp.bam");
+    system("samtools view -bu $title $chr_num\:$leftlower\-$leftupper $chr_num\:$rightlower\-$rightupper > temp.bam");
     system("samtools view -f 0x2 temp.bam > temp.sam");
 
     my $leftseq="";

@@ -122,6 +122,14 @@ if [ ! -f ${PATH_PRO}/annotation/common/mature.miRBase.fa ];then
 	U_to_T_fasta.py ../common/mature.miRBase.U.fa ../common/mature.miRBase.fa fa && rm ../common/mature.miRBase.U.fa
 fi
 
+# download miRNA gff from miRBase current release
+if [ ! -d ${PATH_PRO}/annotation/common/mirbase_genome ];then
+	mkdir ${PATH_PRO}/annotation/common/mirbase_genome && cd ${PATH_PRO}/annotation/common/mirbase_genome 
+	wget -r -nd ftp://mirbase.org/pub/mirbase/CURRENT/genomes/ || (echo0 0 "miRNA gff3 download failed, please check newwork connection or accessibility to ftp://mirbase.org/pub/mirbase/CURRENT/genome" && exit 1)
+	for i in *gff3; do awk 'BEGIN{FS=OFS="\t"} {if($1~/^#/){if($0~/Chromosomal/){split($0,a," ");sp=a[5]" "a[6]}}else{split($9,a,"Name=");split(a[2],b,";");n=b[1];print $1,$4,$5,n,sp,$7}}' $i > ${i/gff3/bed}; done
+	cd ${PATH_PRO}/annotation/${GENOME}
+fi
+
 # get rRNA annotation and build bowtie index
 if [ ! -f ${GENOME}.rRNA.fa ];then
 	echo0 2 "get rRNA annotation for ${GENOME}......"
@@ -145,34 +153,11 @@ else
 	echo0 4 "rRNA annotation not found in rRNA.SILVA.fa for ${SPECIES}, skip make bowtie2 index"
 fi
 
-# get hairpin annotation
-if [ ! -f ${GENOME}.hairpin.fa ];then
-	echo0 2 "get hairpin annotation for ${GENOME}......"
-	grep_fa "${SPECIES} mi" ../common/hairpin.miRBase.fa | awk '{print $1}' > ${GENOME}.hairpin.fa
-fi
-
-# build bowtie index for hairpin
-LC=(`wc -l ${GENOME}.hairpin.fa`)
-if [ ${LC} -gt 0 ];then
-	if [ ! -f BowtieIndex/hairpin.1.ebwt ];then
-		echo0 2 "build hairpin bowtie index for ${GENOME}......"
-		bowtie-build ${GENOME}.hairpin.fa BowtieIndex/hairpin >> log/install.${GENOME} 2>&1 || (echo0 0 "build hairpin index error, please check log/install.${GENOME}" && exit 1)
-	fi
-else
-	echo0 4 "hairpin annotation not found in hairpin.miRBase.fa for ${SPECIES}, skip make bowtie index. If possible, please run install.sh with -i smallrnaseq.rmadapt.fq"
-fi
-
-# get mature miRNA annotation
-if [ ! -f ${GENOME}.mature.fa ];then
-	echo0 2 "get mature miRNA annotation for ${GENOME}......"
-	grep_fa "${SPECIES} mi" ../common/mature.miRBase.fa | awk '{print $1}' > ${GENOME}.mature.fa
-fi
-
 # get Refseq Url
 [ ! -f ../common/assembly_summary_refseq.txt ] && (echo0 2 "download Refseq assemble summary file......" && wget -nd -q ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/assembly_summary_refseq.txt && mv assembly_summary_refseq.txt ../common/ || (echo0 0 "Refseq summary download failed, please check network connection or accessibility to ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/assembly_summary_refseq.txt" && exit 1))
 if [ -z ${REFSEQ_URL} ];then
 	REFSEQ_URL=(`grep -P "\t${SPECIES}\t" ../common/assembly_summary_refseq.txt | grep -P "\trepresentative genome\t|\treference genome\t" | cut -f 20`)
-	[ -z ${REFSEQ_URL} ] && echo0 0 "no ${SPECIES} in assembly_summary_refseq.txt, please provide the refseq genome url in the third parameter" && exit 1
+	[ -z ${REFSEQ_URL} ] && echo0 4 "no ${SPECIES} in assembly_summary_refseq.txt, please provide the refseq genome url in the third parameter" && exit 1
 fi
 
 # download genome.fa from UCSC or Refseq
@@ -203,13 +188,49 @@ fi
 # make chrom.size file from genome fasta
 [ ! -f ${GENOME}.chrom.size ] && echo0 2 "make chrom.size file from genome fasta......" && faToChromSize ${GENOME}.fa > ${GENOME}.chrom.size
 
+# get hairpin annotation
+if [ ! -f ${GENOME}.hairpin.fa ];then
+	echo0 2 "get hairpin annotation for ${GENOME}......"
+	grep_fa "${SPECIES} mi" ../common/hairpin.miRBase.fa | awk '{print $1}' > ${GENOME}.hairpin.fa
+fi
+
+# get miRNA sequence from mirbase genome  if hairpin is not found from hairpin.miRBase.fa
+TWC=(`wc -l ${GENOME}.hairpin.fa`)
+if [ $TWC -eq 0 ];then
+	echo0 2 "no hairpin found in hairpin.miRBase.fa, search mirbase genome to get hairpin sequence......"
+	for i in ${PATH_PRO}/annotation/common/mirbase_genome/*.bed
+	do
+		TSP=`head -1 $i | cut -f 5`
+		if [ "$TSP" == "$SPECIES" ];then
+			awk '!a[$4]++' $i | bedtools getfasta -fi ${GENOME}.fa -fo ${GENOME}.hairpin.fa -bed - -name -s
+		fi
+	done
+fi
+
+# build bowtie index for hairpin
+LC=(`wc -l ${GENOME}.hairpin.fa`)
+if [ ${LC} -gt 0 ];then
+	if [ ! -f BowtieIndex/hairpin.1.ebwt ];then
+		echo0 2 "build hairpin bowtie index for ${GENOME}......"
+		bowtie-build ${GENOME}.hairpin.fa BowtieIndex/hairpin >> log/install.${GENOME} 2>&1 || (echo0 0 "build hairpin index error, please check log/install.${GENOME}" && exit 1)
+	fi
+else
+	echo0 4 "hairpin annotation not found in hairpin.miRBase.fa for ${SPECIES}, skip make bowtie index. If possible, please run install.sh with -i smallrnaseq.rmadapt.fq"
+fi
+
+# get mature miRNA annotation
+if [ ! -f ${GENOME}.mature.fa ];then
+	echo0 2 "get mature miRNA annotation for ${GENOME}......"
+	grep_fa "${SPECIES} mi" ../common/mature.miRBase.fa | awk '{print $1}' > ${GENOME}.mature.fa
+fi
+
 # download gtf/gff annotation file from Ensemble/Refseq
 if [ ! -f ${GENOME}.gtf ];then
 	T_SPECIES=`awk -v a="${SPECIES}" 'BEGIN{print tolower(substr(a,1,1))substr(a,2,length(a)-1)}'`
-	echo0 2 "try download ${GENOME}.gtf from current ensembl release first......" && wget -nd -q ftp://ftp.ensembl.org/pub/current_gtf/${T_SPECIES/ /_}/*[0-9].gtf.gz && zcat *.gtf.gz | awk 'BEGIN{FS=OFS="\t"} {if($1!~/^#/){$1="chr"$1;if($9!~/gene_name/){split($9,a,"gene_id \"");split(a[2],b,"\";");$9=$9" gene_name \""b[1]"\";"}};print $0}' > t && mv t ${GENOME}.gtf || (echo0 0 "genome annotation download from current ensembl release failed, please check network connection or accessibility to ftp://ftp.ensembl.org/pub/current_gtf/bos_taurus/. Change to Refseq for genome annotation file download ......" && NO_ENSEMBL=1)
+	echo0 2 "try download ${GENOME}.gtf from current ensembl release first......" && wget -nd -q ftp://ftp.ensembl.org/pub/current_gtf/${T_SPECIES/ /_}/*[0-9].gtf.gz && zcat *.gtf.gz | awk 'BEGIN{FS=OFS="\t"} {if($1!~/^#/){$1="chr"$1;if($9!~/gene_name/){split($9,a,"gene_id \"");split(a[2],b,"\";");$9=$9" gene_name \""b[1]"\";"}};print $0}' > t && mv t ${GENOME}.gtf && touch .have_ensembl_gtf || (echo0 0 "genome annotation download from current ensembl release failed, please check network connection or accessibility to ftp://ftp.ensembl.org/pub/current_gtf/${T_SPECIES/ /_}. Change to Refseq for genome annotation file download ......")
 fi
 
-if [ -z ${NO_ENSEMBL} ];then
+if [ -f .have_ensembl_gtf ];then
 	if ! [ -f ${GENOME}.mRNA.3UTR.bed -a -f ${GENOME}.mRNA.5UTR.bed -a -f ${GENOME}.mRNA.exon.bed -a -f ${GENOME}.mRNA.intron.bed -a -f ${GENOME}.otherRNA.exon.bed -a -f ${GENOME}.otherRNA.intron.bed -a -f ${GENOME}.sncRNA.bed -a -f ${GENOME}.mRNA.CDS.bed ];then
 		echo0 2 "make bed annotation from ${GENOME}.gtf file......"
 		gtf_to_elements_ensemble.py ${GENOME}.gtf ${GENOME} || echo0 4 "cannot make full set of bed annotation from gtf file, please check gff or give the annotation files yourself"
@@ -350,12 +371,11 @@ if [ ! -z ${IF_TRN} ];then
 fi
 
 # download rmsk annotation from refseq if -t not set
-NO_RMSK=1
 if [ -z ${IF_TRN} ];then
 	if [ ! -f ${GENOME}.fa.out ];then
-		(rsync -a -P rsync://hgdownload.cse.ucsc.edu/goldenPath/${GENOME}/database/*rmsk.txt.gz ./ && zcat *rmsk.txt.gz > ${GENOME}.fa.out && NO_RMSK=) || ("rmsk download failed, please check network connection or accessibility to http://hgdownload.cse.ucsc.edu/goldenPath/${GENOME}/database/, change to Refseq to download rmsk annotation")
-		if [ -z ${NO_RMSK} ];then
-			echo0 2 "make rmsk bed just for LINE, SINE, LTR, DNA elements......" && awk 'BEGIN{FS=" ";OFS="\t"} {if(NR>3 && $12~/DNA|SINE|LINE|LTR/){if($10=="+"){strand="+";st=$14}else{strand="-";st=$15};print $6,$7-1,$8,$11,$3/10,strand,$12,$13,st}}' ${GENOME}.fa.out > ${GENOME}.rmsk.bed9
+		(rsync -a -P rsync://hgdownload.cse.ucsc.edu/goldenPath/${GENOME}/database/*rmsk.txt.gz ./ && zcat *rmsk.txt.gz > ${GENOME}.fa.out && touch .have_ucsc_rmsk) || ("rmsk download failed, please check network connection or accessibility to http://hgdownload.cse.ucsc.edu/goldenPath/${GENOME}/database/, change to Refseq to download rmsk annotation")
+		if [ -f .have_ucsc_rmsk ];then
+			echo0 2 "make rmsk bed just for LINE, SINE, LTR, DNA elements......" && awk 'BEGIN{FS=" ";OFS="\t"} {if(NR>3 && $12~/DNA|SINE|LINE|LTR/){if($10=="+"){strand="+";st=$14;ed=$15}else{strand="-";st=$16;ed=$15};print $6,$7-1,$8,$11,$3/10,strand,$12,$13,st,ed}}' ${GENOME}.fa.out > ${GENOME}.rmsk.bed9
 			sed -i 's/_I-int/_I/' ${GENOME}.rmsk.bed9 # keep identical with repbase name
 		else
 			echo0 2 "download repeatMasker output from Refseq......"
@@ -369,7 +389,7 @@ fi
 
 # make rmsk annotation bed file
 if [ ! -f ${GENOME}.rmsk.bed9 ];then
-	if [ -f ${GENOME}.fa.out ] && [ ! -z ${NO_RMSK} ];then
+	if [ -f ${GENOME}.fa.out ] && [ -z ${IF_TRN} ];then
 		echo0 2 "make rmsk bed just for LINE, SINE, LTR, DNA elements......" && awk 'BEGIN{FS=" ";OFS="\t"} {if(NR>3 && $11~/DNA|SINE|LINE|LTR/){if($9=="+"){strand="+";st=$12}else{strand="-";st=$14};split($11,family,"/");print $5,$6-1,$7,$10,$2,strand,family[1],family[2],st}}' ${GENOME}.fa.out > ${GENOME}.rmsk.bed9
 		if [ -z ${RMSK_URL} ];then
 			[ ! -f *_assembly_report.txt ] && wget -nd -q ${REFSEQ_URL}/*_assembly_report.txt
@@ -387,8 +407,10 @@ fi
 # get transposon consensus sequence
 if [ ! -f ${GENOME}.transposon.fa ];then
 	[ ! -f ../common/RMRBSeqs.fa ] && echo0 0 "../common/RMRBSeqs.fa not found, please re-download it from GitHub" && exit 1
-	echo0 2 "get transposon consensus sequence......" && awk 'BEGIN{FS=OFS="\t"} {if(NR==FNR){a[$4]=1}else{if($1~/^>/){split(substr($1,2,length($1)-1),b,"#");if(a[b[1]]){k=1;$0=">"b[1]}else{k=0}};if(k){print $0}}}' ${GENOME}.rmsk.bed9 ../common/RMRBSeqs.fa > ${GENOME}.transposon.original.fa
-	merge_repbase_fa.py ${GENOME}.transposon.original.fa ${GENOME}.transposon.fa # merge LTR and I for transposons consensus sequence
+	echo0 2 "get transposon consensus sequence......" && awk 'BEGIN{FS=OFS="\t"} {if(NR==FNR){a[$4]=1}else{if($1~/^>/){split(substr($1,2,length($1)-1),b,"#");split(b[1],c1,"_5end");split(c1[1],c2,"_3end");split(c2[1],c3,"_orf2");if(a[c3[1]]){k=1;$0=">"b[1]}else{k=0}};if(k){print $0}}}' ${GENOME}.rmsk.bed9 ../common/RMRBSeqs.fa > ${GENOME}.transposon.original.fa
+	merge_repbase_LTR.py ${GENOME}.transposon.original.fa ${GENOME}.t # merge LTR and I for LTR elements.
+	merge_repbase_LINE1.py ${GENOME}.t ${GENOME}.transposon.fa # merge 5end, 3end and orf2 for LINE elements.
+	rm ${GENOME}.t
 fi
 
 # rename LTR and I for rmsk genomic copies

@@ -11,8 +11,8 @@ def main():
     pool = Pool(int(sys.argv[2]))
     global mind
     global maxd
-    mind = -10
-    maxd = 20
+    mind = 20
+    maxd = 200
     results = []
     for strand in ["+", "-"]:
         for chrom in dict_bed2[strand]:
@@ -36,8 +36,8 @@ def main():
 def phasing(l):
     l.sort()
     do = {}
-    # manually set mind to -10 and maxd to 20
-    for i in range(-10,20+1):
+    # manually set mind to 20 and maxd to 200
+    for i in range(20,200+1):
         do[i] = [0, 0]
     max_index = len(l)
     for i in range(len(l)):
@@ -46,23 +46,13 @@ def phasing(l):
             j += 1
             if j >= max_index:
                 break
-            distance = int(l[j][0] - l[i][1] + 1)
-            if distance <= 20 and distance >= -10:
+            distance = int(l[j][0] - l[i][0] + 1)
+            if distance <= 200 and distance >= 20:
                 do[distance][0] += l[j][2] * l[i][2]
                 do[distance][1] += l[j][3] * l[i][3]
-            else:
+            elif distance > 200:
                 break
         j = i
-        while True:
-            j -= 1
-            if j < 0:
-                break
-            distance = int(l[j][0] - l[i][1] + 1)
-            if distance >= -10 and distance <= 20:
-                do[distance][0] += l[j][2] * l[i][2]
-                do[distance][1] += l[j][3] * l[i][3]
-            else:
-                break
     return do
 
 
@@ -90,7 +80,7 @@ def get_args():
 
 def print_help():
     if len(sys.argv) < 2:
-        bb.fun_print_help("in.bed2", "cpu_number")
+        bb.fun_print_help("in.bed2", "cpu_number", "\nthis script will calculate 5' to 5' distance")
 
 # --------process--------
 if __name__ == '__main__':

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+if  [ $# -lt 1 ];then
+	echo0 5 "cd bed2_summary folder and then run:"
+	echo0 5 "$0 out.prefix"
+	exit 1
+fi
+
+merge_files.sh ".24-32nt.transposon.summary" 4 $1.te.sense.rpm 1
+merge_files.sh ".24-32nt.transposon.summary" 5 $1.te.anti.rpm 1
+merge_files.sh ".24-32nt.picluster.summary" 4 $1.piC.sense.rpm 1
+merge_files.sh ".24-32nt.picluster.summary" 5 $1.piC.anti.rpm 1
+merge_files.sh ".24-32nt.picluster.summary" 10 $1.piC.anti.zscore 1
+merge_files.sh ".24-32nt.picluster.summary" 11 $1.piC.anti.ppscore 1
+merge_files.sh ".24-32nt.transposon.summary" 10 $1.te.sense.zscore 1
+merge_files.sh ".24-32nt.transposon.summary" 11 $1.te.sense.ppscore 1

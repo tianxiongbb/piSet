@@ -17,5 +17,5 @@ do
 	fi
 	n=`expr $n + 1`
 done
-awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,$4,0,$6}' $1.temp1 > $1
+awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,$4,$4":"$1":"$2"-"$3":"$6,$6}' $1.temp1 | sort -u > $1
 rm $1.temp*

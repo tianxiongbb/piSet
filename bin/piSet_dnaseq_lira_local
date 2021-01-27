@@ -1,0 +1,99 @@
+#!/bin/bash
+
+help_info(){
+	echo0 4 "$0"
+	echo0 1 "\t-d <dir>\tdirectory of your dnaseq_pipeline_gatk result"
+	echo0 1 "\t-s <prefix>\tprefix(s) of your single cell sample used in dnaseq_pipeline_gatk"
+	echo0 1 "\t\t \t\tif you have multiple single cell samples, use like -s \"prefix1 prefix2 ...\""
+	echo0 1 "\t-b <prefix>\tprefix of your bulk sample used in dnaseq_pipeline_gatk"
+	echo0 1 "\t-g <male|female>\tgender to determine if analysis of chrX is needed. default: male"
+	echo0 1 "\t-L \t\tSkip running LiRA step which need access to slurm"
+	echo0 1 "\t-G \t\tSkip running GATK step which donot need access to slurm"
+	echo0 1 "genome is set to hs37d5 by default."
+}
+
+if [ $# -lt 1 ];then
+	help_info && exit 1
+fi
+
+GENDER=male
+
+while getopts "hd:s:b:g:LG" OPTION; do
+	case $OPTION in
+		d)	DIR=${OPTARG%\/};;
+		s)	SINGLE_CELL=${OPTARG};;
+		b)	BULK=${OPTARG};;
+		g)	GENDER=${OPTARG};;
+		L)	SKIP_LIRA=1;;
+		G)	SKIP_GATK=1;;
+		h)	help_info && exit 1;;
+		*)	help_info && exit 1;;
+	esac
+done
+
+[ "${GENDER}" != "male" ] && [ "${GENDER}" != "female" ] && echo0 0 "Gender can only be male or female. Abort!" && exit 1
+[ ! -d ${DIR} ] && echo0 0 "The directory ${DIR} is not exist. Abort!" && exit 1
+[ ! -f ${DIR}/gatk/${SINGLE_CELL}.g.vcf.gz ] && echo0 0 "The gatk pipeline for ${SINGLE_CELL} is not finished yet. Abort!" && exit 1
+[ ! -f ${DIR}/gatk/${BULK}.g.vcf.gz ] && echo0 0 "The gatk pipeline for ${BULK} is not finished yet. Abort!" && exit 1
+
+echo0 2 "Start pipeline, the results will be in ${DIR}/LiRA"
+echo0 2 "Copy bam files to /tmp/yutianx"
+[ ! -d /tmp/yutianx ] && mkdir /tmp/yutianx
+cp ${DIR}/gatk/${SINGLE_CELL}.recal.bam ${DIR}/gatk/${SINGLE_CELL}.recal.bai ${DIR}/gatk/${BULK}.recal.bam ${DIR}/gatk/${BULK}.recal.bai /tmp/yutianx/
+
+if [ -z ${SKIP_GATK} ];then
+	# combine two gVCF files and call genotypes
+	echo0 2 "Combine gVCFs"
+	gatk CombineGVCFs -R /data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/hs37d5/hs37d5.fa --variant ${DIR}/gatk/${SINGLE_CELL}.g.vcf.gz --variant ${DIR}/gatk/${BULK}.g.vcf.gz -O ${DIR}/LiRA/${SINGLE_CELL}+${BULK}.g.vcf.gz
+	echo0 2 "Call genotypes for combined gVCF"
+	TIME_COMBINEGVCF=${SECONDS} && SECONDS=0
+	gatk --java-options "-Xmx16g" GenotypeGVCFs -R /data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/hs37d5/hs37d5.fa -V ${DIR}/LiRA/${SINGLE_CELL}+${BULK}.g.vcf.gz -O ${DIR}/LiRA/${SINGLE_CELL}+${BULK}.vcf.gz
+	TIME_GENOTYPEGVCF=${SECONDS} && SECONDS=0
+else
+	TIME_COMBINEGVCF=${SECONDS} && SECONDS=0
+	TIME_GENOTYPEGVCF=${SECONDS} && SECONDS=0
+fi
+
+echo0 2 "Copy vcf files to /tmp/yutianx"
+cp ${DIR}/LiRA/${SINGLE_CELL}+${BULK}.vcf.gz ${DIR}/LiRA/${SINGLE_CELL}+${BULK}.vcf.gz.tbi /tmp/yutianx/
+
+# make config files
+echo0 2 "Make config files"
+echo -e "name\t${SINGLE_CELL}\nanalysis_path\t/tmp/yutianx/${SINGLE_CELL}+${BULK}.sc\nreference_file\t/data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/hs37d5/hs37d5.fa\nbam\t/tmp/yutianx/${SINGLE_CELL}.recal.bam\nvcf\t/tmp/yutianx/${SINGLE_CELL}+${BULK}.vcf.gz\ngender\t${GENDER}\nsample\t${SINGLE_CELL}\nbulk\tF\nreference_identifier\thg19\nphasing_software\teagle" > ${DIR}/LiRA/${SINGLE_CELL}+${BULK}.sc.config.txt
+echo -e "name\t${BULK}\nanalysis_path\t/tmp/yutianx/${SINGLE_CELL}+${BULK}.bulk\nreference_file\t/data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/hs37d5/hs37d5.fa\nbam\t/tmp/yutianx/${BULK}.recal.bam\nvcf\t/tmp/yutianx/${SINGLE_CELL}+${BULK}.vcf.gz\ngender\t${GENDER}\nsample\t${BULK}\nbulk\tT\nreference_identifier\thg19\nphasing_software\teagle" > ${DIR}/LiRA/${SINGLE_CELL}+${BULK}.bulk.config.txt
+
+# run LiRA
+if [ -z ${SKIP_LIRA} ];then
+	echo0 2 "Prepare for LiRA compare"
+	lira_prepare ${DIR}/LiRA/${SINGLE_CELL}+${BULK}.bulk.config.txt
+	lira_prepare ${DIR}/LiRA/${SINGLE_CELL}+${BULK}.sc.config.txt
+	TIME_PREPARELIRA=${SECONDS} && SECONDS=0
+	echo0 2 "Run LiRA compare"
+	lira compare -s ${DIR}/LiRA/${SINGLE_CELL}+${BULK}.sc.config.txt -b ${DIR}/LiRA/${SINGLE_CELL}+${BULK}.bulk.config.txt -p -w -o
+	TIME_COMPARE=${SECONDS} && SECONDS=0
+	echo0 2 "Run LiRA ppower"
+	lira ppower -s ${DIR}/LiRA/${SINGLE_CELL}+${BULK}.sc.config.txt -b ${DIR}/LiRA/${SINGLE_CELL}+${BULK}.bulk.config.txt -o
+	TIME_PPOWER=${SECONDS} && SECONDS=0
+	echo0 2 "Run LiRA varcall"
+	lira varcall -s ${DIR}/LiRA/${SINGLE_CELL}+${BULK}.sc.config.txt -b ${DIR}/LiRA/${SINGLE_CELL}+${BULK}.bulk.config.txt -o
+	TIME_VARCALL=${SECONDS} && SECONDS=0
+else
+	TIME_PREPARELIRA=${SECONDS} && SECONDS=0
+	TIME_COMPARE=${SECONDS} && SECONDS=0
+	TIME_PPOWER=${SECONDS} && SECONDS=0
+	TIME_VARCALL=${SECONDS} && SECONDS=0
+fi
+
+echo0 2 "Copy result files to ${DIR}/LiRA"
+mv /tmp/yutianx/${SINGLE_CELL}+${BULK}.sc /tmp/yutianx/${SINGLE_CELL}+${BULK}.bulk ${DIR}/LiRA/
+echo0 2 "Clean up /tmp/yutianx"
+rm -rf /tmp/yutianx/${SINGLE_CELL}.recal.bam /tmp/yutianx/${BULK}.recal.bam /tmp/yutianx/${SINGLE_CELL}.recal.bai /tmp/yutianx/${BULK}.recal.bai /tmp/yutianx/${SINGLE_CELL}+${BULK}.vcf.gz /tmp/yutianx/${SINGLE_CELL}+${BULK}.vcf.gz.tbi
+
+echo0 2 "Finished!"
+echo0 3 "TIME USED:"
+echo0 3 "gVCF combination:\t$((${TIME_COMBINEGVCF} / 3600))h $(((${TIME_COMBINEGVCF} % 3600) / 60))m" 2>/dev/null
+echo0 3 "Genotyping:\t$((${TIME_GENOTYPEGVCF} / 3600))h $(((${TIME_GENOTYPEGVCF} % 3600) / 60))m" 2>/dev/null
+echo0 3 "LiRA prepare:\t$((${TIME_PREPARELIRA} / 3600))h $(((${TIME_PREPARELIRA} % 3600) / 60))m" 2>/dev/null
+echo0 3 "LiRA compare:\t$((${TIME_COMPARE} / 3600))h $(((${TIME_COMPARE} % 3600) / 60))m" 2>/dev/null
+echo0 3 "LiRA ppower:\t$((${TIME_PPOWER} / 3600))h $(((${TIME_PPOWER} % 3600) / 60))m" 2>/dev/null
+echo0 3 "LiRA varcall:\t$((${TIME_VARCALL} / 3600))h $(((${TIME_VARCALL} % 3600) / 60))m" 2>/dev/null

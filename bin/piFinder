@@ -242,7 +242,7 @@ bowtie -r -m 1 -v 1 -S -p ${CPU} ${INDEX_GENOME} insert_reads/${PREFIX}.pilikeRN
 samtools view -uS -F0x4 ${PREFIX}.pilikeRNA.ACG.uniq.sam 2>/dev/null | bedtools bamtobed -i - > ${PREFIX}.pilikeRNA.ACG.uniq.insert.bed && insertBed_to_bed2 insert_reads/${PREFIX}.pilikeRNA.ACG.insert ${PREFIX}.pilikeRNA.ACG.uniq.insert.bed > ${PREFIX}.pilikeRNA.ACG.uniq.bed2
 rm -rf ${PREFIX}.pilikeRNA.ACG.uniq.sam ${PREFIX}.pilikeRNA.ACG.uniq.insert.bed
 
-###remove ncRNA reads from ensembl gtf file
+###remove ncRNA reads from ensembl gtf file; already done in previous step
 DATE=`date --date="-24 hour"`
 echo -e "\033[31mremove ncRNA reads\t"$DATE"\033[0m"
 #snoRNA scaRNA snRNA miRNA rRNA Mt_tRNA Mt_rRNA

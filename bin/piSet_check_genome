@@ -36,6 +36,17 @@ function checkBowtie2Index(){
 		fi
 	fi
 }
+function checkHisat2Index(){
+	if [ -f Hisat2Index/$1.1.ht2 -a -f Hisat2Index/$1.2.ht2 -a -f Hisat2Index/$1.3.ht2 -a -f Hisat2Index/$1.4.ht2 -a -f Hisat2Index/$1.5.ht2 -a -f Hisat2Index/$1.6.ht2 -a -f Hisat2Index/$1.7.ht2 -a -f Hisat2Index/$1.8.ht2 ];then
+		echo0 5 "check $2: $1 ... OK"
+	else
+		if [ $3 -eq 1 ];then
+			echo0 0 "check $2: $1 ... not found"
+		else
+			echo0 4 "check $2: $1 ... not found"
+		fi
+	fi
+}
 function checkBWAIndex(){
 	if [ -f BWAIndex/$1.amb -a -f BWAIndex/$1.ann -a -f BWAIndex/$1.bwt -a -f BWAIndex/$1.pac -a -f BWAIndex/$1.sa ];then
 		echo0 5 "check $2: $1 ... OK"
@@ -69,14 +80,14 @@ checkFile $1.picluster.size "piRNA cluster size"
 checkFile $1.picluster.chopped.size "chopped piRNA size"
 checkFile $1.transposon.size "transposon size"
 checkFile $1.sncRNA.size "other small noncoding RNA size"
-checkFile $1.mRNA.bed "mRNA region"
+#checkFile $1.mRNA.bed "mRNA region"
 checkFile $1.mRNA.3UTR.bed "mRNA 3'UTR region"
 checkFile $1.mRNA.5UTR.bed "mRNA 5'UTR region"
 checkFile $1.mRNA.CDS.bed "mRNA CDS region"
 checkFile $1.mRNA.exon.bed "mRNA exon region"
 checkFile $1.mRNA.intron.bed "mRNA intron region"
 checkFile $1.sncRNA.bed "other small noncoding RNA region"
-checkFile $1.otherRNA.bed "other longRNA region"
+#checkFile $1.otherRNA.bed "other longRNA region"
 checkFile $1.otherRNA.exon.bed "other longRNA exon region"
 checkFile $1.otherRNA.intron.bed "other longRNA intron region"
 checkFile $1.picluster.bed "piRNA cluster region"
@@ -94,7 +105,7 @@ checkBowtieIndex picluster "bowtie index for picluster" 1
 checkBowtieIndex sncRNA "bowtie index for sncRNA" 2
 checkBowtie2Index genome "bowtie2 index for genome" 1
 checkBowtie2Index rRNA "bowtie2 index for rRNA" 1
-checkBowtie2Index transposon "bowtie2 index for transposon" 1
+checkHisat2Index transposon "hisat2 index for transposon" 1
 checkBWAIndex genome "bwa index for genome" 1
 checkSTARIndex
 echo -e "files colored in \033[40;31;1mred\033[0m is needed, \033[40;33;1myellow\033[0m is suggested."

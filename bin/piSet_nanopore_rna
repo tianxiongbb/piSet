@@ -1,0 +1,145 @@
+#!/bin/bash
+
+# function
+function checkTools(){
+	if [ `which $1` ];then
+		echo0 3 "$1: `which $1`"
+	else
+		echo0 0 "$1 not found, please install it or add it into your PATH!"
+		exit 1
+	fi
+}
+
+function delet(){
+	[ -f $1 ] && rm -rf $1
+}
+
+# help information
+help_info(){
+	echo0 4 "$0"
+	echo0 1 "\t-l <file>\tNanopre RNA sequencing reads in fastq or fastq.gz"
+	echo0 1 "\t-p <file>\tprefix for output. eg: sample1. default: sample_name"
+	echo0 1 "\t-o <dir>\toutput directory. eg: nanopore. default: ./"
+	echo0 1 "\t-g <genome>\tgenome used. eg: dm3, mm10. default: dm3"
+	echo0 1 "\t-B <index>\tminimap2 index used for genome mapping. default: genome/Minimap2Index/genome.mmi"
+	echo0 1 "\t-C <file>\tchromosome size file. default: genome/genome.chrom.size"
+	echo0 1 "\t-c <int>\tCPU number used in this pipeline. default: 1"
+}
+
+if [ $# -lt 1 ];then
+	help_info && exit 1
+fi
+
+# parameters
+CPU=1
+OUTDIR=./
+GENOME=dm3
+
+while getopts "hl:p:o:g:B:C:c:" OPTION; do
+	case $OPTION in
+		l)	LEFT=`readlink -f ${OPTARG}`;;
+		p)	PREFIX=${OPTARG};;
+		o)	OUTDIR=${OPTARG%\/};;
+		g)	GENOME=${OPTARG};;
+		B)	MINIMAP2_INDEX=`readlink -f ${OPTARG}`;;
+		C)	GENOME_SIZE=`readlink -f ${OPTARG}`;;
+		c)	CPU=${OPTARG};;
+		h)	help_info && exit 1;;
+		*)	help_info && exit 1;;
+	esac
+done
+
+PATH_ANNO=`dirname ${0}` && PATH_ANNO=${PATH_ANNO%/bin}/annotation/${GENOME}
+PATH_PROG=`dirname ${0}`
+[ -z ${MINIMAP2_INDEX} ] && MINIMAP2_INDEX=${PATH_ANNO}/Minimap2Index/genome.mmi
+[ -z ${GENOME_SIZE} ] && GENOME_SIZE=${PATH_ANNO}/${GENOME}.chrom.size
+[ -z ${PICLUSTER} ] && PICLUSTER=${PATH_ANNO}/${GENOME}.picluster.bed
+[ -z ${mRNA} ] && mRNA=${PATH_ANNO}/${GENOME}.mRNA.exon.bed
+[ -z ${ncRNA} ] && ncRNA=${PATH_ANNO}/${GENOME}.otherRNA.exon.bed
+[ -z ${sncRNA} ] && sncRNA=${PATH_ANNO}/${GENOME}.sncRNA.bed
+[ ! -d ${OUTDIR} ] && mkdir -p ${OUTDIR}
+[ -z ${PREFIX} ] && PREFIX=`basename ${LEFT}` && PREFIX=${PREFIX%.f*q*}
+
+# check tools
+echo0 1 "check tools......"
+checkTools minimap2
+checkTools bedtools
+checkTools paftools.js
+echo0 1 "OK"
+
+# check parameters
+echo0 1 "check parameters......"
+[ ! -f ${LEFT} ] && echo0 0 "no input.fastq file ${LEFT}" && exit 1
+[ ! -d ${PATH_ANNO} ] && echo0 4 "genome ${GENOME} not installed, please make sure you have give all the annotation files via -B"
+[ ! -f ${MINIMAP2_INDEX} ] && echo0 0 "no minimap2 index ${MINIMAP2_INDEX}" && exit 1
+[ ! -f ${GENOME_SIZE} ] && echo0 0 "no genome size file ${GENOME_SIZE}" && exit 1
+[ ! -f ${PICLUSTER} ] && echo0 0 "no picluster annotation file ${PICLUSTER}" && exit 1
+[ ! -f ${mRNA} ] && echo0 0 "no mRNA annotation file ${mRNA}" && exit 1
+[ ! -f ${ncRNA} ] && echo0 0 "no ncRNA annotation file ${ncRNA}" && exit 1
+[ ! -f ${sncRNA} ] && echo0 0 "no sncRNA annotation file ${sncRNA}" && exit 1
+echo0 1 "OK"
+
+###############
+### process ###
+###############
+
+# mkdir
+[ ! -d ${OUTDIR}/minimap2 ] && mkdir -p ${OUTDIR}/minimap2
+[ ! -d ${OUTDIR}/summary ] && mkdir -p ${OUTDIR}/summary
+[ ! -d ${OUTDIR}/lendis ] && mkdir -p ${OUTDIR}/lendis
+[ ! -d ${OUTDIR}/track ] && mkdir -p ${OUTDIR}/track
+[ ! -d ${OUTDIR}/readInfo ] && mkdir -p ${OUTDIR}/readInfo
+
+# mapping
+echo0 2 "map to genome via minimap2......"
+minimap2 ${MINIMAP2_INDEX} ${LEFT} -t ${CPU} -x splice -u f -o ${OUTDIR}/minimap2/${PREFIX}.paf --secondary=no -c
+
+# format converting and intersect with piclusters, mRNAs, ncRNAs and sncRNAs
+echo0 2 "convert paf to bed12......"
+paftools.js splice2bed ${OUTDIR}/minimap2/${PREFIX}.paf | sort -k1,1 -k2,2n - > ${OUTDIR}/minimap2/${PREFIX}.bed12 
+echo0 2 "intersect mapping results with piclusters......"
+intersectBed -a ${OUTDIR}/minimap2/${PREFIX}.bed12 -b ${PICLUSTER} -wo -nonamecheck -f 0.3 -split | awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$16,"picluster"}' - > ${OUTDIR}/readInfo/${PREFIX}.picluster.bed14
+awk '$13=="42AB"' ${OUTDIR}/readInfo/${PREFIX}.picluster.bed14 > ${OUTDIR}/readInfo/${PREFIX}.42AB.bed
+awk '$13=="flam"' ${OUTDIR}/readInfo/${PREFIX}.picluster.bed14 > ${OUTDIR}/readInfo/${PREFIX}.flam.bed
+echo0 2 "convert bed12 to bigBed......"
+awk 'BEGIN{FS=OFS="\t"} {$4="Nanopre_Read";print $0}' ${OUTDIR}/minimap2/${PREFIX}.bed12 > ${OUTDIR}/${PREFIX}.tmp && bedToBigBed -type=bed12 ${OUTDIR}/${PREFIX}.tmp ${GENOME_SIZE} ${OUTDIR}/track/${PREFIX}.bb && rm ${OUTDIR}/${PREFIX}.tmp 
+cut -f 1-12 ${OUTDIR}/readInfo/${PREFIX}.picluster.bed14 | awk 'BEGIN{FS=OFS="\t"} {$4="Nanopore_Read";print $0}'> ${OUTDIR}/${PREFIX}.tmp && bedToBigBed -type=bed12 ${OUTDIR}/${PREFIX}.tmp ${GENOME_SIZE} ${OUTDIR}/track/${PREFIX}.picluster.bb && rm ${OUTDIR}/${PREFIX}.tmp 
+intersectBed -a ${OUTDIR}/minimap2/${PREFIX}.bed12 -b ${mRNA} -wo -nonamecheck -split | \
+	awk 'BEGIN{FS=OFS="\t"}
+	{
+		c=$1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$7"\t"$8"\t"$9"\t"$10"\t"$11"\t"$12"\t"$16"\tmRNA";
+		a[$16"-"c]=c
+		over_len[$16"-"c]+=$19;
+		if(!b[$16"-"c]){
+			split($11,tl,",");l=0;for(i=1;i<=length(tl)-1;i++){l+=tl[i]};seq_len[$16"-"c]=l
+		}
+	}
+	END{for(i in a){if(over_len[i]>seq_len[i]*0.3){print a[i]}}}' - | sort -k1,1 -k2,2n > ${OUTDIR}/readInfo/${PREFIX}.mRNA.bed14
+intersectBed -a ${OUTDIR}/minimap2/${PREFIX}.bed12 -b ${ncRNA} -wo -nonamecheck -split | \
+	awk 'BEGIN{FS=OFS="\t"}
+	{
+		c=$1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$7"\t"$8"\t"$9"\t"$10"\t"$11"\t"$12"\t"$16"\tncRNA-"$17;
+		a[$16"-"c]=c
+		over_len[$16"-"c]+=$19;
+		if(!b[$16"-"c]){
+			split($11,tl,",");l=0;for(i=1;i<=length(tl)-1;i++){l+=tl[i]};seq_len[$16"-"c]=l
+		}
+	}
+	END{for(i in a){if(over_len[i]>seq_len[i]*0.3){print a[i]}}}' - | sort -k1,1 -k2,2n > ${OUTDIR}/readInfo/${PREFIX}.ncRNA.bed14
+intersectBed -a ${OUTDIR}/minimap2/${PREFIX}.bed12 -b ${sncRNA} -wo -nonamecheck -split | \
+	awk 'BEGIN{FS=OFS="\t"}
+	{
+		c=$1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$7"\t"$8"\t"$9"\t"$10"\t"$11"\t"$12"\t"$16"\tsncRNA-"$17;
+		a[$16"-"c]=c
+		over_len[$16"-"c]+=$19;
+		if(!b[$16"-"c]){
+			split($11,tl,",");l=0;for(i=1;i<=length(tl)-1;i++){l+=tl[i]};seq_len[$16"-"c]=l
+		}
+	}
+	END{for(i in a){if(over_len[i]>seq_len[i]*0.3){print a[i]}}}' - | sort -k1,1 -k2,2n > ${OUTDIR}/readInfo/${PREFIX}.sncRNA.bed14
+cat ${OUTDIR}/readInfo/${PREFIX}.picluster.bed14 ${OUTDIR}/readInfo/${PREFIX}.mRNA.bed14 ${OUTDIR}/readInfo/${PREFIX}.ncRNA.bed14 ${OUTDIR}/readInfo/${PREFIX}.sncRNA.bed14 > ${OUTDIR}/readInfo/${PREFIX}.bed14
+
+# calculate length distribution and read counts for each gene
+awk 'BEGIN{FS=OFS="\t"} {l=0;split($11,a,",");for(i=1;i<=length(a)-1;i++){l+=a[i]};print $13,l}' ${OUTDIR}/readInfo/${PREFIX}.bed14 > ${OUTDIR}/readInfo/${PREFIX}.forR
+awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){print $4,"picluster"}else if(ARGIND==2){if(!a[$4]++){print $4,"mRNA"}}else if(ARGIND==3){if(!a[$4]++){print $4,"ncRNA-"$5}}else{if(!a[$4]++){print $4,"sncRNA-"$5}}}' ${PICLUSTER} ${mRNA} ${ncRNA} ${sncRNA} > ${OUTDIR}/readInfo/${PREFIX}.forR2
+piSet_nanopore_rna_plot.R ${OUTDIR}/readInfo/${PREFIX}.forR ${OUTDIR}/readInfo/${PREFIX}.forR2 ${OUTDIR}/summary/${PREFIX}.summary.txt
