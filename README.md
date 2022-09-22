@@ -45,17 +45,9 @@ By default, piSet will add piSet/bin to your PATH. Enjoy the journey with piSet 
 ## 2. install genome
 Once you have installed piSet, you need to install and download or make all the genome annotation needed in the pipeline. Simply typing: `piSet_install_genome` to get help information.  
 
-To install mouse mm10 genome, run:
+To install mouse mm10 genome, first create a folder named mm10 and copy the piRNA cluster annotation bed (bed6) file into it; then run:
 ```
 piSet_install_genome -g mm10 -s "Mus musculus" -c 16  
-```
-piSet will automaticlly download the latest assembled version of a genome, to install genome in lower assembled version like mm9|hg19|dm3, simply run with -O:
-```
-piSet_install_genome -g mm9 -s "Mus musculus" -c 16 -O
-```
-Right now, piSet only support genome in old assembled version of mm9, hg19 and dm3. To get old assembled genome except mm10, hg19 and dm3, eg: bosTau7, you need to give the gene annotation gtf/gff file as piSet/annotation/bosTau7/bosTau7.(gtf|gff) and  run:
-```
-piSet_install_genome -g bosTau7 -s "Bos taurus" -c 16 -O -T http://www.repeatmasker.org/genomes/bosTau7/RepeatMasker-rm405-db20140131/bosTau7.fa.out.gz
 ```
 tips: -T provides rmsk.url for downloading repeat element annotation in different genome version. The url can be found in [RepeatMasker Website](http://www.repeatmasker.org/genomicDatasets/RMGenomicDatasets.html)  
 gene annotation file can be found in [Ensembl](https://useast.ensembl.org/info/data/ftp/index.html) or [iGenome](https://support.illumina.com/sequencing/sequencing_software/igenome.html)
@@ -86,13 +78,12 @@ After installing genome, running smallRNAseq pipeline is quite easy. For smallRN
 ```
 piSet_srnaseq -i srnaseq.fastq -g mm10 -o output_dir
 ```
-tips: piSet_srnaseq will automaticlly running two main scripts (*piSet_srnamap, piSet_run_bed2_summary*) with default parameters. 
 
-Especially, you may want to compare several srnaseq data at one time, then you can run:
+You may want to compare several srnaseq data at one time, then you can run:
 ```
-piSet_srna_map -i "amybHet1.fastq amybHet2.fastq amybMut1.fastq amybMut2.fastq" -g mm10 -o output_dir -p amyb_HetMut -E -N allSM -a 0
+piSet_srna_map -i "amybHet1.fastq amybHet2.fastq amybMut1.fastq amybMut2.fastq" -g mm10 -o output_dir -p amyb_HetMut -N allSM -a 0
 ```
-tips: -E will enable piSet use EM algorithm to assign multiple mapped reads more accurately.  
+tips: you can also set -E to enable piSet use EM algorithm to assign multiple mapped reads, but this usually takes much more time. 
 set -a to 0 to automaticlly guess the adapter sequence and remove adapter for each samples.  
 set -N to allSM to normalize results via all mapped reads including miRNA and other small noncoding RNAs (eg: snoRNA, snRNA)  
 
