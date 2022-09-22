@@ -23,6 +23,7 @@ cat << EOF
 Author: Tianxiong (Bear) Yu
 usage:
 piSet_rnaseq <option>* (-l input_left.fq) (-g genome) [-r input_right.fq]"
+please reformat RNAseq first using reformat_umi_fastq.py
 EOF
 echo -e "\033[33;1m"
 cat << EOF
@@ -35,6 +36,7 @@ Options:
 		tips for multiple sample mode: if all data is single-end, use like -l "left1.fq left2.fq" without -r; if all data is paired-end data, use like -l "left1.fq left2.fq" -r "right1.fq right2.fq"; if some sample is single-end and other is paired-end, then use like -l "left1.fq left2.fq left3.fq" -r "right1.fq none right3.fq", which none indicates signle-end data.
 	-g genome used for this pipeline. eg: hg38 or mm10
 	-E set this parameter if ERCC spike-ins are added in the library.
+	-e concentrate of ERCC spike-ins added to the library. set this parameter when -E is enabled. default: 3000 mol/cell.
 	-t sample information file, please use -t with multiple sample mode. sample information is a tab delimited file like format below:
 		# sample_prefix_name	condition
 		Bill.RNAseq.gen.Thoc7_Df.ovary.r1 Thoc7_DF
@@ -96,13 +98,14 @@ MISMATCH=0.02
 ATTRIBUTE=gene_name
 NONUNIQUE=all
 HTSEQ_MODE=intersection-nonempty
+CONCENTRATE=3000
 
 echo0 1 "Command:"
 COMMAND="BB_rnaseq_pipeline "$*
 echo0 3 "$COMMAND"
 echo ""
 
-ARGS=`getopt -a -o l:r:g:p:o:M:m:C:c:L:i:H:t:S:E -l no-rRNA-removing,index-rRNA:,index-genome:,no-duplication-removing,nonunique:,htseq-mode:,transposon-analysis,index-transposon:,size-transposon:,annotation-bed12:,no-deseq2 -- "$@"`
+ARGS=`getopt -a -o l:r:g:p:o:M:m:C:c:L:i:H:t:S:e:E -l no-rRNA-removing,index-rRNA:,index-genome:,no-duplication-removing,nonunique:,htseq-mode:,transposon-analysis,index-transposon:,size-transposon:,annotation-bed12:,no-deseq2 -- "$@"`
 [ $? -ne 0 ] && usage
 eval set -- "${ARGS}"
 while true
@@ -125,6 +128,7 @@ do
 		-H)	HTSEQ=$2 && shift 2;;
 		-S)	ALL_SIZE=$2 && shift 2;;
 		-E)	ERCC=1 && shift 1;;
+		-e)	CONCENTRATE=$2 && shift 2;;
 		--no-deseq2)	IF_NOT_DESEQ2=1 && shift;;
 		--no-rRNA-removing)	IF_NOT_RRNA=1 && shift;;
 		--index-rRNA)	INDEX_RRNA=$2 && shift 2;;
@@ -345,6 +349,7 @@ PARA_BAMTOBED=para.${RANDOM}.${RANDOM}.${RANDOM}.bamtobed
 [ ! -d ${OUTPATH}/signal ] && mkdir ${OUTPATH}/signal
 [ ! -d ${OUTPATH}/replicates_quality ] && mkdir ${OUTPATH}/replicates_quality
 [ ! -d ${OUTPATH}/bigWig ] && mkdir ${OUTPATH}/bigWig
+[ ! -d ${OUTPATH}/bigWig_norByERCC ] && [ ! -z ${ERCC} ] && mkdir ${OUTPATH}/bigWig_norByERCC
 [ ! -d ${OUTPATH}/comparison ] && mkdir ${OUTPATH}/comparison
 [ ! -d ${OUTPATH}/bucket ] && mkdir ${OUTPATH}/bucket
 
@@ -484,7 +489,15 @@ do
 			bedtools bamtobed -i ${BAM} -bed12 -tag NH | awk 'BEGIN{FS=OFS="\t"} {if(substr($4,length($4))=="1"){if($6=="+"){$6="-"}else{$6="+"}};print $0}' > ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12
 		fi
 	fi
-	###if ERCCs are imported while library constrcution, align to them and calculate the ERCC reads; TODO
+	###confirm the normalize factor for density
+	#NUM_UNIQ_READ=`grep "Uniquely mapped reads number" STAR/${PREFIX[${SAMPLE_INDEX}]}Log.final.out | awk 'BEGIN{FS="\t"} {print $2}'`
+	awk '$5==1' ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12 > ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.uniq.bed12 
+	NUM_UNIQ_READ=(`wc -l ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.uniq.bed12`)
+	FACTOR=(`awk -v num=$NUM_UNIQ_READ 'BEGIN{factor=1000000/num;print factor}'`)
+	echo -e "${FACTOR}" > ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.factor
+	echo0 3 "---normalized to unique mapped reads per million, factor = ${FACTOR}"
+
+	###if ERCCs are imported while library constrcution, align to them and calculate the ERCC reads
 	if [ ! -z ${ERCC} ];then
 		echo0 1 "---start mapping to ERCC spike-ins---"
 		###mapping with hisat2
@@ -502,10 +515,10 @@ do
 		echo0 2 "---sam to indexed bam via samtools......"
 		samtools view -f 0X2 -@ ${CPU} -bhS ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.ERCC.sam > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.ERCC.bam 
 		samtools sort -@ ${CPU} -o ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.ERCC.sort.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.ERCC.bam 
-		samtools index @ ${CPU} ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.ERCC.sort.bam 
+		samtools index -@ ${CPU} ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.ERCC.sort.bam 
 		umi_mark_duplicates.py -f ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.ERCC.sort.bam -p ${CPU}
 		samtools view -@ ${CPU} -bh -F 0x400 ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.ERCC.sort.deumi.sorted.bam > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.ERCC.rmdup.bam 
-		samtools index @ ${CPU} ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.ERCC.rmdup.bam 
+		samtools index -@ ${CPU} ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.ERCC.rmdup.bam 
 		BAM_ERCC=${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.ERCC.rmdup.bam 
 		if [ -f ${BAM_ERCC} ];then
 			rm -rf ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.ERCC.bam ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.ERCC.sam
@@ -524,25 +537,22 @@ do
 				bedtools bamtobed -i ${BAM_ERCC} -bed12 | awk 'BEGIN{FS=OFS="\t"} {if(substr($4,length($4))=="1"){if($6=="+"){$6="-"}else{$6="+"}};print $0}' > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.ERCC.bed12
 			fi
 		fi
-		awk 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){a[$1]++}else{print $1,a[$1]/1}}' ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.ERCC.bed12 ${SIZE_ERCC} > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.ERCC.readcount
-		awk '{s++} END{print s}' ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.ERCC.bed12 > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.ERCC.totalread
+		awk -v f=${FACTOR} 'BEGIN{FS=OFS="\t";print "\tlength\treads\trpkm"} {if(ARGIND==1){a[$1]++}else{print $1,$2,a[$1]/1,a[$1]*f/$2*1000}}' ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.ERCC.bed12 ${SIZE_ERCC} > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.ERCC.summary
+		awk '{if(NR>1){s+=$4}} END{print s}' ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.ERCC.summary > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.ERCC.totalRPKM
+		###factor for ERCC sike-ins
+		FACTOR_ERCC=`awk -v c=$CONCENTRATE '{print c/$1}' ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.ERCC.totalRPKM`
 	fi
-	###confirm the normalize factor for density
-	#NUM_UNIQ_READ=`grep "Uniquely mapped reads number" STAR/${PREFIX[${SAMPLE_INDEX}]}Log.final.out | awk 'BEGIN{FS="\t"} {print $2}'`
-	awk '$5==1' ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12 > ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.uniq.bed12 
-	NUM_UNIQ_READ=(`wc -l ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.uniq.bed12`)
-	FACTOR=(`awk -v num=$NUM_UNIQ_READ 'BEGIN{factor=1000000/num;print factor}'`)
-	echo -e "${FACTOR}" > ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.factor
-	echo0 3 "---normalized to unique mapped reads per million, factor = ${FACTOR}"
 	
 	###make bigWig and normalize
 	echo0 2 "---make signal files......"
 	if [ "${LIBRARY}" = "no" ];then
 		#bed12_to_bw.py ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12 ${CHROMSIZE} ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]} ${FACTOR} 0
 		echo "bedtools genomecov -scale ${FACTOR} -split -bg -i ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.uniq.bed12 -g ${CHROMSIZE} | sort -k1,1 -k2,2n > ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.uniq.bdg && bedGraphToBigWig ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.uniq.bdg ${CHROMSIZE} ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.uniq.bw" >> ${PARA_BEDTOBW} && echo "bedtools genomecov -scale ${FACTOR} -split -bg -i ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12 -g ${CHROMSIZE} | sort -k1,1 -k2,2n > ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.bdg && bedGraphToBigWig ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.bdg ${CHROMSIZE} ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.bw" >> ${PARA_BEDTOBW}
+		[ ! -z ${ERCC} ] && echo "bedtools genomecov -scale ${FACTOR_ERCC} -split -bg -i ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.uniq.bed12 -g ${CHROMSIZE} | sort -k1,1 -k2,2n > ${OUTPATH}/bigWig_norByERCC/${PREFIX[${SAMPLE_INDEX}]}.uniq.bdg && bedGraphToBigWig ${OUTPATH}/bigWig_norByERCC/${PREFIX[${SAMPLE_INDEX}]}.uniq.bdg ${CHROMSIZE} ${OUTPATH}/bigWig_norByERCC/${PREFIX[${SAMPLE_INDEX}]}.uniq.bw" >> ${PARA_BEDTOBW} && echo "bedtools genomecov -scale ${FACTOR_ERCC} -split -bg -i ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12 -g ${CHROMSIZE} | sort -k1,1 -k2,2n > ${OUTPATH}/bigWig_norByERCC/${PREFIX[${SAMPLE_INDEX}]}.bdg && bedGraphToBigWig ${OUTPATH}/bigWig_norByERCC/${PREFIX[${SAMPLE_INDEX}]}.bdg ${CHROMSIZE} ${OUTPATH}/bigWig_norByERCC/${PREFIX[${SAMPLE_INDEX}]}.bw" >> ${PARA_BEDTOBW}
 	else
 		#bed12_to_bw.py ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12 ${CHROMSIZE} ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]} ${FACTOR} ${CPU}
 		echo "bedtools genomecov -scale ${FACTOR} -split -bg -strand + -i ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.uniq.bed12 -g ${CHROMSIZE} | sort -k1,1 -k2,2n > ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.uniq.watson.bdg && bedGraphToBigWig ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.uniq.watson.bdg ${CHROMSIZE} ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.uniq.watson.bw" >> ${PARA_BEDTOBW} && echo "bedtools genomecov -scale ${FACTOR} -split -bg -strand - -i ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.uniq.bed12 -g ${CHROMSIZE} | sort -k1,1 -k2,2n | awk 'BEGIN{FS=OFS=\"\t\"} {\$4=-\$4;print \$0}' > ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.uniq.crick.bdg && bedGraphToBigWig ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.uniq.crick.bdg ${CHROMSIZE} ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.uniq.crick.bw" >> ${PARA_BEDTOBW} && echo "bedtools genomecov -scale ${FACTOR} -split -bg -strand + -i ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12 -g ${CHROMSIZE} | sort -k1,1 -k2,2n > ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.watson.bdg && bedGraphToBigWig ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.watson.bdg ${CHROMSIZE} ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.watson.bw" >> ${PARA_BEDTOBW} && echo "bedtools genomecov -scale ${FACTOR} -split -bg -strand - -i ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12 -g ${CHROMSIZE} | sort -k1,1 -k2,2n | awk 'BEGIN{FS=OFS=\"\t\"} {\$4=-\$4;print \$0}' > ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.crick.bdg && bedGraphToBigWig ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.crick.bdg ${CHROMSIZE} ${OUTPATH}/bigWig/${PREFIX[${SAMPLE_INDEX}]}.crick.bw" >> ${PARA_BEDTOBW}
+		[ ! -z ${ERCC} ] && echo "bedtools genomecov -scale ${FACTOR_ERCC} -split -bg -strand + -i ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.uniq.bed12 -g ${CHROMSIZE} | sort -k1,1 -k2,2n > ${OUTPATH}/bigWig_norByERCC/${PREFIX[${SAMPLE_INDEX}]}.uniq.watson.bdg && bedGraphToBigWig ${OUTPATH}/bigWig_norByERCC/${PREFIX[${SAMPLE_INDEX}]}.uniq.watson.bdg ${CHROMSIZE} ${OUTPATH}/bigWig_norByERCC/${PREFIX[${SAMPLE_INDEX}]}.uniq.watson.bw" >> ${PARA_BEDTOBW} && echo "bedtools genomecov -scale ${FACTOR_ERCC} -split -bg -strand - -i ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.uniq.bed12 -g ${CHROMSIZE} | sort -k1,1 -k2,2n | awk 'BEGIN{FS=OFS=\"\t\"} {\$4=-\$4;print \$0}' > ${OUTPATH}/bigWig_norByERCC/${PREFIX[${SAMPLE_INDEX}]}.uniq.crick.bdg && bedGraphToBigWig ${OUTPATH}/bigWig_norByERCC/${PREFIX[${SAMPLE_INDEX}]}.uniq.crick.bdg ${CHROMSIZE} ${OUTPATH}/bigWig_norByERCC/${PREFIX[${SAMPLE_INDEX}]}.uniq.crick.bw" >> ${PARA_BEDTOBW} && echo "bedtools genomecov -scale ${FACTOR_ERCC} -split -bg -strand + -i ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12 -g ${CHROMSIZE} | sort -k1,1 -k2,2n > ${OUTPATH}/bigWig_norByERCC/${PREFIX[${SAMPLE_INDEX}]}.watson.bdg && bedGraphToBigWig ${OUTPATH}/bigWig_norByERCC/${PREFIX[${SAMPLE_INDEX}]}.watson.bdg ${CHROMSIZE} ${OUTPATH}/bigWig_norByERCC/${PREFIX[${SAMPLE_INDEX}]}.watson.bw" >> ${PARA_BEDTOBW} && echo "bedtools genomecov -scale ${FACTOR_ERCC} -split -bg -strand - -i ${OUTPATH}/STAR/${PREFIX[${SAMPLE_INDEX}]}.bed12 -g ${CHROMSIZE} | sort -k1,1 -k2,2n | awk 'BEGIN{FS=OFS=\"\t\"} {\$4=-\$4;print \$0}' > ${OUTPATH}/bigWig_norByERCC/${PREFIX[${SAMPLE_INDEX}]}.crick.bdg && bedGraphToBigWig ${OUTPATH}/bigWig_norByERCC/${PREFIX[${SAMPLE_INDEX}]}.crick.bdg ${CHROMSIZE} ${OUTPATH}/bigWig_norByERCC/${PREFIX[${SAMPLE_INDEX}]}.crick.bw" >> ${PARA_BEDTOBW}
 	fi
 	###htseq-count
 	if [ "$HTSEQ" != "0" ];then
@@ -605,6 +615,7 @@ do
 			bed12ToBed6 ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed12 > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6 
 			awk -v factor=${FACTOR} 'BEGIN{FS=OFS="\t"} {if(NR==FNR){a[$1]=0}else{a[$1]+=(1/$5)}} END{for(i in a){print i,a[i]}}' ${SIZE_TRANSPOSON} ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed12 | sort -k1,1 > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.transposon.readCount
 			awk -v factor=${FACTOR} 'BEGIN{FS=OFS="\t"} {if(NR==FNR){b[$1]=$2;a[$1]=0}else{a[$1]+=(1/$5)}} END{for(i in a){print i,a[i]*factor*1000/b[i]}}' ${SIZE_TRANSPOSON} ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed12 | sort -k1,1 > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.transposon.rpkm
+			[ ! -z ${ERCC} ] && awk -v c=$CONCENTRATE 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){a=$1}else{print $1,$2*c/a}}' ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.ERCC.totalRPKM ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.transposon.rpkm > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.transposon.mol-cell
 			awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,1/$5}' ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6 | sort -k1,1 -k2,2n > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6.bdg 
 			mergeOverlappedBdg ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6.bdg > ${OUTPATH}/bucket/${PREFIX[${SAMPLE_INDEX}]}.transposon.bdg
 			rm ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6.bdg 
@@ -613,6 +624,7 @@ do
 			bed12ToBed6 ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed12 > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6 
 			awk -v factor=${FACTOR} 'BEGIN{FS=OFS="\t"} {if(NR==FNR){a1[$1]=0;a2[$1]=0;a3[$1]=0}else{a1[$1]+=(1/$5);if($6=="+"){a2[$1]+=(1/$5)}else{a3[$1]+=(1/$5)}}} END{for(i in a1){print i,a1[i],a2[i],a3[i]}}' ${SIZE_TRANSPOSON} ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6 | sort -k1,1 > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.transposon.readCount
 			awk -v factor=${FACTOR} 'BEGIN{FS=OFS="\t"} {if(NR==FNR){b[$1]=$2;a1[$1]=0;a2[$1]=0;a3[$1]=0}else{a1[$1]+=(1/$5);if($6=="+"){a2[$1]+=(1/$5)}else{a3[$1]+=(1/$5)}}} END{for(i in a1){print i,a1[i]*factor*1000/b[i],a2[i]*factor*1000/b[i],a3[i]*factor*1000/b[i]}}' ${SIZE_TRANSPOSON} ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6 | sort -k1,1 > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.transposon.rpkm
+			[ ! -z ${ERCC} ] && awk -v c=$CONCENTRATE 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){a=$1}else{print $1,$2*c/a,$3*c/a,$4*c/a}}' ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.ERCC.totalRPKM ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.transposon.rpkm > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.transposon.mol-cell
 			awk '$6=="+"' ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6 > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6.sense
 			awk '$6=="-"' ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6 > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6.anti
 			awk -v factor=${FACTOR} 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,factor/$5}' ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6.sense | sort -k1,1 -k2,2n > ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed6.sense.bdg 
@@ -631,6 +643,12 @@ ParaFly -c ${PARA_BEDTOBW} -CPU ${CPU} -failed_cmds ${PARA_BEDTOBW}.failed_cmds 
 echo0 2 "run pooled htseq commands......"
 ParaFly -c ${PARA_HTSEQ} -CPU ${CPU} -failed_cmds ${PARA_HTSEQ}.failed_cmds 2>/dev/null && rm ${PARA_HTSEQ}*
 ParaFly -c ${PARA_HTSEQ1} -CPU ${CPU} -failed_cmds ${PARA_HTSEQ1}.failed_cmds 2>/dev/null && rm ${PARA_HTSEQ1}*
+SAMPLE_INDEX=0
+for TEMP_LEFT in ${LEFT[*]}
+do
+	[ ! -z ${ERCC} ] && awk -v c=$CONCENTRATE 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){a=$1}else{print $1,$2*c/a}}' ${OUTPATH}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.ERCC.totalRPKM ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.gene+picluster+rmsk.rpkm > ${OUTPATH}/signal/${PREFIX[${SAMPLE_INDEX}]}.gene+picluster+rmsk.mol-cell
+	SAMPLE_INDEX=$((${SAMPLE_INDEX} + 1))
+done
 
 ###finished
 echo0 4 "------finished🍺🍺🍺------"

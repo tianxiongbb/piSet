@@ -81,6 +81,7 @@ echo0 1 "check parameters......"
 [ -z ${RIGHT} ] && echo0 4 "right file not provide, use signle-end mode"
 [ -z ${GENOME} ] && echo0 0 "please provideg genome via -g" && exit 1
 
+LEFT=${LEFT//,/ }
 for i in ${LEFT[*]}
 do
 	[ ! -f "${i}" ] && echo0 0 "no file found in ${i}" && exit 1
@@ -350,13 +351,13 @@ do
 		awk -v f=$FACTOR 'BEGIN{FS=OFS="\t";print "\t0-500\t0-2000\tall"} {if(NR==FNR){a[$1]++;if(($3+$2)/2<500){b[$1]++};if(($3+$2)/2<2000){c[$1]++}}else{if($2<500){lb=$2}else{lb=500};if($2<2000){lc=$2}else{lc=2000};print $1,b[$1]*f*1000/lb,c[$1]*f*1000/lc,a[$1]*f*1000/$2}}' ${OUTDIR}/map_to_transposon/${PREFIX[${SAMPLE_INDEX}]}.transposon.bed ${TRANSPOSON_SIZE} > ${OUTDIR}/signal/${PREFIX[${SAMPLE_INDEX}]}.transposon.rpkm 
 	fi
 	TIME=${SECONDS}
-	echo0 3 "Time used for ${PREFIX[${SAMPLE_ID}]}:\t$((${TIME} / 3600))h $(((${TIME} / 60) % 60))m"
+	echo0 3 "Time used for ${PREFIX[${SAMPLE_INDEX}]}:\t$((${TIME} / 3600))h $(((${TIME} / 60) % 60))m"
 	SAMPLE_INDEX=$((${SAMPLE_INDEX} + 1))
 	SECONDS=0
 done
 
 ### run macs2 for peak calling and FE, pvalue generation
-INPUT_INDEX=$((${#LEFT[*]} - 1))
+INPUT_INDEX=$((${SAMPLE_INDEX} - 1))
 GENOME_LENGTH=`awk '{sum+=$2} END{print sum}' ${CHROMSIZE}`
 CHROM_NUMBER=(`wc -l ${CHROMSIZE}`)
 if [ ${CHROM_NUMBER} -gt 100000 ];then

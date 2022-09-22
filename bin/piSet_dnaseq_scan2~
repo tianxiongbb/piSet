@@ -1,0 +1,41 @@
+#!/bin/bash
+
+if [ $# -lt 3 ];then
+	echo0 4 "$0 bulk.recal.bam sc.recal.bam outdir cpus"
+	echo0 4 "genome is set to hs37d5 by default"
+	echo0 4 "please activate scan2 environment first"
+	exit 1
+fi
+
+# export PATH
+export R_LIBS=
+export PYTHONPATH=/home/yutianx/.local/lib/python2.7/site-packages
+# copy files to /tmp
+PREFIX=`basename $2` && PREFIX=${PREFIX%.recal.bam}
+mkdir -p /tmp/yutianx/${PREFIX}
+cp $1 ${1%.bam}.bai $2 ${2%.bam}.bai /tmp/yutianx/${PREFIX}
+BAM_SC=/tmp/yutianx/${PREFIX}/`basename $2`
+BAM_BULK=/tmp/yutianx/${PREFIX}/`basename $1`
+TMP_DIR=/tmp/yutianx/${PREFIX}/scan2
+# create directory for analysis
+[ ! -d ${TMP_DIR} ] && mkdir ${TMP_DIR}
+scan2 -d ${TMP_DIR} init
+cd ${TMP_DIR}
+# configure analysis parameters
+scan2 config --verbose --ref /data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/hs37d5/hs37d5.fa \
+	--dbsnp /data/tusers/yutianx/tongji2/Annotation/dbSNP/common_all_20180418.vcf.gz \
+	--shapeit-refpanel /data/tusers/yutianx/tongji2/Annotation/1000_genome_project/1000GP_Phase3 \
+	--min-sc-dp 5 --min-bulk-dp 10 \
+	--callable-regions True --score-all-sites \
+	--bulk-bam ${BAM_BULK} --sc-bam ${BAM_SC}
+# validate parameters
+scan2 validate
+# run analysis
+scan2 run --joblimit $4
+SC=`samtools view -H ${BAM_SC} | awk 'BEGIN{FS=OFS="\t"} {if($1~/@RG/){print substr($2,4)}}'`
+Rscript /data/tusers/yutianx/tongji2/For_Mike/codes/germline_control.R ${TMP_DIR}/snv/${SC}/somatic_genotypes.rda ${TMP_DIR}/${SC}.somatic.csv ${TMP_DIR}/${SC}.germline.csv
+Rscript /data/tusers/yutianx/tongji2/For_Mike/codes/get_callable_bases.R ${TMP_DIR}/${SC}.callable.csv ${TMP_DIR}/callable_regions/${SC}/summary.chunk*.bulk_intersect.rda
+Rscript /data/tusers/yutianx/tongji2/For_Mike/codes/mutburden.R ${TMP_DIR}/${SC}.somatic.csv ${TMP_DIR}/${SC}.germline.csv ${TMP_DIR}/${SC}.callable.csv ${TMP_DIR}/${SC}.burden.csv 
+# copy results to outdir
+mv ${TMP_DIR} $3
+rm ${BAM_SC} ${BAM_BULK}

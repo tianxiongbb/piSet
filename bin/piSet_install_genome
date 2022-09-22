@@ -227,7 +227,7 @@ fi
 # download gtf/gff annotation file from Ensemble/Refseq
 if [ ! -f ${GENOME}.gtf ];then
 	T_SPECIES=`awk -v a="${SPECIES}" 'BEGIN{print tolower(substr(a,1,1))substr(a,2,length(a)-1)}'`
-	echo0 2 "try download ${GENOME}.gtf from current ensembl release first......" && wget -nd -q ftp://ftp.ensembl.org/pub/current_gtf/${T_SPECIES/ /_}/*[0-9].gtf.gz && zcat *.gtf.gz | awk 'BEGIN{FS=OFS="\t"} {if($1!~/^#/){$1="chr"$1;if($9!~/gene_name/){split($9,a,"gene_id \"");split(a[2],b,"\";");$9=$9" gene_name \""b[1]"\";"}};print $0}' > t && mv t ${GENOME}.gtf && touch .have_ensembl_gtf || (echo0 0 "genome annotation download from current ensembl release failed, please check network connection or accessibility to ftp://ftp.ensembl.org/pub/current_gtf/${T_SPECIES/ /_}. Change to Refseq for genome annotation file download ......")
+	echo0 2 "try download ${GENOME}.gtf from current ensembl release first......" && wget -nd -q ftp://ftp.ensembl.org/pub/current_gtf/${T_SPECIES// /_}/*[0-9].gtf.gz && zcat *.gtf.gz | awk 'BEGIN{FS=OFS="\t"} {if($1!~/^#/){$1="chr"$1;if($9!~/gene_name/){split($9,a,"gene_id \"");split(a[2],b,"\";");$9=$9" gene_name \""b[1]"\";"}};print $0}' > t && mv t ${GENOME}.gtf && touch .have_ensembl_gtf || (echo0 0 "genome annotation download from current ensembl release failed, please check network connection or accessibility to ftp://ftp.ensembl.org/pub/current_gtf/${T_SPECIES/ /_}. Change to Refseq for genome annotation file download ......")
 fi
 
 if [ -f .have_ensembl_gtf ];then
@@ -375,7 +375,7 @@ if [ -z ${IF_TRN} ];then
 	if [ ! -f ${GENOME}.fa.out ];then
 		(rsync -a -P rsync://hgdownload.cse.ucsc.edu/goldenPath/${GENOME}/database/*rmsk.txt.gz ./ && zcat *rmsk.txt.gz > ${GENOME}.fa.out && touch .have_ucsc_rmsk) || ("rmsk download failed, please check network connection or accessibility to http://hgdownload.cse.ucsc.edu/goldenPath/${GENOME}/database/, change to Refseq to download rmsk annotation")
 		if [ -f .have_ucsc_rmsk ];then
-			echo0 2 "make rmsk bed just for LINE, SINE, LTR, DNA elements......" && awk 'BEGIN{FS=" ";OFS="\t"} {if(NR>3 && $12~/DNA|SINE|LINE|LTR/){if($10=="+"){strand="+";st=$14;ed=$15}else{strand="-";st=$16;ed=$15};print $6,$7-1,$8,$11,$3/10,strand,$12,$13,st,ed}}' ${GENOME}.fa.out > ${GENOME}.rmsk.bed9
+			echo0 2 "make rmsk bed just for LINE, SINE, LTR, DNA elements......" && awk 'BEGIN{FS=" ";OFS="\t"} {if(NR>3 && $12~/DNA|SINE|LINE|LTR/){if($10=="+"){strand="+";st=$14;ed=$15}else{strand="-";st=$16;ed=$15};print $6,$7,$8,$11,$3/10,strand,$12,$13,st,ed}}' ${GENOME}.fa.out > ${GENOME}.rmsk.bed9
 			sed -i 's/_I-int/_I/' ${GENOME}.rmsk.bed9 # keep identical with repbase name
 		else
 			echo0 2 "download repeatMasker output from Refseq......"
@@ -390,7 +390,7 @@ fi
 # make rmsk annotation bed file
 if [ ! -f ${GENOME}.rmsk.bed9 ];then
 	if [ -f ${GENOME}.fa.out ] && [ -z ${IF_TRN} ];then
-		echo0 2 "make rmsk bed just for LINE, SINE, LTR, DNA elements......" && awk 'BEGIN{FS=" ";OFS="\t"} {if(NR>3 && $11~/DNA|SINE|LINE|LTR/){if($9=="+"){strand="+";st=$12}else{strand="-";st=$14};split($11,family,"/");print $5,$6-1,$7,$10,$2,strand,family[1],family[2],st}}' ${GENOME}.fa.out > ${GENOME}.rmsk.bed9
+		echo0 2 "make rmsk bed just for LINE, SINE, LTR, DNA elements......" && awk 'BEGIN{FS=" ";OFS="\t"} {if(NR>3 && $11~/DNA|SINE|LINE|LTR/){if($9=="+"){strand="+";st=$12}else{strand="-";st=$14};split($11,family,"/");print $5,$6,$7,$10,$2,strand,family[1],family[2],st}}' ${GENOME}.fa.out > ${GENOME}.rmsk.bed9
 		if [ -z ${RMSK_URL} ];then
 			[ ! -f *_assembly_report.txt ] && wget -nd -q ${REFSEQ_URL}/*_assembly_report.txt
 			[ ! -f *_assembly_report.txt ] && echo0 0 "assembly report download failed, please check network connection or accessibility to ${REFSEQ_URL}" && exit 1
@@ -411,6 +411,7 @@ if [ ! -f ${GENOME}.transposon.fa ];then
 	merge_repbase_LTR.py ${GENOME}.transposon.original.fa ${GENOME}.t # merge LTR and I for LTR elements.
 	merge_repbase_LINE1.py ${GENOME}.t ${GENOME}.transposon.fa # merge 5end, 3end and orf2 for LINE elements.
 	rm ${GENOME}.t
+	[ ! -f ${GENOME}.transposon.fa ] && cp ${GENOME}.transposon.original.fa ${GENOME}.transposon.fa 
 fi
 
 # rename LTR and I for rmsk genomic copies

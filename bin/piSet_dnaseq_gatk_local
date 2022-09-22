@@ -16,6 +16,8 @@ function delet(){
 
 # help information
 help_info(){
+	echo0 4 "this script will run locally, in /tmp/yutianx"
+	echo0 4 "only preserve recal.bam to save storage"
 	echo0 4 "$0"
 	echo0 1 "\t-l <file>\tleft DNA sequencing reads in fastq or fastq.gz"
 	echo0 1 "\t-r <file>\tright DNA sequencing reads in fastq or fastq.gz"
@@ -85,8 +87,8 @@ echo0 1 "OK"
 
 # check parameters
 echo0 1 "check parameters......"
-[ ! -f ${LEFT} ] && echo0 0 "Warning: no left.fastq file ${LEFT}"
-[ ! -f ${RIGHT} ] && echo0 0 "Warning: no right.fastq file ${RIGHT}"
+[ ! -f ${LEFT} ] && echo0 0 "no left.fastq file ${LEFT}" && exit 1
+[ ! -f ${RIGHT} ] && echo0 0 "no right.fastq file ${RIGHT}" && exit 1
 [ ! -d ${PATH_ANNO} ] && echo0 4 "genome ${GENOME} not installed, please make sure you have give all the annotation files via -f -b and -B"
 ! [ ${FRAGMENT_SIZE} -gt 0 ] 2>/dev/null && echo0 0 "-s must be interger" && exit 1
 ! [ ${MISMATCH_CONSENSUS} -ge 0 ] 2>/dev/null && echo0 0 "-m must be interger" && exit 1
@@ -108,50 +110,77 @@ echo0 1 "OK"
 [ ! -d ${OUTDIR}/LiRA ] && mkdir ${OUTDIR}/LiRA
 [ ! -d ${OUTDIR}/log ] && mkdir ${OUTDIR}/log
 
+[ ! -d /tmp/yutianx ] && mkdir /tmp/yutianx
+[ ! -d /tmp/yutianx/piSet_dnaseq_gatk ] && mkdir /tmp/yutianx/piSet_dnaseq_gatk
+[ ! -d /tmp/yutianx/piSet_dnaseq_gatk/${PREFIX} ] && mkdir /tmp/yutianx/piSet_dnaseq_gatk/${PREFIX}
+[ ! -d /tmp/yutianx/piSet_dnaseq_gatk/${PREFIX}/fq ] && mkdir /tmp/yutianx/piSet_dnaseq_gatk/${PREFIX}/fq
+[ ! -d /tmp/yutianx/piSet_dnaseq_gatk/${PREFIX}/bwa ] && mkdir /tmp/yutianx/piSet_dnaseq_gatk/${PREFIX}/bwa
+[ ! -d /tmp/yutianx/piSet_dnaseq_gatk/${PREFIX}/TEMP2 ] && mkdir /tmp/yutianx/piSet_dnaseq_gatk/${PREFIX}/TEMP2
+[ ! -d /tmp/yutianx/piSet_dnaseq_gatk/${PREFIX}/gatk ] && mkdir /tmp/yutianx/piSet_dnaseq_gatk/${PREFIX}/gatk
+[ ! -d /tmp/yutianx/piSet_dnaseq_gatk/${PREFIX}/LiRA ] && mkdir /tmp/yutianx/piSet_dnaseq_gatk/${PREFIX}/LiRA
+[ ! -d /tmp/yutianx/piSet_dnaseq_gatk/${PREFIX}/log ] && mkdir /tmp/yutianx/piSet_dnaseq_gatk/${PREFIX}/log
+
+# copy fastq to /tmp
+cp ${LEFT} ${RIGHT} /tmp/yutianx/piSet_dnaseq_gatk/${PREFIX}/fq/ 
+LEFT=/tmp/yutianx/piSet_dnaseq_gatk/${PREFIX}/fq/`basename ${LEFT}` 
+RIGHT=/tmp/yutianx/piSet_dnaseq_gatk/${PREFIX}/fq/`basename ${RIGHT}` 
+TMPDIR=/tmp/yutianx/piSet_dnaseq_gatk/${PREFIX}
+
 # genome alignement using bwa mem
-if [ ! -f ${OUTDIR}/gatk/${PREFIX}.recal.bam ];then # skip this step if already mapped
+if [ ! -f ${TMPDIR}/bwa/${PREFIX}.mkdup.bam ];then # skip this step if already mapped
 	# map DNAseq to genome via bwa mem
 	echo0 2 "map to genome via bwa mem......"
-	[ ! -f ${OUTDIR}/bwa/${PREFIX}.sam ] && bwa mem -R "@RG\tID:"${PREFIX}"\tLB:${PREFIX}\tPL:illumina\tSM:"${PREFIX}"\tPU:unit" -t ${CPU} ${BWA_INDEX} ${LEFT} ${RIGHT} > ${OUTDIR}/bwa/${PREFIX}.sam 2>${OUTDIR}/log/${PREFIX}.bwamem.log
+	[ ! -f ${TMPDIR}/bwa/${PREFIX}.sam ] && bwa mem -R "@RG\tID:"${PREFIX}"\tLB:${PREFIX}\tPL:illumina\tSM:"${PREFIX}"\tPU:unit" -t ${CPU} ${BWA_INDEX} ${LEFT} ${RIGHT} > ${TMPDIR}/bwa/${PREFIX}.sam 2>${TMPDIR}/log/${PREFIX}.bwamem.log
 	TIME_GENOME_MAPPING=${SECONDS} && SECONDS=0
 	# sam to sorted.bam
 	echo0 2 "sam to mkdup.bam......"
-	samtools view -bhS -@ ${CPU} ${OUTDIR}/bwa/${PREFIX}.sam > ${OUTDIR}/bwa/${PREFIX}.bam
-	samtools sort -@ ${CPU} -o ${OUTDIR}/bwa/${PREFIX}.sorted.bam ${OUTDIR}/bwa/${PREFIX}.bam
-	rm ${OUTDIR}/bwa/${PREFIX}.sam ${OUTDIR}/bwa/${PREFIX}.bam
+	samtools view -bhS -@ ${CPU} ${TMPDIR}/bwa/${PREFIX}.sam > ${TMPDIR}/bwa/${PREFIX}.bam
+	samtools sort -@ ${CPU} -o ${TMPDIR}/bwa/${PREFIX}.sorted.bam ${TMPDIR}/bwa/${PREFIX}.bam
+	rm ${TMPDIR}/bwa/${PREFIX}.sam ${TMPDIR}/bwa/${PREFIX}.bam
 	TIME_SAM_TO_SORTED_BAM=${SECONDS} && SECONDS=0
-	java -jar -Xmx16g /data/tusers/yutianx/tongji2/DailyCode/picard.jar MarkDuplicates I=${OUTDIR}/bwa/${PREFIX}.sorted.bam O=${OUTDIR}/bwa/${PREFIX}.mkdup.bam M=${OUTDIR}/bwa/${PREFIX}.metrics.txt
+	java -jar -Xmx16g /data/tusers/yutianx/tongji2/DailyCode/picard.jar MarkDuplicates I=${TMPDIR}/bwa/${PREFIX}.sorted.bam O=${TMPDIR}/bwa/${PREFIX}.mkdup.bam M=${TMPDIR}/bwa/${PREFIX}.metrics.txt
 	TIME_BAM_TO_MKDUP_BAM=${SECONDS} && SECONDS=0
-	# make index for sorted.bam
-	[ ! -f ${OUTDIR}/bwa/${PREFIX}.sorted.bam.bai ] && samtools index -@ ${CPU} ${OUTDIR}/bwa/${PREFIX}.sorted.bam
-	[ ! -f ${OUTDIR}/bwa/${PREFIX}.mkdup.bam.bai ] && samtools index -@ ${CPU} ${OUTDIR}/bwa/${PREFIX}.mkdup.bam
-	# statistics for mapping results
-	[ ! -f ${OUTDIR}/bwa/${PREFIX}.flagstat ] && samtools flagstat -@ ${CPU} ${OUTDIR}/bwa/${PREFIX}.mkdup.bam > ${OUTDIR}/bwa/${PREFIX}.flagstat
-	# quality recalibration
-	gatk BaseRecalibrator --java-options "-Xmx16g" -I ${OUTDIR}/bwa/${PREFIX}.mkdup.bam -R ${GENOME_FASTA} --known-sites ${DBSNP} -O ${OUTDIR}/gatk/${PREFIX}.recal_data.tables
-	gatk ApplyBQSR --java-options "-Xmx16g" -R ${GENOME_FASTA} -I ${OUTDIR}/bwa/${PREFIX}.mkdup.bam --bqsr-recal-file ${OUTDIR}/gatk/${PREFIX}.recal_data.tables -O ${OUTDIR}/gatk/${PREFIX}.recal.bam
-	TIME_RECALIBRATION=${SECONDS} && SECONDS=0
 else
-	echo0 4 "already mapped to genome and converted mapping files to recal.bam, skip"
+	echo0 4 "already mapped to genome and converted mapping files to sorted.bam, skip"
 fi
 
+# make index for sorted.bam
+[ ! -f ${TMPDIR}/bwa/${PREFIX}.sorted.bam.bai ] && samtools index -@ ${CPU} ${TMPDIR}/bwa/${PREFIX}.sorted.bam
+[ ! -f ${TMPDIR}/bwa/${PREFIX}.mkdup.bam.bai ] && samtools index -@ ${CPU} ${TMPDIR}/bwa/${PREFIX}.mkdup.bam
+# statistics for mapping results
+[ ! -f ${TMPDIR}/bwa/${PREFIX}.flagstat ] && samtools flagstat -@ ${CPU} ${TMPDIR}/bwa/${PREFIX}.mkdup.bam > ${TMPDIR}/bwa/${PREFIX}.flagstat
+
+# quality recalibration
+gatk BaseRecalibrator --java-options "-Xmx32g" -I ${TMPDIR}/bwa/${PREFIX}.mkdup.bam -R ${GENOME_FASTA} --known-sites ${DBSNP} -O ${TMPDIR}/gatk/${PREFIX}.recal_data.tables
+gatk ApplyBQSR --java-options "-Xmx32g" -R ${GENOME_FASTA} -I ${TMPDIR}/bwa/${PREFIX}.mkdup.bam --bqsr-recal-file ${TMPDIR}/gatk/${PREFIX}.recal_data.tables -O ${TMPDIR}/gatk/${PREFIX}.recal.bam
+TIME_RECALIBRATION=${SECONDS} && SECONDS=0
+
+# remove sorted.bam and mkdup.bam to save storage
+rm ${TMPDIR}/bwa/${PREFIX}.sorted.bam* ${TMPDIR}/bwa/${PREFIX}.mkdup.bam*
+
 # call variance using HaplotypeCaller and GenotypeGVCFs
-mkdir ${OUTDIR}/gatk/tmp.${PREFIX}
+mkdir ${TMPDIR}/gatk/tmp.${PREFIX}
 while read chrom l
 do
-	echo -e "gatk HaplotypeCaller --java-options "-Xmx4g" -R ${GENOME_FASTA} -I ${OUTDIR}/gatk/${PREFIX}.recal.bam -O ${OUTDIR}/gatk/tmp.${PREFIX}/${chrom}.g.vcf.gz -ERC GVCF -L ${chrom}" >> ${OUTDIR}/gatk/tmp.${PREFIX}.parafile
+	echo -e "gatk HaplotypeCaller --java-options "-Xmx2g" -R ${GENOME_FASTA} -I ${TMPDIR}/gatk/${PREFIX}.recal.bam -O ${TMPDIR}/gatk/tmp.${PREFIX}/${chrom}.g.vcf.gz -ERC GVCF -L ${chrom}" >> ${TMPDIR}/gatk/tmp.${PREFIX}.parafile
 done < ${GENOME_SIZE}
-ParaFly -c ${OUTDIR}/gatk/tmp.${PREFIX}.parafile -CPU ${CPU}
-cat ${OUTDIR}/gatk/tmp.${PREFIX}/*.gz > ${OUTDIR}/gatk/${PREFIX}.tmp.vcf.gz
-zcat ${OUTDIR}/gatk/${PREFIX}.tmp.vcf.gz | awk 'BEGIN{FS=OFS="\t"} {if($1!~/^#/){k=1};if(k==1 && $1~/^#/){next};print $0}' > ${OUTDIR}/gatk/${PREFIX}.tmp.vcf
-bcftools sort -o ${OUTDIR}/gatk/${PREFIX}.g.vcf.gz -O z -m 32G ${OUTDIR}/gatk/${PREFIX}.tmp.vcf
-tabix ${OUTDIR}/gatk/${PREFIX}.g.vcf.gz
-rm ${OUTDIR}/gatk/${PREFIX}.tmp.vcf ${OUTDIR}/gatk/${PREFIX}.tmp.vcf.gz
-gatk GenotypeGVCFs --java-options "-Xmx16g" -R ${GENOME_FASTA} -V ${OUTDIR}/gatk/${PREFIX}.g.vcf.gz -O ${OUTDIR}/gatk/${PREFIX}.vcf.gz 
-rm -rf ${OUTDIR}/gatk/tmp.${PREFIX} ${OUTDIR}/gatk/tmp.${PREFIX}.parafile* 
+ParaFly -c ${TMPDIR}/gatk/tmp.${PREFIX}.parafile -CPU ${CPU}
+cat ${TMPDIR}/gatk/tmp.${PREFIX}/*.gz > ${TMPDIR}/gatk/${PREFIX}.tmp.vcf.gz
+zcat ${TMPDIR}/gatk/${PREFIX}.tmp.vcf.gz | awk 'BEGIN{FS=OFS="\t"} {if($1!~/^#/){k=1};if(k==1 && $1~/^#/){next};print $0}' > ${TMPDIR}/gatk/${PREFIX}.tmp.vcf
+bcftools sort -o ${TMPDIR}/gatk/${PREFIX}.g.vcf.gz -O z -m 32G ${TMPDIR}/gatk/${PREFIX}.tmp.vcf
+tabix ${TMPDIR}/gatk/${PREFIX}.g.vcf.gz
+rm ${TMPDIR}/gatk/${PREFIX}.tmp.vcf ${TMPDIR}/gatk/${PREFIX}.tmp.vcf.gz
+gatk GenotypeGVCFs --java-options "-Xmx32g" -R ${GENOME_FASTA} -V ${TMPDIR}/gatk/${PREFIX}.g.vcf.gz -O ${TMPDIR}/gatk/${PREFIX}.vcf.gz 
+rm -rf ${TMPDIR}/gatk/tmp.${PREFIX} ${TMPDIR}/gatk/tmp.${PREFIX}.parafile* 
 TIME_VARIANCE=${SECONDS} && SECONDS=0
 
 # TEMP2 (skipped, please run TEMP2 directly)
+
+# move results to outdir
+mv /tmp/yutianx/piSet_dnaseq_gatk/${PREFIX}/bwa/* ${OUTDIR}/bwa/ 
+mv /tmp/yutianx/piSet_dnaseq_gatk/${PREFIX}/gatk/* ${OUTDIR}/gatk/ 
+mv /tmp/yutianx/piSet_dnaseq_gatk/${PREFIX}/log/* ${OUTDIR}/log/ 
+rm -rf /tmp/yutianx/piSet_dnaseq_gatk/${PREFIX}
 
 echo0 4 "------ finished, congras🍺🍺🍺 ------"
 echo0 3 "Genome mapping:\t$((${TIME_GENOME_MAPPING} / 3600))h $(((${TIME_GENOME_MAPPING} % 3600) / 60))m" 2>/dev/null

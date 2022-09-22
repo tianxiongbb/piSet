@@ -14,11 +14,11 @@ CHR=`awk 'BEGIN{FS=OFS="\t"} {printf $1" "}' $2`
 echo0 2 "call snps, it will take a long time......"
 for chrom in ${CHR}
 do
-	echo -e "bcftools mpileup -f $3 -I ${1} -r ${chrom} -L 1000000 --annotate FORMAT/DP,FORMAT/AD | bcftools call -mv > ${4}.temp.${chrom}.snps" >> ${ParaFile}
+	echo -e "samtools mpileup -f $3 -v -I -t DP,AD -A ${1} -r ${chrom} | bcftools call -mv | bcftools view -v snps > ${4}.temp.${chrom}.snps" >> ${ParaFile}
 done
 ParaFly -c ${ParaFile} -CPU $5 && rm ${ParaFile}*
-awk '$1~/^#/' ${4}.temp.${chrom}.snps > ${4}.temp.header
-awk '$1!~/^#/' ${4}.temp.*.snps | cat ${4}.temp.header -  > $4
+awk "$1~/^#/" ${4}.temp.${chrom}.snps > ${4}.temp.header
+awk "$1!~/^#/" ${4}.temp.*.snps | cat ${4}.temp.header -  > $4
 TIME_SNP=${SECONDS}
 rm ${4}.temp.*.snps ${4}.temp.header
 

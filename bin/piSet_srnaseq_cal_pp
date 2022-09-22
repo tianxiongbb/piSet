@@ -1,0 +1,24 @@
+#!/bin/bash
+
+if [ $# -lt 2 ];then
+	echo0 4 "$0 in.genome.bed2 in.bed output.prefix CPU"
+	echo0 1 "this script calculates ping-pong pairs and zscore for each gene in in.bed file."
+	echo0 1 "in.genome.bed2 is the genome.bed2 from piSet result. in.bed is the file to calculate ping-pong, it can be dm6.mRNA.exon.bed, dm6.mRNA.intron.bed, or anything like that."
+	exit 1
+fi
+
+mkdir $3.tmp
+awk '{if(!a[$4]++){print $4}}' $2 > ${3}.tmp.list
+while read l
+do
+	touch $3.tmp/${l}.bed2
+	echo -e "bed2_pingpong -a $3.tmp/${l}.bed2 -b $3.tmp/${l}.bed2 > $3.tmp/${l}.pp" >> $3.tmp.parafile
+done < $3.tmp.list
+sed 's/(/\\(/g' $3.tmp.parafile | sed 's/)/\\)/g' - | sed "s/'/\\\'/g" - > $3.tmp.parafile2 
+intersectBed -a $1 -b $2 -wo -nonamecheck | awk -v p=$3 'BEGIN{FS=OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7>p".tmp/"$11".bed2"}' -
+ParaFly -c $3.tmp.parafile2 -CPU $4
+awk 'BEGIN{FS=OFS="\t";for(i=1;i<=30;i++){printf "\t"i};print ""}' > $3.pp
+cd $3.tmp
+for i in *pp; do awk 'BEGIN{FS=OFS="\t"} {if(NR==1){fn=substr(FILENAME,1,length(FILENAME)-3);printf fn};printf "\t"$2} END{print ""}' $i >> ../$3.pp; done
+cd ..
+rm -rf $3.tmp $3.tmp.list $3.tmp.parafile* 

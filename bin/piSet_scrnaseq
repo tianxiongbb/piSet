@@ -165,6 +165,12 @@ if [ -z ${WHITELIST} ];then
 	BUSFILE=${OUTDIR}/output.sorted.bus
 	bustools whitelist -o ${OUTDIR}/whitelist ${BUSFILE} > ${OUTDIR}/log.bustools.whitelist 2>&1
 	WHITELIST=${OUTDIR}/whitelist
+	WHITE_N=(`sort -u ${WHITELIST} | wc -l`)
+	# if only few barcodes are in the whitelist, set threshold to 2000
+	if [ ${WHITE_N} -lt 10 ];then
+		bustools whitelist -o ${OUTDIR}/whitelist -f 2000 ${BUSFILE} > ${OUTDIR}/log.bustools.whitelist 2>&1
+		WHITELIST=${OUTDIR}/whitelist
+	fi
 fi
 # correct bus file using whitelist and sort
 echo0 2 "correct bus file using whitelist and sort..."

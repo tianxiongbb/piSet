@@ -1,0 +1,54 @@
+#!/bin/bash
+
+##----INTRO-----------##
+# Name=BB_rnaseq_pipeline
+VERSION=1.20
+# Date=Apr20 ,2016
+# Update=Jan 15, 2017
+# Update information:
+# Update=Oct 27, 2017
+# Update information: 1. add CPU for htseq; 2. use BB_bamtobw to make bigWig files for visualizing. 3. add a choice for repbase mapping.
+
+########################
+# Purpose
+#This file is for doing some pre-analysis for each RNA-seq samples
+#1.Mapping: bowtie2 + STAR
+#2.Count Feature Signal: htseq-count
+#3.Plot Results: to do
+
+#######--Arguments--#######
+help_info(){
+echo -e "\033[32;1m"
+cat << EOF
+Author: Tianxiong (Bear) Yu
+usage:
+piSet_scrnaseq_separate_bam input.bam barcode_celltype.tab out.prefix cpu
+EOF
+echo -e "\033[33;1m"
+cat << EOF
+
+Options:
+
+    input.bam contains barcodes from each cell, marked by CB:Z:
+    barcode_celltype.tab is a tab-delimited table with two columns: 1. barcode 2. celltype
+EOF
+echo -e "\033[0m"
+}
+
+
+if [ $# -lt 1 ];then
+	help_info
+	exit 1
+fi
+
+PATH_PROG=`dirname $0` && PATH_ANNO=${PATH_PROG%/bin}/annotation
+
+samtools view -H $1 > $3.header.tmp
+samtools view -@ $4 $1 | awk -v p=$3 'BEGIN{FS=OFS="\t"} {if(ARGIND==1){ct[$1]=$2}else{split($0,a,"CB:Z:");split(a[2],b,"\t");if(ct[b[1]]){print $0>p"."ct[b[1]]".sam";if(!k[ct[b[1]]]++){print ct[b[1]]>p".celltypes.tmp"}}}}' $2 -
+while read l
+do
+	cat $3.header.tmp $3"."$l".sam" | samtools view -@ $4 -bhS - > $3"."$l".bam"
+	samtools index -@ $4 $3"."$l".bam"
+	rm $3"."$l".sam"
+done < $3".celltypes.tmp"
+rm $3".celltypes.tmp" $3.header.tmp 

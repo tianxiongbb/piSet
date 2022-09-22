@@ -1,0 +1,95 @@
+#!/bin/bash
+
+# function
+function checkTools(){
+	if [ `which $1` ];then
+		echo0 3 "$1: `which $1`"
+	else
+		echo0 0 "$1 not found, please install it or add it into your PATH!"
+		exit 1
+	fi
+}
+
+function delet(){
+	[ -f $1 ] && rm -rf $1
+}
+
+# help information
+help_info(){
+	echo0 4 "$0"
+	echo0 1 "\t-l <file>\tDNA sequencing reads in fastq or fastq.gz"
+	echo0 1 "\t-r <file>\tDNA sequencing raw signal folder containing fast5 files"
+	echo0 1 "\t-s <file>\tsequencing_summary.txt file from guppy basecaller"
+	echo0 1 "\t-p <file>\tprefix for output. eg: TEMP/sample1. default: ./result"
+	echo0 1 "\t-g <genome>\tgenome used. eg: dm3, mm10. default: phaCin"
+	echo0 4 "transposon insertion and deletion (currently not enabled):"
+	echo0 4 "other:"
+	echo0 1 "\t-c <int>\tCPU number used in this pipeline. default: 4"
+}
+
+if [ $# -lt 1 ];then
+	help_info && exit 1
+fi
+
+# parameters
+CPU=4
+PREFIX=./result
+GENOME=phaCin
+
+while getopts "hl:r::p:g:c:s:" OPTION; do
+	case $OPTION in
+		l)	FASTQ=`readlink -f ${OPTARG}`;;
+		r)	FAST5=`readlink -f ${OPTARG}`;;
+		s)	SEQ_SUMMARY=`readlink -f ${OPTARG}`;;
+		p)	PREFIX=${OPTARG};;
+		g)	GENOME=${OPTARG};;
+		c)	CPU=${OPTARG};;
+		h)	help_info && exit 1;;
+		*)	help_info && exit 1;;
+	esac
+done
+
+PATH_ANNO=`dirname ${0}` && PATH_ANNO=${PATH_ANNO%/bin}/annotation/${GENOME}
+PATH_PROG=`dirname ${0}`
+[ -z ${REFERENCE} ] && REFERENCE=${PATH_ANNO}/${GENOME}.fa
+[ -z ${GENOME_SIZE} ] && GENOME_SIZE=${PATH_ANNO}/${GENOME}.chrom.size
+OUTDIR=`dirname ${PREFIX}`
+[ ! -d ${OUTDIR} ] && mkdir -p ${OUTDIR}
+PREFIX=`readlink -f ${PREFIX}` && OUTDIR=`dirname ${PREFIX}`
+
+# check tools
+echo0 1 "check tools......"
+checkTools minimap2
+checkTools samtools
+checkTools nanopolish
+echo0 1 "OK"
+
+# check parameters
+echo0 1 "check parameters......"
+[ ! -f ${FASTQ} ] && echo0 0 "no input fastq file ${LEFT}" && exit 1
+[ ! -d ${FAST5} ] && echo0 0 "no input fast5 folder ${RIGHT}" && exit 1
+[ ! -f ${SEQ_SUMMARY} ] && echo0 0 "no sequencing summary file ${LEFT}" && exit 1
+[ ! -d ${PATH_ANNO} ] && echo0 4 "genome ${GENOME} not installed, please make sure you have give all the annotation files via -f -b and -B"
+echo0 1 "OK"
+
+###############
+### process ###
+###############
+
+# build index for process reads
+echo0 2 "build index for process reads......"
+nanopolish index -s ${SEQ_SUMMARY} -d ${FAST5} ${FASTQ}
+TIME_INDEX=${SECONDS} && SECONDS=0
+# alignment to genome
+minimap2 -a -x map-ont ${REFERENCE} ${FASTQ} -t ${CPU} | samtools view -bhS -@ ${CPU} - | samtools sort -@ ${CPU} - -o ${PREFIX}.sorted.bam
+samtools index -@ ${CPU} ${PREFIX}.sorted.bam
+TIME_GENOME_MAPPING=${SECONDS} && SECONDS=0
+# calling DNA methylation
+nanopolish call-methylation -t ${CPU} -r ${FASTQ} -b ${PREFIX}.sorted.bam -g ${REFERENCE} > ${PREFIX}.methy_calls.csv
+/data/tusers/yutianx/tongji2/Software/nanopolish/scripts/calculate_methylation_frequency.py ${PREFIX}.methy_calls.csv > ${PREFIX}.methy_freq.csv
+TIME_METHYLATION=${SECONDS} && SECONDS=0
+
+echo0 4 "------ finished, congras🍺🍺🍺 ------"
+echo0 3 "Indexing:\t$((${TIME_INDEX} / 3600))h $((${TIME_INDEX} / 60))m" 2>/dev/null
+echo0 3 "Genome mapping:\t$((${TIME_GENOME_MAPPING} / 3600))h $((${TIME_GENOME_MAPPING} / 60))m" 2>/dev/null
+echo0 3 "Calling DNA methylation:\t$((${TIME_METHYLATION} / 3600))h $((${TIME_METHYLATION} / 60))m" 2>/dev/null

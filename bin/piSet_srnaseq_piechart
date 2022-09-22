@@ -7,11 +7,11 @@ fi
 
 # parameters
 PATH_PROG=`dirname $0` && PREFIX_ANNO=${PATH_PROG%/bin}/annotation/$2/$2
-MAPPING_GENOME=`readlink -f $1*.genome.bed2`
-MAPPING_RRNA=`readlink -f $1*.rRNA.bed2`
-MAPPING_MIRNA=`readlink -f $1*.hairpin.bed2`
-MAPPING_SNCRNA=`readlink -f $1*.sncRNA.bed2`
-MAPPING_UNALIGN=`readlink -f $1*.unalign.insert`
+MAPPING_GENOME=`readlink -f $1.x_*.genome.bed2`
+MAPPING_RRNA=`readlink -f $1.rRNA.bed2`
+MAPPING_MIRNA=`readlink -f $1.x_*.hairpin.bed2`
+MAPPING_SNCRNA=`readlink -f $1.x_*.sncRNA.bed2`
+MAPPING_UNALIGN=`readlink -f $1.x_*.unalign.insert`
 
 # intersect with all elements
 if [ -f ${MAPPING_RRNA} ];then

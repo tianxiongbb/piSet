@@ -37,6 +37,9 @@ done
 [ ! -f ${DIR}/gatk/${BULK}.g.vcf.gz ] && echo0 0 "The gatk pipeline for ${BULK} is not finished yet. Abort!" && exit 1
 
 echo0 2 "Start pipeline, the results will be in ${DIR}/LiRA"
+echo0 2 "Copy bam files to /tmp/yutianx"
+[ ! -d /tmp/yutianx ] && mkdir /tmp/yutianx
+cp ${DIR}/gatk/${SINGLE_CELL}.recal.bam ${DIR}/gatk/${SINGLE_CELL}.recal.bai ${DIR}/gatk/${BULK}.recal.bam ${DIR}/gatk/${BULK}.recal.bai /tmp/yutianx/
 
 if [ -z ${SKIP_GATK} ];then
 	# combine two gVCF files and call genotypes
@@ -51,16 +54,18 @@ else
 	TIME_GENOTYPEGVCF=${SECONDS} && SECONDS=0
 fi
 
+echo0 2 "Copy vcf files to /tmp/yutianx"
+cp ${DIR}/LiRA/${SINGLE_CELL}+${BULK}.vcf.gz ${DIR}/LiRA/${SINGLE_CELL}+${BULK}.vcf.gz.tbi /tmp/yutianx/
+
 # make config files
 echo0 2 "Make config files"
-echo -e "name\t${SINGLE_CELL}\nanalysis_path\t${DIR}/LiRA/${SINGLE_CELL}+${BULK}.sc\nreference_file\t/data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/hs37d5/hs37d5.fa\nbam\t${DIR}/gatk/${SINGLE_CELL}.recal.bam\nvcf\t${DIR}/LiRA/${SINGLE_CELL}+${BULK}.vcf.gz\ngender\t${GENDER}\nsample\t${SINGLE_CELL}\nbulk\tF\nreference_identifier\thg19\nphasing_software\teagle" > ${DIR}/LiRA/${SINGLE_CELL}+${BULK}.sc.config.txt
-echo -e "name\t${BULK}\nanalysis_path\t${DIR}/LiRA/${SINGLE_CELL}+${BULK}.bulk\nreference_file\t/data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/hs37d5/hs37d5.fa\nbam\t${DIR}/gatk/${BULK}.recal.bam\nvcf\t${DIR}/LiRA/${SINGLE_CELL}+${BULK}.vcf.gz\ngender\t${GENDER}\nsample\t${BULK}\nbulk\tT\nreference_identifier\thg19\nphasing_software\teagle" > ${DIR}/LiRA/${SINGLE_CELL}+${BULK}.bulk.config.txt
+echo -e "name\t${SINGLE_CELL}\nanalysis_path\t/tmp/yutianx/${SINGLE_CELL}+${BULK}.sc\nreference_file\t/data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/hs37d5/hs37d5.fa\nbam\t/tmp/yutianx/${SINGLE_CELL}.recal.bam\nvcf\t/tmp/yutianx/${SINGLE_CELL}+${BULK}.vcf.gz\ngender\t${GENDER}\nsample\t${SINGLE_CELL}\nbulk\tF\nreference_identifier\thg19\nphasing_software\teagle" > ${DIR}/LiRA/${SINGLE_CELL}+${BULK}.sc.config.txt
+echo -e "name\t${BULK}\nanalysis_path\t/tmp/yutianx/${SINGLE_CELL}+${BULK}.bulk\nreference_file\t/data/tusers/yutianx/tongji2/GitHuB/piSet/annotation/hs37d5/hs37d5.fa\nbam\t/tmp/yutianx/${BULK}.recal.bam\nvcf\t/tmp/yutianx/${SINGLE_CELL}+${BULK}.vcf.gz\ngender\t${GENDER}\nsample\t${BULK}\nbulk\tT\nreference_identifier\thg19\nphasing_software\teagle" > ${DIR}/LiRA/${SINGLE_CELL}+${BULK}.bulk.config.txt
 
 # run LiRA
 if [ -z ${SKIP_LIRA} ];then
 	echo0 2 "Prepare for LiRA compare"
-	#nohup lira_prepare ${DIR}/LiRA/${SINGLE_CELL}+${BULK}.bulk.config.txt &
-	nohup lira_prepare ${DIR}/LiRA/${SINGLE_CELL}+${BULK}.bulk.config.txt &
+	lira_prepare ${DIR}/LiRA/${SINGLE_CELL}+${BULK}.bulk.config.txt
 	lira_prepare ${DIR}/LiRA/${SINGLE_CELL}+${BULK}.sc.config.txt
 	TIME_PREPARELIRA=${SECONDS} && SECONDS=0
 	echo0 2 "Run LiRA compare"
@@ -78,6 +83,11 @@ else
 	TIME_PPOWER=${SECONDS} && SECONDS=0
 	TIME_VARCALL=${SECONDS} && SECONDS=0
 fi
+
+echo0 2 "Copy result files to ${DIR}/LiRA"
+#mv /tmp/yutianx/${SINGLE_CELL}+${BULK}.sc /tmp/yutianx/${SINGLE_CELL}+${BULK}.bulk ${DIR}/LiRA/
+echo0 2 "Clean up /tmp/yutianx"
+#rm -rf /tmp/yutianx/${SINGLE_CELL}.recal.bam /tmp/yutianx/${BULK}.recal.bam /tmp/yutianx/${SINGLE_CELL}.recal.bai /tmp/yutianx/${BULK}.recal.bai /tmp/yutianx/${SINGLE_CELL}+${BULK}.vcf.gz /tmp/yutianx/${SINGLE_CELL}+${BULK}.vcf.gz.tbi
 
 echo0 2 "Finished!"
 echo0 3 "TIME USED:"

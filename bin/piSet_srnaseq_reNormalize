@@ -12,14 +12,14 @@ for i in $1*.lendis $1*.summary
 do
 	if [ "${i%.chopped.summary}" == "$i" ];then
 		FN=`basename $i`
-		awk -v f=$3 'BEGIN{FS=OFS="\t"} {if(NR>1){for(i=2;i<=NF;i++){$i=$i*f}};print $0}' $i > ${OUTDIR}/${FN}
+		awk -v f=$3 'BEGIN{FS=OFS="\t"} {if(NR>1){for(i=2;i<=5;i++){$i=$i*f};$11=$11*f*f};print $0}' $i > ${OUTDIR}/${FN}
 	fi
 done
 
 for i in $1*chopped.summary
 do
 	FN=`basename $i`
-	awk -v f=$3 'BEGIN{FS=OFS="\t"} {if(NR>1){for(i=2;i<=(NF-1);i++){$i=$i*f}};print $0}' $i > ${OUTDIR}/${FN}
+	awk -v f=$3 'BEGIN{FS=OFS="\t"} {if(NR>1){for(i=2;i<=5;i++){$i=$i*f}};print $0}' $i > ${OUTDIR}/${FN}
 done
 
 for i in $1*.cov

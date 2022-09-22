@@ -27,6 +27,9 @@ help_info(){
 	echo0 1 "output:"
 	echo0 4 "\t-o <dir>\toutput directory. default: ./chipseq_pipeline"
 	echo0 4 "\t-p <string\toutput prefix name. if you want to set -p in multiple sample mode, plesae use like -p \"prefix1 prefix2 prefix3\" and keep coordinate with sample_prefix_name in sample information file. default: sample name"
+	echo0 1 "spike-ins:"
+	echo0 4 "\t-S <index>\tbowtie2 index for spike-ins; please use bowtie2-build to build it."
+	echo0 4 "\t-s <concentration>\tconcentration of spikein used in the lirabry. Set this parameter if you want to normalize signals to spike-ins instead of depth."
 	echo0 6 "other optional:"
 	echo0 6 "\t-q qvalue used for macs2 peak calling"
 	echo0 6 "\t-i <index>\tbowtie2 index for genome mapping. default: genome/Bowtie2Index/genome"
@@ -35,7 +38,7 @@ help_info(){
 	echo0 6 "\t-k <file>\ttransposon.size file if needed. default: genome/genome.transposon.size"
 	echo0 6 "\t-c <int>\tCPU number used. default: 1"
 	echo0 5 "\tsuggestion for running CUTRUN data:"
-	echo0 5 "\tpiSet_chipseq -l "in.1.fq.gz in.negative.1.fq.gz" -I -g genome -o outputdir -q 0.001 -c cpu"
+	echo0 5 "\tpiSet_chipseq -l 'in.1.fq.gz in.negative.1.fq.gz' -I -g genome -o outputdir -q 0.001 -c cpu"
 }
 
 if [ $# -lt 1 ];then
@@ -50,7 +53,7 @@ MAX_FRAGMENT=700
 MAP_ENGINE=bowtie2
 QVALUE=0.05
 
-while getopts "hl:r:g:i:C:ao:p:c:X:PTRM:q:It:Tk:" OPTION; do
+while getopts "hl:r:g:i:C:ao:p:c:X:PTRM:q:It:Tk:S:s" OPTION; do
 	case $OPTION in
 		h)	help_info && exit 1;;
 		l)	LEFT=(${OPTARG});;
@@ -71,6 +74,8 @@ while getopts "hl:r:g:i:C:ao:p:c:X:PTRM:q:It:Tk:" OPTION; do
 		I)	IF_INPUT=1;;
 		t)	INDEX_TE=${OPTARG};;
 		k)	TRANSPOSON_SIZE=${OPTARG};;
+		S)	INDEX_SPIKEIN=${OPTARG};;
+		s)	IF_NOR_SPIKEIN=1;;
 		*)	help_info && exit 1
 	esac
 done
@@ -207,6 +212,35 @@ do
 		THIS_LEFT=${TEMP_LEFT}
 		THIS_RIGHT=${RIGHT[${SAMPLE_INDEX}]}
 	fi
+	# mapping to spikeins via bowtie2 and sort the bam files into bed files
+	if [ ! -z ${INDEX_SPIKEIN} ];then
+		echo0 2 "map to spike-ins and process reads"
+		if [ -z ${RIGHT[${SAMPLE_INDEX}]} ];then # single-end
+			bowtie2 -p ${CPU} --very-sensitive --no-unal -x ${INDEX_SPIKEIN} -U ${THIS_LEFT} -S ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.spikein.sam > ${OUTDIR}/log/${PREFIX[${SAMPLE_INDEX}]}.bowtie2.spikein.log 2>&1 || (echo0 0 "bowtie2 error, please check ${OUTDIR}/log/${PREFIX[${SAMPLE_INDEX}]}.bowtie2.spikein.log" && exit 1)
+		else # paired-end
+			bowtie2 -p ${CPU} --very-sensitive --no-unal --no-mixed --no-discordant -I 10 -X ${MAX_FRAGMENT} -x ${INDEX_SPIKEIN} -1 ${THIS_LEFT} -2 ${THIS_RIGHT} -S ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.spikein.sam > ${OUTDIR}/log/${PREFIX[${SAMPLE_INDEX}]}.bowtie2.spikein.log 2>&1 || (echo0 0 "bowtie2 error, please check ${OUTDIR}/log/${PREFIX[${SAMPLE_INDEX}]}.bowtie2.spikein.log" && exit 1)
+		fi
+		samtools view -@ ${CPU} -bhS -o ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.spikein.bam ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.spikein.sam || (echo0 0 "samtools view error" && exit 1)
+		if [ -z ${RIGHT[${SAMPLE_INDEX}]} ];then
+			samtools sort -@ ${CPU} -o ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.spikein.sort.bam ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.spikein.bam || (echo0 0 "samtools sort error" && exit 1)
+		else
+			samtools sort -n -@ ${CPU} -o ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.spikein.sortByName.bam ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.spikein.bam || (echo0 0 "samtools sort error" && exit 1)
+		fi
+		if [ -z ${RIGHT[${SAMPLE_INDEX}]} ];then
+			BAM_SPIKEIN=${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.spikein.sort.bam 
+		else
+			samtools sort -@ ${CPU} -o ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.spikein.sort.bam ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.spikein.sortByName.bam
+			BAM_SPIKEIN=${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.spikein.sortByName.bam 
+		fi
+		samtools index -@ ${CPU} ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.spikein.sort.bam || (echo0 0 "samtools index error" && exit 1) 
+		if [ -z ${RIGHT[${SAMPLE_INDEX}]} ];then
+			bedtools bamtobed -i ${BAM_SPIKEIN} > ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.spikein.bed
+		else
+			bedtools bamtobed -bedpe -i ${BAM_SPIKEIN} | \
+				awk 'BEGIN{FS=OFS="\t"} {print $1,$2,$6,$7,$8,"+"}' | sort -k1,1 -k2,2n \
+				> ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.spikein.bed
+		fi
+	fi
 	# mapping via bowtie2|bwa mem|bwa aln
 	if [ "${MAP_ENGINE}" == "bowtie2" ];then # bowtie2 as engine
 		echo0 2 "mapping to genome via bowtie2......"
@@ -279,6 +313,9 @@ do
 	LIST_BAM+=(${BAM}) # add final bam file name to LIST_BAM
 	samtools flagstat ${BAM} > ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.flagstat
 	FACTOR=`awk 'BEGIN{FS=" "} {if($0~/mapped \(/){print 1000000/$1}}' ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.flagstat`
+	if [ ! -z ${IF_NOR_SPIKEIN} ];then
+		FACTOR=`awk -v c=${IF_NOR_SPIKEIN} '{s++} END{print s/c}' ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.spikein.bed`
+	fi
 	echo0 3 "factor used for normalization: ${FACTOR}"
 	echo -e "${FACTOR}" > ${OUTDIR}/bowtie2/${PREFIX[${SAMPLE_INDEX}]}.factor
 	# bam to bed and then to bigWig
